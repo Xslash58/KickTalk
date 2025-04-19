@@ -1,0 +1,120 @@
+import "../assets/styles/components/Navbar.css";
+import clsx from "clsx";
+import { useEffect, useRef, useState } from "react";
+import { useChat } from "../providers/ChatProvider";
+
+const Navbar = ({ currentChatroomId, onSelectChatroom }) => {
+  const { state, addChatroom, removeChatroom } = useChat();
+  const [showAddChatroomDialog, setAddChatroomDialog] = useState(false);
+  const [isConnecting, setIsConnecting] = useState(false);
+  const inputRef = useRef(null);
+  const chatroomListRef = useRef(null);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const username = inputRef.current?.value.toLowerCase();
+    if (!username) return;
+
+    setIsConnecting(true);
+
+    try {
+      const newChatroom = await addChatroom(username);
+      if (newChatroom) {
+        onSelectChatroom(newChatroom.id);
+        setAddChatroomDialog(false);
+      }
+
+      inputRef.current.value = "";
+    } finally {
+      setIsConnecting(false);
+    }
+  };
+
+  const handleRemoveChatroom = async (chatroomId) => {
+    const { chatrooms, connections } = state;
+
+    if (!connections[chatroomId]) return;
+
+    const currentIndex = chatrooms.findIndex((chatroom) => chatroom.id === chatroomId);
+    const remainingChatrooms = chatrooms.filter((chatroom) => chatroom && chatroom.id !== chatroomId);
+
+    await removeChatroom(chatroomId);
+
+    // If there are chatrooms available select next in list else select one behind
+    if (remainingChatrooms.length) {
+      const nextChatroom = remainingChatrooms[currentIndex] || remainingChatrooms[currentIndex - 1];
+      onSelectChatroom(nextChatroom.id);
+    } else {
+      onSelectChatroom(null);
+    }
+  };
+
+  // Set first chatroom as active on mount
+  // TODO: Update to last selected chatroom store in json
+  useEffect(() => {
+    const savedChatrooms = JSON.parse(localStorage.getItem("chatrooms")) || [];
+
+    if (!savedChatrooms.length) return;
+    onSelectChatroom(savedChatrooms[0].id);
+  }, []);
+
+  return (
+    <div className="navbarContainer" ref={chatroomListRef}>
+      <div className="chatroomsList">
+        {state.chatrooms.map((chatroom) => (
+          <div
+            key={chatroom.id}
+            onClick={() => onSelectChatroom(chatroom.id)}
+            className={clsx("chatroomStreamer", chatroom.id === currentChatroomId && "chatroomStreamerActive")}>
+            <div className="streamerInfo">
+              {chatroom.streamerData?.user?.profile_pic && (
+                <img
+                  className="profileImage"
+                  src={chatroom.streamerData.user.profile_pic}
+                  alt={`${chatroom.username}'s profile`}
+                />
+              )}
+              <span>{chatroom.username}</span>
+            </div>
+            <button className="closeChatroom" onClick={() => handleRemoveChatroom(chatroom.id)} aria-label="Remove chatroom">
+              <span>&times;</span>
+            </button>
+          </div>
+        ))}
+      </div>
+
+      <div className={clsx("navbarAddChatroomDialog", showAddChatroomDialog && "open")}>
+        <div className="navbarAddChatroomDialogBody">
+          <div className="navbarAddChatroomDialogHead">
+            <h2>Add Chatroom</h2>
+            <button
+              className="navbarAddChatroomDialogClose"
+              onClick={() => setAddChatroomDialog(false)}
+              aria-label="Close Add Chatroom">
+              <span>&times;</span>
+            </button>
+          </div>
+          <form onSubmit={handleSubmit} className="navbarAddForm">
+            <input ref={inputRef} placeholder="Enter username" disabled={isConnecting} />
+            <button className="navbarAddChatroom" type="submit" disabled={isConnecting}>
+              {isConnecting ? "Connecting..." : "Add"}
+            </button>
+          </form>
+        </div>
+
+        <div className="dialogBackgroundOverlay" />
+      </div>
+
+      <div className="navbarAddChatroomContainer">
+        <button
+          className="navbarAddChatroomButton"
+          onClick={() => setAddChatroomDialog(!showAddChatroomDialog)}
+          disabled={isConnecting}>
+          Add <span>&#43;</span>
+        </button>
+      </div>
+    </div>
+  );
+};
+
+export default Navbar;

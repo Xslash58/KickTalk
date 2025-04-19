@@ -1,0 +1,100 @@
+.titleBar {
+  height: 48px;
+  background-color: #ffffff0a;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  app-region: drag;
+}
+
+.titleBarLeft {
+  height: 100%;
+  align-items: center;
+  display: flex;
+  gap: 8px;
+  flex: 1 1 25%;
+}
+
+.titleBarLeft span {
+  margin-left: 16px;
+  font-size: 14px;
+  color: rgb(54, 99, 51);
+}
+
+.titleBarRight {
+  height: 100%;
+  flex: 1 1 25%;
+  app-region: drag;
+}
+
+.titleBarControls {
+  display: flex;
+  height: 100%;
+  width: 100%;
+  position: relative;
+  justify-content: flex-end;
+}
+
+.titleBarControls > button {
+  app-region: no-drag;
+  display: flex;
+  align-items: center;
+  width: 48px;
+  justify-content: center;
+  height: 100%;
+  background-color: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.titleBarControls button:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.8);
+  cursor: default;
+}
+
+.titleBarControls button.close:hover {
+  background-color: rgb(212, 0, 0);
+}
+
+.titleBarSettings {
+  display: flex;
+  app-region: drag;
+}
+
+.titleBarSettings > button {
+  app-region: no-drag;
+  display: flex;
+  align-items: center;
+  height: 100%;
+  background-color: transparent;
+  border: none;
+  gap: 4px;
+  opacity: 0.5;
+  cursor: pointer;
+  outline: none;
+  transition: 0.2s ease-in-out opacity;
+}
+
+.titleBarSettings.open button {
+  opacity: 0.8;
+}
+
+.titleBarSettings button:hover {
+  opacity: 0.8;
+}
+
+.titleBarSettings > button > svg {
+  fill: white;
+  transition: 0.1s transform ease-in-out;
+}
+
+.titleBarSettings.open > button > svg {
+  transform: rotate(180deg);
+}
+
+.titleBarSettings span {
+  font-weight: 600;
+  color: white;
+}

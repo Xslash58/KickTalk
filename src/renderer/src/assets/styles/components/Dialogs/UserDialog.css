@@ -1,0 +1,181 @@
+.dialogWrapper {
+  height: 100vh;
+}
+
+.dialogHeader {
+  border-bottom: 1px solid #182f21;
+  min-height: 140px;
+  align-items: center;
+  display: flex;
+  app-region: drag;
+  padding: 0 16px;
+}
+
+.dialogLogs {
+  height: calc(100vh - 140px);
+  overflow: hidden;
+  background-color: #0b160f;
+}
+
+.dialogLogsHead {
+  padding: 16px 0px 12px 16px;
+  font-weight: 600;
+  font-size: 12px;
+  text-transform: uppercase;
+  border-bottom: 1px solid #182f21;
+}
+
+.dialogHeaderUser {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+}
+
+.dialogHeaderUser img {
+  width: inherit;
+  height: inherit;
+  object-fit: cover;
+  border-radius: 4px;
+  border: 1px solid #192c1f;
+}
+
+.dialogHeaderUserInfo {
+  display: flex;
+  gap: 8px;
+  flex-direction: column;
+}
+
+.dialogHeaderUserDates {
+  display: flex;
+  gap: 4px;
+  flex-direction: column;
+}
+
+.dialogHeaderUserInfo > h1 {
+  font-size: 24px;
+  width: max-content;
+  app-region: no-drag;
+}
+
+.dialogHeaderDate {
+  display: flex;
+  gap: 4px;
+  width: max-content;
+  app-region: no-drag;
+}
+
+.dialogHeaderDate > span {
+  font-weight: 600;
+  color: rgb(255 255 255 / 90%);
+}
+
+.dialogHeaderDate > p {
+  font-weight: 600;
+  color: rgb(255 255 255 / 75%);
+}
+
+.dialogHeaderUserImage {
+  height: 88px;
+  width: 88px;
+  app-region: no-drag;
+}
+
+.dialogLogsContent {
+  height: calc(100% - 48px);
+  padding: 16px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  gap: 12px;
+  display: flex;
+  flex-direction: column;
+}
+
+.dialogLogsContent::-webkit-scrollbar {
+  width: 10px;
+}
+
+.dialogLogsContent::-webkit-scrollbar-corner {
+  background: rgba(255, 255, 255, 0.429);
+}
+
+.dialogLogsContent::-webkit-scrollbar-thumb {
+  background-color: #b6d2c277;
+  border-radius: 2px;
+  background-clip: content-box;
+  min-width: 32px;
+  min-height: 32px;
+}
+
+.dialogLogsContent::-webkit-scrollbar-track {
+  background-color: #ffffff26;
+}
+
+.dialogLogMessage {
+  overflow-wrap: anywhere;
+  display: inline;
+}
+
+.chatroomUser {
+  display: inline;
+  overflow-wrap: anywhere;
+}
+
+.chatroomUser > p {
+  display: inline;
+  font-weight: bold;
+  font-size: 18px;
+  overflow-wrap: anywhere;
+}
+
+.dialogLogMessage > p {
+  display: inline;
+  overflow-wrap: anywhere;
+}
+
+.dialogLogMessage > a {
+  color: white;
+}
+
+.chatroomBadges {
+  display: inline;
+}
+
+.chatroomBadge {
+  display: inline;
+  margin-right: 4px;
+}
+
+.chatroomBadgeIcon {
+  width: calc(16px * 18 / 13);
+  height: calc(16px * 18 / 13);
+  vertical-align: middle;
+}
+
+.emoteTooltip {
+  display: none;
+  border-radius: 4px;
+  position: absolute;
+  background-color: rgba(24, 51, 30, 0.95);
+  border: 1px solid rgb(46, 86, 55);
+  padding: 16px;
+}
+
+.showTooltip {
+  position: absolute;
+  width: min-content;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  top: 40px;
+  width: 132px;
+  height: 120px;
+  z-index: 9;
+  font-size: 18px;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+}
+
+.showTooltip > img {
+  width: 40px;
+}

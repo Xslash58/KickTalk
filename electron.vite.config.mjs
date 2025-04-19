@@ -1,0 +1,30 @@
+import { resolve } from "path";
+import { defineConfig, externalizeDepsPlugin } from "electron-vite";
+import react from "@vitejs/plugin-react";
+
+export default defineConfig({
+  main: {
+    plugins: [externalizeDepsPlugin({ exclude: ["electron-store"] })],
+  },
+  preload: {
+    plugins: [externalizeDepsPlugin()],
+  },
+  renderer: {
+    build: {
+      rollupOptions: {
+        input: {
+          index: resolve("src/renderer/index.html"),
+          dialog: resolve("src/renderer/dialog.html"),
+        },
+      },
+    },
+    resolve: {
+      alias: {
+        "@renderer": resolve("src/renderer/src"),
+        "@components": resolve("src/renderer/src/components"),
+        "@assets": resolve("src/renderer/src/assets"),
+      },
+    },
+    plugins: [react()],
+  },
+});

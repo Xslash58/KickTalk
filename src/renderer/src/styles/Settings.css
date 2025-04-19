@@ -1,0 +1,174 @@
+.settingsWrapper {
+  position: absolute;
+  top: 48px;
+  background-color: #17291df8;
+  border: 1px solid #3a5343;
+  backdrop-filter: blur(2px);
+  width: 324px;
+  height: max-content;
+  max-height: 456px;
+  z-index: 99;
+  margin: 0 auto;
+  left: 0;
+  right: 0;
+  border-radius: 6px;
+  opacity: 0;
+  pointer-events: none;
+  overflow-y: auto;
+  box-shadow: 0px 8px 9px #030f08ba;
+  transition: all 0.2s ease-in-out;
+}
+
+.settingsWrapper::-webkit-scrollbar {
+  width: 8px;
+}
+
+.settingsWrapper::-webkit-scrollbar-corner {
+  background: rgba(255, 255, 255, 0.429);
+}
+
+.settingsWrapper::-webkit-scrollbar-thumb {
+  background-color: #b6d2c277;
+  border-radius: 2px;
+  background-clip: content-box;
+  min-width: 32px;
+  min-height: 32px;
+}
+.settingsWrapper::-webkit-scrollbar-track {
+  background-color: #ffffff26;
+}
+
+.settingsWrapper.show {
+  top: 48px;
+  opacity: 1;
+  pointer-events: all;
+}
+
+.settingsHead {
+  padding: 16px;
+}
+
+.settingsDivider {
+  display: block;
+  height: 1px;
+  width: 100%;
+  background-color: #3a5343;
+}
+
+.settingsSection {
+  padding: 16px;
+}
+
+.settingsSection h5 {
+  color: #6a8875;
+}
+
+.settingsCosmetics {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.settingsSwitch {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.settingsSwitch input {
+  background-color: grey;
+}
+
+.settingSwitchItem {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+  background-color: transparent;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.settingSwitchItem > .checkBox {
+  width: 16px;
+  height: 16px;
+  border-radius: 2px;
+  border: 1.5px solid #3a5343;
+  background-color: transparent;
+  transition: all 0.15s ease-in-out;
+}
+
+.settingSwitchItem > .checkBox > svg {
+  fill: white;
+  transition: fill 0.15s ease-in-out;
+}
+
+.settingSwitchItem > span {
+  color: rgba(255, 255, 255, 0.5);
+  transition: color 0.15s ease-in-out;
+}
+
+.settingSwitchItem.checked > span {
+  color: rgba(255, 255, 255, 1);
+}
+
+.settingSwitchItem.checked > .checkBox {
+  border-color: #00c94a;
+  background-color: #00c94aaf;
+}
+
+.notifications {
+  display: flex;
+}
+
+.notificationPhrases {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.highlightPhrases {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.highlightPhrase {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 8px 8px 10px;
+  background: rgba(80, 123, 97, 0.2);
+  border-radius: 4px;
+  font-size: 16px;
+}
+
+.highlightPhrase button {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.7);
+  cursor: pointer;
+  padding: 0 4px;
+  font-size: 16px;
+}
+
+.highlightAddPhrase input {
+  width: 100%;
+  padding: 8px;
+  background: rgba(24, 47, 33, 0.5);
+  border: 1px solid rgba(80, 123, 97, 0.3);
+  border-radius: 4px;
+  color: white;
+  font-size: 14px;
+  transition: 0.15s all ease-in-out;
+}
+
+.highlightAddPhrase input::placeholder {
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.highlightAddPhrase input:focus {
+  outline: none;
+  border-color: #3a5343;
+  background: rgba(24, 47, 33, 0.7);
+}
