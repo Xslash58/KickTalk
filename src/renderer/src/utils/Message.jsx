@@ -3,7 +3,7 @@ import KickBadges from "../components/Cosmetics/Badges";
 import { MessageParser } from "./MessageParser";
 
 const Message = memo(
-  ({ message, chatroomId, subscriberBadges }) => {
+  ({ message, chatroomId, subscriberBadges, sevenTVEmotes }) => {
     // const settings = window.app.loadSettings();
 
     const handleOpenDialog = useCallback(
@@ -11,7 +11,7 @@ const Message = memo(
         e.preventDefault();
 
         const cords = [e.clientX, e.clientY];
-        window.app.dialog.open({
+        window.app.userDialog.open({
           sender: message.sender,
           chatroomId,
           cords,
@@ -52,7 +52,7 @@ const Message = memo(
                 </button>
               </div>
               <span className="chatMessageContent">
-                <MessageParser message={message} />
+                <MessageParser message={message} sevenTVEmotes={sevenTVEmotes} />
               </span>
             </span>
           </>
