@@ -1,14 +1,38 @@
-import { app, shell, BrowserWindow, ipcMain, screen, session } from "electron";
+import { app, shell, BrowserWindow, ipcMain, screen, globalShortcut, session, safeStorage } from "electron";
 import { join } from "path";
-import fs from "fs";
-import { electronApp, optimizer, is } from "@electron-toolkit/utils";
+import ElectronStore from "electron-store";
+import { electronApp, optimizer } from "@electron-toolkit/utils";
 import { closeBrowser } from "../../utils/kickAPI";
-import Store from "electron-store";
+import store from "../../utils/config";
 import dotenv from "dotenv";
-
 dotenv.config();
 
+const authStore =  new ElectronStore({
+  fileExtension: "env",
+  schema: {
+    SESSION_TOKEN: {
+      type: "string",
+      default: "null",
+    },
+    KICK_SESSION: {
+      type: "string",
+      default: "null",
+    },
+  },
+});
+ipcMain.setMaxListeners(100);
+
+const isDev = process.env.NODE_ENV === "development";
+
 const chatLogsStore = new Map();
+
+async function storeToken(token_name, token) {
+  await authStore.set(token_name, token);
+}
+
+async function retrieveToken(token_name) {
+  return await authStore.get(token_name);
+}
 
 let dialogInfo = null;
 
@@ -16,10 +40,21 @@ let mainWindow = null;
 let userDialog = null;
 let authDialog = null;
 
-const authSession = {
-  token: process.env.SESSION_TOKEN,
-  session: process.env.KICK_SESSION,
-};
+retrieveToken("buh").then((token) => {
+  console.log("Token:", token);
+});
+ipcMain.handle("store:get", async (e, { key }) => {
+  if (!key) return store.store;
+  return store.get(key);
+});
+
+ipcMain.handle("store:set", async (e, { key, value }) => {
+  return store.set(key, value);
+});
+
+ipcMain.handle("store:delete", async (e, { key }) => {
+  return store.delete(key);
+});
 
 ipcMain.handle("chatLogs:get", async (e, { data }) => {
   const { chatroomId, userId } = data;
@@ -76,18 +111,17 @@ const createWindow = () => {
   // Create the browser window.
   const displays = screen.getAllDisplays();
 
-  //TODO: Remove
-  const secondaryMonitor = displays[1];
-
   mainWindow = new BrowserWindow({
-    width: 600,
-    height: 900,
-    x: Math.floor(displays[0].workArea.x / 2),
-    y: Math.floor(displays[0].workArea.y / 2),
+    width: store.get("lastMainWindowState.width"),
+    height: store.get("lastMainWindowState.height"),
+    x: store.get("lastMainWindowState.x"),
+    y: store.get("lastMainWindowState.y"),
     minWidth: 350,
+    minHeight: 250,
     show: false,
     backgroundColor: "#06190e",
     autoHideMenuBar: true,
+    // alwaysOnTop: store.get("alwaysOnTop"),
     titleBarStyle: "hidden",
     icon: join(__dirname, "../../resources/icons/win/KickTalk_v1.ico"),
     webPreferences: {
@@ -104,20 +138,102 @@ const createWindow = () => {
     mainWindow.webContents.openDevTools();
   });
 
+  mainWindow.on("resize", () => {
+    store.set("lastMainWindowState", { ...mainWindow.getNormalBounds() });
+  });
+
+  mainWindow.on("close", () => {
+    store.set("lastMainWindowState", { ...mainWindow.getNormalBounds() });
+  });
+
   mainWindow.webContents.setWindowOpenHandler((details) => {
     shell.openExternal(details.url);
     return { action: "deny" };
   });
 
+  mainWindow.webContents.setZoomFactor(store.get("zoomFactor"));
+
   // HMR for renderer base on electron-vite cli.
   // Load the remote URL for development or the local html file for production.
-  if (is.dev && process.env["ELECTRON_RENDERER_URL"]) {
+  if (isDev && process.env["ELECTRON_RENDERER_URL"]) {
     mainWindow.loadURL(process.env["ELECTRON_RENDERER_URL"]);
   } else {
     mainWindow.loadFile(join(__dirname, "../renderer/index.html"));
   }
 };
 
+
+async function loginToKick(type) {
+
+  const authSession = {
+    token: await retrieveToken("SESSION_TOKEN"),
+    session: await retrieveToken("KICK_SESSION"),
+  };
+  
+  console.log(authSession.token, authSession.session);
+  console.log(typeof authSession.token, typeof authSession.session);
+  if (authSession.token != 'null' || authSession.session != 'null') return true;
+
+  return new Promise((resolve) => {
+    const loginDialog = new BrowserWindow({
+      width: 1280,
+      height: 720,
+      webPreferences: {
+        autoplayPolicy: "user-gesture-required",
+        nodeIntegration: false,
+      },
+    });
+    
+    switch (type) {
+      case "kick":
+      loginDialog.loadURL("https://kick.com/login");
+      break;
+      case "google":
+      loginDialog.loadURL("https://accounts.google.com/o/oauth2/auth?client_id=582091208538-64t6f8i044gppt1etba67qu07t4fimuf.apps.googleusercontent.com&redirect_uri=https%3A%2F%2Fkick.com%2Fsocial%2Fgoogle%2Fcallback&scope=openid+profile+email&response_type=code");
+      break;
+      case "apple":
+      loginDialog.loadURL("https://appleid.apple.com/auth/authorize?client_id=com.kick&redirect_uri=https%3A%2F%2Fkick.com%2Fredirect%2Fapple&scope=name%20email&response_type=code&response_mode=form_post");
+      break;
+      default:
+      console.error("Unknown login type:", type);
+    }
+
+    const checkForSessionToken = async () => {
+      const cookies = await session.defaultSession.cookies.get({ domain: "kick.com" });
+      const sessionCookie = cookies.find((cookie) => cookie.name === "session_token");
+      const kickSession = cookies.find((cookie) => cookie.name === "kick_session");
+
+      if (sessionCookie && kickSession) {
+
+        // Save the session token and kick session to the .env file
+        const sessionToken = decodeURIComponent(sessionCookie.value);
+        const kickSessionValue = decodeURIComponent(kickSession.value);
+
+        await storeToken("SESSION_TOKEN", sessionToken);
+        await storeToken("KICK_SESSION", kickSessionValue);
+
+        loginDialog.close();
+        app.relaunch();
+        app.exit(0);
+        resolve(true);
+        return true;
+      }
+
+      return false;
+    };
+
+    const interval = setInterval(async () => {
+      if (await checkForSessionToken()) {
+        clearInterval(interval);
+      }
+    }, 1000);
+
+    loginDialog.on("closed", () => {
+      clearInterval(interval);
+      resolve(false);
+    });
+  });
+}
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
@@ -128,7 +244,7 @@ app.whenReady().then(() => {
   }
 
   // Set app user model id for windows
-  electronApp.setAppUserModelId("com.electron");
+  electronApp.setAppUserModelId("com.kicktalk.app");
 
   // Default open or close DevTools by F12 in development
   // and ignore CommandOrControl + R in production.
@@ -141,52 +257,7 @@ app.whenReady().then(() => {
   ipcMain.on("ping", () => console.log("pong"));
 
   createWindow();
-
-  // if (!authSession.token && !authSession.session) {
-  //   loginDialog = new BrowserWindow({
-  //     width: 1280,
-  //     height: 720,
-  //     webPreferences: {
-  //       autoplayPolicy: "user-gesture-required",
-  //       nodeIntegration: false,
-  //     },
-  //   });
-
-  //   loginDialog.loadURL("https://kick.com/login");
-
-  //   const checkForSessionToken = async () => {
-  //     const cookies = await session.defaultSession.cookies.get({ domain: "kick.com" });
-  //     const sessionCookie = cookies.find((cookie) => cookie.name === "session_token");
-  //     if (sessionCookie) {
-  //       const envPath = join(__dirname, "../../.env");
-  //       console.log(envPath);
-  //       const kickSession = cookies.find((cookie) => cookie.name === "kick_session");
-  //       if (kickSession) {
-  //         // Load existing .env file if it exists
-  //         dotenv.config({ path: envPath });
-
-  //         // Save the session token&kick session to the .env file
-  //         const urlEncodedSessionCookie = decodeURIComponent(sessionCookie.value);
-  //         const urlEncodedkickSession = decodeURIComponent(kickSession.value);
-
-  //         fs.writeFileSync(envPath, `SESSION_TOKEN=${urlEncodedSessionCookie}\nKICK_SESSION=${urlEncodedkickSession}`, {
-  //           flag: "w",
-  //         });
-
-  //         loginDialog.close();
-  //         return true;
-  //       }
-  //     }
-  //     return false;
-  //   };
-
-  //   const interval = setInterval(async () => {
-  //     const found = await checkForSessionToken();
-  //     if (found) {
-  //       clearInterval(interval);
-  //     }
-  //   }, 1000);
-  // }
+  
 
   // Cleanup puppeteer on app quit
 
@@ -200,6 +271,23 @@ app.whenReady().then(() => {
     // On macOS it's common to re-create a window in the app when the
     // dock icon is clicked and there are no other windows open.
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
+  });
+
+  // Set Zoom Levels
+  globalShortcut.register("Ctrl+Plus", () => {
+    if (mainWindow.webContents.getZoomFactor() < 1.5) {
+      const newZoomFactor = mainWindow.webContents.getZoomFactor() + 0.1;
+      mainWindow.webContents.setZoomFactor(newZoomFactor);
+      store.set("zoomFactor", newZoomFactor);
+    }
+  });
+
+  globalShortcut.register("Ctrl+-", () => {
+    if (mainWindow.webContents.getZoomFactor() > 0.8) {
+      const newZoomFactor = mainWindow.webContents.getZoomFactor() - 0.1;
+      mainWindow.webContents.setZoomFactor(newZoomFactor);
+      store.set("zoomFactor", newZoomFactor);
+    }
   });
 });
 
@@ -269,8 +357,9 @@ ipcMain.handle("userDialog:open", (e, { data }) => {
 // Auth Dialog Handler
 ipcMain.handle("authDialog:open", (e, { data }) => {
   const mainWindowPos = mainWindow.getPosition();
-  const newX = mainWindowPos[0] + data.cords[0] - 150;
-  const newY = mainWindowPos[1] + data.cords[1] - 100;
+  const mainWindowBounds = mainWindow.getBounds();
+  const newX = mainWindowBounds.x + (mainWindowBounds.width - 500) / 2;
+  const newY = mainWindowBounds.y + (mainWindowBounds.height - 500) / 2;
 
   if (authDialog) {
     authDialog.setPosition(newX, newY);
@@ -298,7 +387,7 @@ ipcMain.handle("authDialog:open", (e, { data }) => {
   });
 
   // Load the same URL as main window but with dialog hash
-  if (is.dev && process.env["ELECTRON_RENDERER_URL"]) {
+  if (isDev && process.env["ELECTRON_RENDERER_URL"]) {
     authDialog.loadURL(`${process.env["ELECTRON_RENDERER_URL"]}/auth.html`);
   } else {
     authDialog.loadFile(join(__dirname, "../renderer/auth.html"));
@@ -316,9 +405,27 @@ ipcMain.handle("authDialog:open", (e, { data }) => {
   //   }
   // });
 
+
   authDialog.on("closed", () => {
     authDialog = null;
   });
+});
+
+ipcMain.handle("authDialog:auth", async (e, { data }) => {
+  if (data.type) {
+    const result = await loginToKick(data.type);
+    if(result) {
+      authDialog.close();
+      authDialog = null;
+    }
+  }
+});
+
+ipcMain.handle("authDialog:close", () => {
+  if (authDialog) {
+    authDialog.close();
+    authDialog = null;
+  }
 });
 
 // Function to move the user dialog window

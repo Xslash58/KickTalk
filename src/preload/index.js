@@ -6,20 +6,25 @@ import {
   getChannelChatroomInfo,
   getSelfInfo,
   getUserChatroomInfo,
+  getSilencedUsers,
 } from "../../utils/kickAPI2";
 import handleEmotes from "../../utils/emotes";
 import processBadges from "../../utils/badges";
 import fetch7TVData from "../../utils/7tvData";
 
-import path from "node:path";
-import fs from "fs";
-import dotenv from "dotenv";
+import ElectronStore from "electron-store";
 
-dotenv.config();
+const authStore = new ElectronStore({
+  fileExtension: "env",
+});
+
+function retrieveToken(token_name) {
+  return authStore.get(token_name);
+}
 
 const session = {
-  token: process.env.SESSION_TOKEN,
-  session: process.env.KICK_SESSION,
+  token: retrieveToken("SESSION_TOKEN"),
+  session: retrieveToken("KICK_SESSION"),
 };
 
 // Validate Session Token by Fetching User Data
@@ -27,12 +32,7 @@ const validateSessionToken = async () => {
   if (!session.token) return false;
 
   try {
-    const userData = await getSelfInfo(session.token, session.session);
-    const newSettings = {
-      notificationPhrases: [userData.data.username, `@${userData.data.username}`],
-    };
-
-    editSettings(newSettings);
+    await getSelfInfo(session.token, session.session);
     return true;
   } catch (error) {
     console.error("Error validating session token:", error);
@@ -47,49 +47,6 @@ const openURLExternally = (url) => {
   shell.openExternal(url);
 };
 
-// Load or create settings file
-const loadSettings = () => {
-  try {
-    const settingsPath = path.resolve("settings.json");
-    if (fs.existsSync(settingsPath)) {
-      const data = fs.readFileSync(settingsPath, "utf-8");
-      return JSON.parse(data);
-    } else {
-      const defaultSettings = {
-        load7TVPaints: true,
-        load7TVEmotes: true,
-        load7TVBadges: true,
-        notifications: true,
-        notificationsSound: true,
-        notificationSoundFile: "default",
-        notificationBackground: true,
-        notificationBackgroundColour: "#800000",
-        notificationPhrases: [],
-      };
-      fs.writeFileSync(settingsPath, JSON.stringify(defaultSettings, null, 2), "utf-8");
-      return defaultSettings;
-    }
-  } catch (error) {
-    console.error("Error loading settings:", error);
-    return null;
-  }
-};
-
-// Edit settings file
-// TODO: Replace with electron-store
-const editSettings = (newSettings) => {
-  try {
-    const settingsPath = path.resolve("settings.json");
-    const currentSettings = loadSettings();
-    const updatedSettings = { ...currentSettings, ...newSettings };
-    fs.writeFileSync(settingsPath, JSON.stringify(updatedSettings, null, 2), "utf-8");
-    return;
-  } catch (error) {
-    console.error("Error editing settings:", error);
-    return null;
-  }
-};
-
 if (process.contextIsolated) {
   try {
     contextBridge.exposeInMainWorld("app", {
@@ -101,7 +58,8 @@ if (process.contextIsolated) {
 
       authDialog: {
         open: (data) => ipcRenderer.invoke("authDialog:open", { data }),
-        close: () => ipcRenderer.send("authDialog:close"),
+        auth: (data) => ipcRenderer.invoke("authDialog:auth", { data }),
+        close: () => ipcRenderer.invoke("authDialog:close"),
       },
 
       userDialog: {
@@ -132,6 +90,7 @@ if (process.contextIsolated) {
         getChannelInfo,
         getChannelChatroomInfo,
         sendMessage: (channelId, message) => sendMessageToChannel(channelId, message, session.token, session.session),
+        getSilencedUsers,
         getSelfInfo: async () => {
           try {
             const response = await getSelfInfo(session.token, session.session);
@@ -152,8 +111,11 @@ if (process.contextIsolated) {
         fetch7TVData,
       },
 
-      loadSettings,
-      editSettings,
+      store: {
+        get: async (key) => await ipcRenderer.invoke("store:get", { key }),
+        set: async (key, value) => await ipcRenderer.invoke("store:set", { key, value }),
+        delete: async (key) => await ipcRenderer.invoke("store:delete", { key }),
+      },
     });
   } catch (error) {
     console.error("Failed to expose APIs:", error);

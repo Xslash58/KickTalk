@@ -10,7 +10,6 @@ const User = () => {
   const [subscriberBadges, setSubscriberBadges] = useState([]);
   const dialogLogsRef = useRef(null); 
   const [sevenTVEmotes, setSevenTVEmotes] = useState([]);
-
   useEffect(() => {
     const loadData = async (data) => {
       setDialogData(data);
@@ -21,7 +20,6 @@ const User = () => {
       setSevenTVEmotes(currentChatroom?.channel7TVEmotes || []);
       console.log(sevenTVEmotes);
       setSubscriberBadges(currentChatroom?.streamerData?.subscriber_badges || []);
-
       const { messages } = await window.app.logs.get({ chatroomId: data.chatroomId, userId: data.sender.id });
 
       setUserLogs(messages || []);
@@ -32,10 +30,7 @@ const User = () => {
     };
 
     const updateData = (data) => {
-      setUserLogs((prevLogs) => {
-        const newMessages = data.logs?.messages || [];
-        return [...prevLogs, ...newMessages.filter((msg) => !prevLogs.some((existing) => existing.id === msg.id))];
-      });
+      setUserLogs(data.logs?.messages || []);
     };
 
     const dataCleanup = window.app.userDialog.onData(loadData);
@@ -101,7 +96,11 @@ const User = () => {
               <div className="dialogLogItem" key={log.id}>
                 <div className="chatroomUser">
                   <div className="chatroomBadges">
-                    <KickBadges type={"dialog"} badges={log.sender.identity.badges} subscriberBadges={subscriberBadges} />
+                    <KickBadges
+                      type={"dialog"}
+                      badges={log.sender.identity.badges}
+                      subscriberBadges={chatroomData?.streamerData?.subscriber_badges || []}
+                    />
                   </div>
                   <p style={{ color: `${log.sender.identity.color}` }}>
                     {log.sender.username}

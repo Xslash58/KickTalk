@@ -3,6 +3,7 @@
 }
 
 .chatContainer {
+  justify-content: space-between;
   height: calc(100vh - 48px);
   width: 100%;
   display: flex;
@@ -28,6 +29,7 @@
   flex: 1;
   height: calc(100vh - 200px);
   overflow-y: auto;
+  height: 100vh;
   padding-left: 8px;
   margin-right: 0;
   display: flex;
@@ -100,7 +102,21 @@
   vertical-align: middle;
   white-space: collapse;
 }
+
+.emote {
+  vertical-align: middle;
+  margin-left: 1px;
+  margin-right: 1px;
+}
+
 .kickEmote {
+  font-weight: 900;
+  margin-right: 4px;
+  white-space: normal;
+  width: 38px;
+}
+
+.stvEmote {
   font-weight: 900;
   margin-right: 4px;
   white-space: normal;

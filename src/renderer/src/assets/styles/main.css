@@ -1,5 +1,5 @@
 /* @import "./base.css"; */
-@font-face {
+/* @font-face {
   font-family: "Indivisible";
   font-weight: 500;
   src: url("../fonts/Indivisible-Regular.ttf");
@@ -15,10 +15,24 @@
   font-family: "Indivisible";
   font-weight: 700;
   src: url("../fonts/Indivisible-SemiBold.ttf");
+} */
+
+@font-face {
+  font-family: "Inter";
+  font-weight: 500;
+  src: url("../fonts/Inter/Inter-Regular.ttf");
 }
 
-html {
-  line-height: 1.5;
+@font-face {
+  font-family: "Inter";
+  font-weight: 600;
+  src: url("../fonts/Inter/Inter-Medium.ttf");
+}
+
+@font-face {
+  font-family: "Inter";
+  font-weight: 700;
+  src: url("../fonts/Inter/Inter-SemiBold.ttf");
 }
 
 #main {
@@ -113,11 +127,10 @@ video {
   margin: 0px;
   padding: 0px;
   border: 0px;
-  vertical-align: baseline;
 }
 
 * {
-  font-family: "Indivisible";
+  font-family: "Inter";
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   font-synthesis: none;
@@ -224,7 +237,6 @@ body {
 .kick-emote{
   width: 38px;
 }
-
 .badges {
   display: contents;
   vertical-align: middle;
