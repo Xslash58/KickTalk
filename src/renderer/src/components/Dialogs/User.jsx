@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import "../../assets/styles/components/Dialogs/UserDialog.css";
-import KickBadges from "../Cosmetics/Badges";
+import {KickBadges, KickTalkBetaTesters} from "../Cosmetics/Badges";
 import { MessageParser } from "../../utils/MessageParser";
+const kickTalkBetaTesters = await window.app.utils.getKickTalkBadges();
+
 
 const User = () => {
   const [dialogData, setDialogData] = useState(null);
@@ -25,7 +27,7 @@ const User = () => {
       setUserLogs(messages || []);
 
       // Fetch User Profile in Channel
-      const { data: user } = await window.app.kick.getUserInfo(currentChatroom?.slug, data?.sender?.username);
+      const { data: user } = await window.app.kick.getUserChatroomInfo(currentChatroom?.slug, data?.sender?.username);
       setUserProfile(user);
     };
 
@@ -96,10 +98,11 @@ const User = () => {
               <div className="dialogLogItem" key={log.id}>
                 <div className="chatroomUser">
                   <div className="chatroomBadges">
+                  <KickTalkBetaTesters message={log} kickTalkBetaTesters={kickTalkBetaTesters}/>
                     <KickBadges
                       type={"dialog"}
                       badges={log.sender.identity.badges}
-                      subscriberBadges={chatroomData?.streamerData?.subscriber_badges || []}
+                      subscriberBadges={log?.streamerData?.subscriber_badges || []}
                     />
                   </div>
                   <p style={{ color: `${log.sender.identity.color}` }}>

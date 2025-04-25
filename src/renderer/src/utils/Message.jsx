@@ -1,9 +1,9 @@
 import { memo, useCallback, useEffect } from "react";
-import KickBadges from "../components/Cosmetics/Badges";
+import {KickBadges, KickTalkBetaTesters} from "../components/Cosmetics/Badges";
 import { MessageParser } from "./MessageParser";
 
 const Message = memo(
-  ({ message, chatroomId, subscriberBadges, sevenTVEmotes }) => {
+  ({ message, chatroomId, subscriberBadges, sevenTVEmotes, kickTalkBetaTesters }) => {
     const handleOpenDialog = useCallback(
       (e) => {
         e.preventDefault();
@@ -39,6 +39,7 @@ const Message = memo(
             <span className="chatMessageContainer">
               <div className="chatMessageUser">
                 <div className="chatMessageBadges">
+                  <KickTalkBetaTesters message={message} kickTalkBetaTesters={kickTalkBetaTesters}/>
                   <KickBadges badges={message.sender.identity?.badges} subscriberBadges={subscriberBadges} />
                 </div>
                 <button

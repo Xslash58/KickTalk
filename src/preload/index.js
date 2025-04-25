@@ -7,6 +7,7 @@ import {
   getSelfInfo,
   getUserChatroomInfo,
   getSilencedUsers,
+  getKickTalkBadges,
 } from "../../utils/kickAPI2";
 import handleEmotes from "../../utils/emotes";
 import processBadges from "../../utils/badges";
@@ -91,9 +92,9 @@ if (process.contextIsolated) {
         getChannelChatroomInfo,
         sendMessage: (channelId, message) => sendMessageToChannel(channelId, message, session.token, session.session),
         getSilencedUsers,
-        getSelfInfo: async () => {
+        getSelfInfo: async (username) => {
           try {
-            const response = await getSelfInfo(session.token, session.session);
+            const response = await getSelfInfo(session.token, session.session, username);
             return response.data;
           } catch (error) {
             console.error("Error fetching user data:", error);
@@ -101,6 +102,7 @@ if (process.contextIsolated) {
           }
         },
         getUserInfo: (chatroomName, username) => getUserChatroomInfo(chatroomName, username),
+        getUserChatroomInfo: (chatroomName, username) => getUserChatroomInfo(chatroomName, username, session.token, session.session),
       },
 
       // Utility functions
@@ -109,6 +111,7 @@ if (process.contextIsolated) {
         handleEmotes,
         processBadges,
         fetch7TVData,
+        getKickTalkBadges,
       },
 
       store: {

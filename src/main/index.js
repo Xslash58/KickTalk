@@ -168,11 +168,12 @@ async function loginToKick(type) {
   if (authSession.token != "null" || authSession.session != "null") return true;
 
   return new Promise((resolve) => {
+    const mainWindowBounds = mainWindow.getBounds();
     const loginDialog = new BrowserWindow({
       width: 1280,
       height: 720,
-      x: mainWindow.getPosition()[0] + (mainWindow.getSize()[0] - 1280) / 2,
-      y: mainWindow.getPosition()[1] + (mainWindow.getSize()[1] - 720) / 2,
+      x: mainWindowBounds.x + (mainWindowBounds.width - 1280) / 2,
+      y: mainWindowBounds.y + (mainWindowBounds.height - 720) / 2,
       show: true,
       resizable: false,
       transparent: true,
@@ -180,6 +181,7 @@ async function loginToKick(type) {
       webPreferences: {
         autoplayPolicy: "user-gesture-required",
         nodeIntegration: false,
+        devTools: true,
       },
     });
 
@@ -330,7 +332,7 @@ ipcMain.handle("userDialog:open", (e, { data }) => {
   });
 
   // Load the same URL as main window but with dialog hash
-  if (is.dev && process.env["ELECTRON_RENDERER_URL"]) {
+  if (isDev && process.env["ELECTRON_RENDERER_URL"]) {
     userDialog.loadURL(`${process.env["ELECTRON_RENDERER_URL"]}/user.html`);
   } else {
     userDialog.loadFile(join(__dirname, "../renderer/user.html"));

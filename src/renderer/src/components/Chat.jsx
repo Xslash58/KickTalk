@@ -6,6 +6,8 @@ import { MouseScroll } from "@phosphor-icons/react";
 import Message from "../utils/Message";
 import ChatInput from "./ChatInput";
 
+const kickTalkBetaTesters = await window.app.utils.getKickTalkBadges();
+
 // TODO: Separate chatroom inputs / history, each chatroom has its own input
 const Chat = memo(({ chatroomId }) => {
   const chatBodyRef = useRef();
@@ -15,7 +17,6 @@ const Chat = memo(({ chatroomId }) => {
 
   const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
   const [showScrollToBottom, setShowScrollToBottom] = useState(false);
-
   const currentChatroom = chatrooms.find((chatroom) => chatroom.id === chatroomId);
   const chatroomMessages = messages[chatroomId] || [];
   const subscriberBadges = currentChatroom?.streamerData?.subscriber_badges || [];
@@ -56,6 +57,7 @@ const Chat = memo(({ chatroomId }) => {
               subscriberBadges={subscriberBadges}
               sevenTVEmotes={currentChatroom?.channel7TVEmotes}
               message={message}
+              kickTalkBetaTesters={kickTalkBetaTesters}
             />
           );
         })}

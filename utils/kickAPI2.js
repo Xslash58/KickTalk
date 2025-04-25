@@ -27,7 +27,7 @@ const sendMessageToChannel = (channelID, message, sessionCookie, kickSession) =>
 };
 
 const getSelfInfo = (sessionCookie, kickSession) => {
-  return axios.get(`${APIUrl}/api/v1/user`, {
+  return axios.get(`${APIUrl}/api/v2/channels/${username}`, {
     headers: {
       Authorization: `Bearer ${sessionCookie}`,
     },
@@ -35,9 +35,14 @@ const getSelfInfo = (sessionCookie, kickSession) => {
   });
 };
 
-const getUserChatroomInfo = (chatroomName, username) => {
+const getUserChatroomInfo = (chatroomName, username, sessionCookie, kickSession) => {
   const transformedChannelName = chatroomName.replace("_", "-");
-  return axios.get(`${APIUrl}/api/v2/channels/${transformedChannelName}/users/${username}`);
+  return axios.get(`${APIUrl}/api/v2/channels/${chatroomName}/users/${username}`, {
+    headsers: {
+      Authorization: `Bearer ${sessionCookie}`,
+    },
+    Cookie: `kick_session=${kickSession}, session_token=${sessionCookie}, x-xsrf-token=${sessionCookie}, XSRF-TOKEN=${kickSession}`,
+  });
 };
 
 const getSilencedUsers = (sessionCookie, kickSession) => {
@@ -49,4 +54,8 @@ const getSilencedUsers = (sessionCookie, kickSession) => {
   });
 }
 
-export { getChannelInfo, getChannelChatroomInfo, sendMessageToChannel, getSelfInfo, getUserChatroomInfo, getSilencedUsers };
+const getKickTalkBadges = (sessionCookie, kickSession) => {
+  return axios.get(`https://kick-talk-badges-ftkbot.replit.app/badges`, {});
+};
+
+export { getChannelInfo, getChannelChatroomInfo, sendMessageToChannel, getSelfInfo, getUserChatroomInfo, getSilencedUsers, getKickTalkBadges };
