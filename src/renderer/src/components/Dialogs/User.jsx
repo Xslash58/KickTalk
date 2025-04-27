@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import "../../assets/styles/components/Dialogs/UserDialog.css";
-import {KickBadges, KickTalkBetaTesters} from "../Cosmetics/Badges";
+import { KickBadges } from "../Cosmetics/Badges";
 import { MessageParser } from "../../utils/MessageParser";
 const kickTalkBetaTesters = await window.app.utils.getKickTalkBadges();
 
@@ -10,17 +10,16 @@ const User = () => {
   const [userProfile, setUserProfile] = useState(null);
   const [userLogs, setUserLogs] = useState([]);
   const [subscriberBadges, setSubscriberBadges] = useState([]);
-  const dialogLogsRef = useRef(null); 
   const [sevenTVEmotes, setSevenTVEmotes] = useState([]);
+  const dialogLogsRef = useRef(null);
+
   useEffect(() => {
     const loadData = async (data) => {
       setDialogData(data);
 
       const chatrooms = JSON.parse(localStorage.getItem("chatrooms")) || [];
       const currentChatroom = chatrooms.find((chatroom) => chatroom.id === data.chatroomId);
-      console.log(currentChatroom);
       setSevenTVEmotes(currentChatroom?.channel7TVEmotes || []);
-      console.log(sevenTVEmotes);
       setSubscriberBadges(currentChatroom?.streamerData?.subscriber_badges || []);
       const { messages } = await window.app.logs.get({ chatroomId: data.chatroomId, userId: data.sender.id });
 
@@ -98,12 +97,8 @@ const User = () => {
               <div className="dialogLogItem" key={log.id}>
                 <div className="chatroomUser">
                   <div className="chatroomBadges">
-                  <KickTalkBetaTesters message={log} kickTalkBetaTesters={kickTalkBetaTesters}/>
-                    <KickBadges
-                      type={"dialog"}
-                      badges={log.sender.identity.badges}
-                      subscriberBadges={log?.streamerData?.subscriber_badges || []}
-                    />
+                    <KickBadges badges={log.sender.identity.badges} subscriberBadges={subscriberBadges} />
+
                   </div>
                   <p style={{ color: `${log.sender.identity.color}` }}>
                     {log.sender.username}

@@ -1,5 +1,6 @@
 import axios from "axios";
 const APIUrl = "https://kick.com";
+const KickTalkAPIUrl = "https://api.kicktalk.app";
 
 const getChannelInfo = async (channelID) => {
   // TODO: Update Regex replace for url
@@ -37,12 +38,21 @@ const getSelfInfo = (sessionCookie, kickSession) => {
 
 const getUserChatroomInfo = (chatroomName, username, sessionCookie, kickSession) => {
   const transformedChannelName = chatroomName.replace("_", "-");
-  return axios.get(`${APIUrl}/api/v2/channels/${chatroomName}/users/${username}`, {
-    headsers: {
+  return axios.get(`${APIUrl}/api/v2/channels/${transformedChannelName}/users/${username}`, {
+    headers: {
       Authorization: `Bearer ${sessionCookie}`,
     },
     Cookie: `kick_session=${kickSession}, session_token=${sessionCookie}, x-xsrf-token=${sessionCookie}, XSRF-TOKEN=${kickSession}`,
   });
+};
+
+const getKickEmotes = (chatroomName) => {
+  return axios.get(`${APIUrl}/emotes/${chatroomName}`);
+};
+
+const getKickTalkBadges = () => {
+  return axios.get(`${KickTalkAPIUrl}/badges`);
+
 };
 
 const getSilencedUsers = (sessionCookie, kickSession) => {
@@ -52,10 +62,15 @@ const getSilencedUsers = (sessionCookie, kickSession) => {
     },
     Cookie: `kick_session=${kickSession}, session_token=${sessionCookie}, x-xsrf-token=${sessionCookie}, XSRF-TOKEN=${kickSession}`,
   });
-}
-
-const getKickTalkBadges = (sessionCookie, kickSession) => {
-  return axios.get(`https://kick-talk-badges-ftkbot.replit.app/badges`, {});
 };
 
-export { getChannelInfo, getChannelChatroomInfo, sendMessageToChannel, getSelfInfo, getUserChatroomInfo, getSilencedUsers, getKickTalkBadges };
+export {
+  getChannelInfo,
+  getChannelChatroomInfo,
+  sendMessageToChannel,
+  getSelfInfo,
+  getKickEmotes,
+  getKickTalkBadges,
+  getUserChatroomInfo,
+  getSilencedUsers,
+};

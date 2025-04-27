@@ -1,9 +1,10 @@
-import { contextBridge, ipcRenderer, shell } from "electron";
+import { contextBridge, ipcRenderer, shell, session } from "electron";
 import { electronAPI } from "@electron-toolkit/preload";
 import {
   sendMessageToChannel,
   getChannelInfo,
   getChannelChatroomInfo,
+  getKickEmotes,
   getSelfInfo,
   getUserChatroomInfo,
   getSilencedUsers,
@@ -23,25 +24,25 @@ function retrieveToken(token_name) {
   return authStore.get(token_name);
 }
 
-const session = {
+const authSession = {
   token: retrieveToken("SESSION_TOKEN"),
   session: retrieveToken("KICK_SESSION"),
 };
 
 // Validate Session Token by Fetching User Data
-const validateSessionToken = async () => {
-  if (!session.token) return false;
+// const validateSessionToken = async () => {
+//   if (!authSession.token) return false;
 
-  try {
-    await getSelfInfo(session.token, session.session);
-    return true;
-  } catch (error) {
-    console.error("Error validating session token:", error);
-    return false;
-  }
-};
+//   try {
+//     await getSelfInfo(authSession.token, authSession.session);
+//     return true;
+//   } catch (error) {
+//     console.error("Error validating session token:", error);
+//     return false;
+//   }
+// };
 
-validateSessionToken();
+// validateSessionToken();
 
 // Utility Functions
 const openURLExternally = (url) => {
@@ -55,7 +56,7 @@ if (process.contextIsolated) {
       maximize: () => ipcRenderer.send("maximize"),
       close: () => ipcRenderer.send("close"),
       bringToFront: () => ipcRenderer.invoke("bring-to-front"),
-      getPosition: () => ipcRenderer.invoke("get-window-position"),
+      logout: () => ipcRenderer.invoke("logout"),
 
       authDialog: {
         open: (data) => ipcRenderer.invoke("authDialog:open", { data }),
@@ -90,19 +91,21 @@ if (process.contextIsolated) {
       kick: {
         getChannelInfo,
         getChannelChatroomInfo,
-        sendMessage: (channelId, message) => sendMessageToChannel(channelId, message, session.token, session.session),
+        sendMessage: (channelId, message) => sendMessageToChannel(channelId, message, authSession.token, authSession.session),
         getSilencedUsers,
         getSelfInfo: async (username) => {
           try {
-            const response = await getSelfInfo(session.token, session.session, username);
+            const response = await getSelfInfo(authSession.token, authSession.session);
             return response.data;
           } catch (error) {
             console.error("Error fetching user data:", error);
             return null;
           }
         },
+        getEmotes: (chatroomName) => getKickEmotes(chatroomName),
         getUserInfo: (chatroomName, username) => getUserChatroomInfo(chatroomName, username),
-        getUserChatroomInfo: (chatroomName, username) => getUserChatroomInfo(chatroomName, username, session.token, session.session),
+        getUserChatroomInfo: (chatroomName, username) =>
+          getUserChatroomInfo(chatroomName, username, authSession.token, authSession.session),
       },
 
       // Utility functions

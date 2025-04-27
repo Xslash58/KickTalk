@@ -1,38 +1,61 @@
 import { app, shell, BrowserWindow, ipcMain, screen, globalShortcut, session, safeStorage } from "electron";
 import { join } from "path";
-import ElectronStore from "electron-store";
+import Store from "electron-store";
 import { electronApp, optimizer } from "@electron-toolkit/utils";
 import { closeBrowser } from "../../utils/kickAPI";
 import store from "../../utils/config";
+
 import dotenv from "dotenv";
 dotenv.config();
 
-const authStore = new ElectronStore({
+const authStore = new Store({
   fileExtension: "env",
   schema: {
     SESSION_TOKEN: {
       type: "string",
-      default: "null",
     },
     KICK_SESSION: {
       type: "string",
-      default: "null",
     },
   },
 });
+
 ipcMain.setMaxListeners(100);
 
 const isDev = process.env.NODE_ENV === "development";
 
 const chatLogsStore = new Map();
 
-async function storeToken(token_name, token) {
-  await authStore.set(token_name, token);
-}
+const storeToken = async (token_name, token) => {
+  if (!token || !token_name) return;
 
-async function retrieveToken(token_name) {
-  return await authStore.get(token_name);
-}
+  try {
+    authStore.set(token_name, token);
+  } catch (error) {
+    console.error("[Auth Token]: Error storing token:", error);
+  }
+};
+
+const retrieveToken = async (token_name) => {
+  try {
+    const token = await authStore.get(token_name);
+    return token || null;
+  } catch (error) {
+    console.error("[Auth Token]: Error retrieving token:", error);
+    return null;
+  }
+};
+
+const clearAuthTokens = async () => {
+  try {
+    authStore.clear();
+    await session.defaultSession.clearStorageData({
+      storages: ["cookies"],
+    });
+  } catch (error) {
+    console.error("[Auth Token]: Error clearing tokens & cookies:", error);
+  }
+};
 
 let dialogInfo = null;
 
@@ -96,14 +119,6 @@ ipcMain.handle("bring-to-front", () => {
   }
 });
 
-// Get window position (useful for dialogs)
-ipcMain.handle("get-window-position", () => {
-  if (!mainWindow) return null;
-  const position = mainWindow.getPosition();
-  const size = mainWindow.getSize();
-  return { x: position[0], y: position[1], width: size[0], height: size[1] };
-});
-
 const createWindow = () => {
   // Create the browser window.
   const displays = screen.getAllDisplays();
@@ -159,21 +174,31 @@ const createWindow = () => {
   }
 };
 
-async function loginToKick(type) {
+const loginToKick = async (method) => {
   const authSession = {
     token: await retrieveToken("SESSION_TOKEN"),
     session: await retrieveToken("KICK_SESSION"),
   };
 
-  if (authSession.token != "null" || authSession.session != "null") return true;
+  if (authSession.token && authSession.session) return true;
+
+  const mainWindowPos = mainWindow.getPosition();
+  const currentDisplay = screen.getDisplayNearestPoint({
+    x: mainWindowPos[0],
+    y: mainWindowPos[1],
+  });
+  const newX = currentDisplay.bounds.x + Math.round((currentDisplay.bounds.width - 500) / 2);
+  const newY = currentDisplay.bounds.y + Math.round((currentDisplay.bounds.height - 600) / 2);
+
 
   return new Promise((resolve) => {
     const mainWindowBounds = mainWindow.getBounds();
     const loginDialog = new BrowserWindow({
       width: 1280,
       height: 720,
-      x: mainWindowBounds.x + (mainWindowBounds.width - 1280) / 2,
-      y: mainWindowBounds.y + (mainWindowBounds.height - 720) / 2,
+      x: newX,
+      y: newY,
+
       show: true,
       resizable: false,
       transparent: true,
@@ -181,11 +206,13 @@ async function loginToKick(type) {
       webPreferences: {
         autoplayPolicy: "user-gesture-required",
         nodeIntegration: false,
-        devTools: true,
+        contextIsolation: true,
+        sandbox: false,
       },
     });
 
-    switch (type) {
+    switch (method) {
+
       case "kick":
         loginDialog.loadURL("https://kick.com/login");
         break;
@@ -200,14 +227,14 @@ async function loginToKick(type) {
         );
         break;
       default:
-        console.error("[Auth Login]:Unknown login type:", type);
+        console.error("[Auth Login]:Unknown login method:", method);
+
     }
 
     const checkForSessionToken = async () => {
       const cookies = await session.defaultSession.cookies.get({ domain: "kick.com" });
       const sessionCookie = cookies.find((cookie) => cookie.name === "session_token");
       const kickSession = cookies.find((cookie) => cookie.name === "kick_session");
-
       if (sessionCookie && kickSession) {
         // Save the session token and kick session to the .env file
         const sessionToken = decodeURIComponent(sessionCookie.value);
@@ -217,8 +244,9 @@ async function loginToKick(type) {
         await storeToken("KICK_SESSION", kickSessionValue);
 
         loginDialog.close();
-        app.relaunch();
-        app.exit(0);
+        authDialog.close();
+        mainWindow.webContents.reload();
+
         resolve(true);
         return true;
       }
@@ -237,7 +265,7 @@ async function loginToKick(type) {
       resolve(false);
     });
   });
-}
+};
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
@@ -292,6 +320,12 @@ app.whenReady().then(() => {
       store.set("zoomFactor", newZoomFactor);
     }
   });
+});
+
+// Logout Handler
+ipcMain.handle("logout", () => {
+  clearAuthTokens();
+  mainWindow.webContents.reload();
 });
 
 // User Dialog Handler
@@ -358,14 +392,16 @@ ipcMain.handle("userDialog:open", (e, { data }) => {
 });
 
 // Auth Dialog Handler
-ipcMain.handle("authDialog:open", (e, { data }) => {
+ipcMain.handle("authDialog:open", (e) => {
   const mainWindowPos = mainWindow.getPosition();
-  const mainWindowBounds = mainWindow.getBounds();
-  const newX = mainWindowBounds.x + (mainWindowBounds.width - 500) / 2;
-  const newY = mainWindowBounds.y + (mainWindowBounds.height - 500) / 2;
+  const currentDisplay = screen.getDisplayNearestPoint({
+    x: mainWindowPos[0],
+    y: mainWindowPos[1],
+  });
+  const newX = currentDisplay.bounds.x + Math.round((currentDisplay.bounds.width - 500) / 2);
+  const newY = currentDisplay.bounds.y + Math.round((currentDisplay.bounds.height - 600) / 2);
 
   if (authDialog) {
-    authDialog.setPosition(newX, newY);
     authDialog.focus();
     return;
   }
