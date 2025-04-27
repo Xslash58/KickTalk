@@ -4,7 +4,7 @@ import { KickTalkBadges, KickBadges } from "../components/Cosmetics/Badges";
 import { MessageParser } from "./MessageParser";
 
 const Message = memo(
-  ({ message, chatroomId, subscriberBadges, sevenTVEmotes, kickTalkBadges }) => 
+  ({ message, chatroomId, subscriberBadges, sevenTVEmotes, kickTalkBadges }) => {
     const handleOpenDialog = useCallback(
       (e) => {
         e.preventDefault();
