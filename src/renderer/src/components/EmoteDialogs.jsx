@@ -3,54 +3,99 @@ import KickLogoFull from "../assets/icons/kickLogoFull.svg";
 import { memo, useState } from "react";
 import useChatStore from "../providers/ChatProvider";
 import { useShallow } from "zustand/react/shallow";
-import KickLogo from "../assets/icons/kickLogoIcon.svg";
 import STVLogo from "../assets/icons/stvLogo.svg";
 import { CaretUp } from "@phosphor-icons/react";
+import { useRef, useEffect } from "react";
 
-const EmoteSection = ({ emotes, title, handleEmoteClick }) => {
-  const [isOpen, setIsOpen] = useState(false);
+
+const EmoteSection = ({ emotes, title, handleEmoteClick, type, isOpen = false }) => {
+  const [sectionIsOpen, setSectionIsOpen] = useState(isOpen);
+  const [visibleCount, setVisibleCount] = useState(20);
+  const loadMoreTriggerRef = useRef(null);
+  const loadMoreEmotes = () => {
+    setVisibleCount((prev) => Math.min(prev + 20, emotes.length));
+  };
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          loadMoreEmotes();
+        }
+      },
+      { threshold: 1.0 }
+    );
+
+    if (loadMoreTriggerRef.current) {
+      observer.observe(loadMoreTriggerRef.current);
+    }
+
+    return () => {
+      if (loadMoreTriggerRef.current) {
+        observer.unobserve(loadMoreTriggerRef.current);
+      }
+    };
+  }, [loadMoreTriggerRef, emotes.length]);
 
   return (
-    <div className={clsx("kickDialogBodySection", isOpen && "opened")}>
+    <div className={clsx("kickDialogBodySection", sectionIsOpen && "opened")}>
       <div className="kickDialogRowHead">
         <span>{title}</span>
 
-        <button onClick={() => setIsOpen(!isOpen)} className="kickDialogRowHeadBtn">
+        <button onClick={() => setSectionIsOpen(!sectionIsOpen)} className="kickDialogRowHeadBtn">
           <CaretUp size={20} weight={"bold"} />
         </button>
       </div>
-      <div className="kickEmoteItems">
-        {emotes?.map((emote) => (
-          <button onClick={() => handleEmoteClick(emote)} className="kickEmoteItem" key={emote.id}>
-            <img src={`https://files.kick.com/emotes/${emote.id}/fullsize`} alt={emote.name} loading="lazy" />
-          </button>
-        ))}
-      </div>
+      {sectionIsOpen && (
+        <div className="kickEmoteItems">
+          {emotes?.slice(0, visibleCount).map((emote, index) => (
+            <button
+              onClick={() => handleEmoteClick(emote)}
+              className="kickEmoteItem"
+              key={`${emote.uniqueKey}-${index}`}
+            >
+              {type === "kick" ? (
+                <img
+                  src={`https://files.kick.com/emotes/${emote.id}/fullsize`}
+                  alt={emote.name}
+                  loading="lazy"
+                />
+              ) : (
+                <img
+                  src={"https://cdn.7tv.app/emote/" + emote.id + "/1x.webp"}
+                  alt={emote.name}
+                  loading="lazy"
+                />
+              )}
+            </button>
+          ))}
+          {visibleCount < emotes.length && (
+            <div ref={loadMoreTriggerRef} className="loadMoreTrigger" />
+          )}
+        </div>
+      )}
     </div>
   );
 };
 
-const SevenTVEmoteDialog = ({ isDialogOpen, sevenTVEmotes }) => {
+const SevenTVEmoteDialog = ({ isDialogOpen, sevenTVEmotes, handleEmoteClick }) => {
+  if(!sevenTVEmotes) return null;
+  if(!sevenTVEmotes.emote_set) return null;
   return (
     <div className={clsx("emoteDialog", isDialogOpen && "show")}>
       <div className="kickDialogHead">
         <img src={STVLogo} height={20} alt="Kick.com" />
         {/* <div className="kickDialogHeadSearch">
-        <input type="text" placeholder="Search" />
+          <input type="text" placeholder="Search" />
         </div> */}
       </div>
-
       <div className="kickDialogBody">
-        {/* {sevenTVEmotes?.map((emoteSection) => {
-          return (
-            <EmoteSection
-              key={emoteSection.name || "sub_emojis"}
-              emotes={emoteSection.emotes}
-              title={emoteSection.name || "Subscriber Emojis"}
-              handleEmoteClick={handleEmoteClick}
-            />
-          );
-        })} */}
+        <EmoteSection
+          emotes={sevenTVEmotes.emote_set.emotes?.map((emoteSection, index) => ({ ...emoteSection.data, uniqueKey: `${emoteSection.data.id}-${index}` })) || []}
+          title="7TV Emotes"
+          type="7tv"
+          isOpen={true}
+          handleEmoteClick={handleEmoteClick}
+        />
       </div>
     </div>
   );
@@ -67,13 +112,15 @@ const KickEmoteDialog = ({ isDialogOpen, kickEmotes, handleEmoteClick }) => {
       </div>
 
       <div className="kickDialogBody">
-        {kickEmotes?.map((emoteSection) => {
+        {kickEmotes?.map((emoteSection, index) => {
           return (
             <EmoteSection
-              key={emoteSection.name || "sub_emojis"}
+              key={`${emoteSection.name || "sub_emojis"}-${index}`}
               emotes={emoteSection.emotes}
               title={emoteSection.name || "Subscriber Emojis"}
+              type={"kick"}
               handleEmoteClick={handleEmoteClick}
+              isOpen={index === 0}
             />
           );
         })}
@@ -85,6 +132,7 @@ const KickEmoteDialog = ({ isDialogOpen, kickEmotes, handleEmoteClick }) => {
 const EmoteDialogs = memo(
   ({ chatroomId, handleEmoteClick }) => {
     const kickEmotes = useChatStore(useShallow((state) => state.chatrooms.find((room) => room.id === chatroomId)?.emotes));
+    const sevenTVEmotes = useChatStore(useShallow((state) => state.chatrooms.find((room) => room.id === chatroomId)?.channel7TVEmotes),);
     const [activeDialog, setActiveDialog] = useState(null);
 
     return (
@@ -105,7 +153,7 @@ const EmoteDialogs = memo(
         </div>
 
         <div className="emoteDialogs">
-          <SevenTVEmoteDialog isDialogOpen={activeDialog === "7tv"} />
+          <SevenTVEmoteDialog isDialogOpen={activeDialog === "7tv"} sevenTVEmotes={sevenTVEmotes} handleEmoteClick={handleEmoteClick} />
           <KickEmoteDialog isDialogOpen={activeDialog === "kick"} kickEmotes={kickEmotes} handleEmoteClick={handleEmoteClick} />
         </div>
       </>
