@@ -3,7 +3,6 @@
   width: 100%;
   overflow-x: scroll;
   background-color: #ffffff0a;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.116);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -106,7 +105,7 @@
   padding: 0 16px;
   padding-left: 24px;
   align-items: center;
-  height: 72px;
+  height: 73px;
   background: linear-gradient(90deg, #03120900 0%, #143220 100%);
 }
 

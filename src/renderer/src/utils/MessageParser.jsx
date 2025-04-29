@@ -29,7 +29,7 @@ const rules = [
     // URL rule
     regexPattern: urlRegex,
     component: ({ match, index }) => (
-      <a key={`link-${index}`} href={match[0]} target="_blank" rel="noreferrer">
+      <a style={{ color: "#c3d6c9" }} key={`link-${index}`} href={match[0]} target="_blank" rel="noreferrer">
         {match[0]}
       </a>
     ),

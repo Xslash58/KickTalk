@@ -92,6 +92,8 @@ class KickPusher extends EventTarget {
         }
 
         if (
+          jsonData.event === `App\\Events\\StreamerIsLive` ||
+          jsonData.event === `App\\Events\\StopStreamBroadcast` ||
           jsonData.event === `App\\Events\\PinnedMessageCreatedEvent` ||
           jsonData.event === `App\\Events\\PinnedMessageDeletedEvent` ||
           jsonData.event === `App\\Events\\ChatroomUpdatedEvent`

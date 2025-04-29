@@ -14,6 +14,26 @@ const getChannelChatroomInfo = (channelID) => {
   return axios.get(`${APIUrl}/api/v2/channels/${channelID}/chatroom`);
 };
 
+const getUserChatroomStatus = (sessionCookie, kickSession, channelName) => {
+  return axios.get(`${APIUrl}/api/v2/channels/${channelName}/me`, {
+    headers: {
+      accept: "*/*",
+      authorization: `Bearer ${sessionCookie}`,
+      priority: "u=1, i",
+      "x-xsrf-token": kickSession,
+    },
+    referrer: `https://kick.com/${channelName}`,
+    referrerPolicy: "strict-origin-when-cross-origin",
+    method: "GET",
+    mode: "cors",
+    credentials: "include",
+  });
+};
+
+const getInitialChatroomMessages = (channelID) => {
+  return axios.get(`${APIUrl}/api/v2/channels/${channelID}/messages`);
+};
+
 const sendMessageToChannel = (channelID, message, sessionCookie, kickSession) => {
   return axios.post(
     `${APIUrl}/api/v2/messages/send/${channelID}`,
@@ -28,7 +48,6 @@ const sendMessageToChannel = (channelID, message, sessionCookie, kickSession) =>
 };
 
 const getSelfInfo = (sessionCookie, kickSession) => {
-  console.log(sessionCookie, kickSession);
   return axios.get(`${APIUrl}/api/v1/user`, {
     headers: {
       accept: "*/*",
@@ -48,9 +67,16 @@ const getUserChatroomInfo = (chatroomName, username, sessionCookie, kickSession)
   const transformedChannelName = chatroomName.replace("_", "-");
   return axios.get(`${APIUrl}/api/v2/channels/${transformedChannelName}/users/${username}`, {
     headers: {
-      Authorization: `Bearer ${sessionCookie}`,
+      accept: "*/*",
+      authorization: `Bearer ${sessionCookie}`,
+      priority: "u=1, i",
+      "x-xsrf-token": kickSession,
     },
-    Cookie: `kick_session=${kickSession}, session_token=${sessionCookie}, x-xsrf-token=${sessionCookie}, XSRF-TOKEN=${kickSession}`,
+    referrer: "https://kick.com/",
+    referrerPolicy: "strict-origin-when-cross-origin",
+    method: "GET",
+    mode: "cors",
+    credentials: "include",
   });
 };
 
@@ -64,10 +90,17 @@ const getKickTalkBadges = () => {
 
 const getSilencedUsers = (sessionCookie, kickSession) => {
   return axios.get(`${APIUrl}/api/v2/silenced-users`, {
-    headsers: {
-      Authorization: `Bearer ${sessionCookie}`,
+    headers: {
+      accept: "*/*",
+      authorization: `Bearer ${sessionCookie}`,
+      priority: "u=1, i",
+      "x-xsrf-token": kickSession,
     },
-    Cookie: `kick_session=${kickSession}, session_token=${sessionCookie}, x-xsrf-token=${sessionCookie}, XSRF-TOKEN=${kickSession}`,
+    referrer: "https://kick.com/",
+    referrerPolicy: "strict-origin-when-cross-origin",
+    method: "GET",
+    mode: "cors",
+    credentials: "include",
   });
 };
 
@@ -80,4 +113,6 @@ export {
   getKickTalkBadges,
   getUserChatroomInfo,
   getSilencedUsers,
+  getInitialChatroomMessages,
+  getUserChatroomStatus,
 };

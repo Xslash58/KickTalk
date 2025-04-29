@@ -9,10 +9,11 @@ import {
   getUserChatroomInfo,
   getSilencedUsers,
   getKickTalkBadges,
+  getInitialChatroomMessages,
 } from "../../utils/services/kick/kickAPI";
 import handleEmotes from "../../utils/emotes";
 import processBadges from "../../utils/badges";
-import fetch7TVData from "../../utils/7tvData";
+import { getChannelEmotes } from "../../utils/services/seventv/stvAPI";
 
 import Store from "electron-store";
 
@@ -106,6 +107,12 @@ if (process.contextIsolated) {
         getUserInfo: (chatroomName, username) => getUserChatroomInfo(chatroomName, username),
         getUserChatroomInfo: (chatroomName, username) =>
           getUserChatroomInfo(chatroomName, username, authSession.token, authSession.session),
+        getInitialChatroomMessages: (channelID) => getInitialChatroomMessages(channelID),
+      },
+
+      // 7TV API
+      stv: {
+        getChannelEmotes,
       },
 
       // Utility functions
@@ -113,7 +120,6 @@ if (process.contextIsolated) {
         openExternal: (url) => shell.openExternal(url),
         handleEmotes,
         processBadges,
-        fetch7TVData,
         getKickTalkBadges,
         getBadges: async () => await ipcRenderer.invoke("kicktalk:getBadges"),
       },
@@ -124,7 +130,6 @@ if (process.contextIsolated) {
         delete: async (key) => await ipcRenderer.invoke("store:delete", { key }),
         onUpdate: async (callback) => {
           const handler = (_, data) => callback(data);
-
           ipcRenderer.on("store:updated", handler);
           return () => ipcRenderer.removeListener("store:updated", handler);
         },

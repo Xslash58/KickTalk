@@ -18,7 +18,6 @@ const Message = memo(
     );
 
     // TODO: Future Reply Dialog
-
     const userKickTalkBadges = kickTalkBadges?.find(
       (badge) => badge.username.toLowerCase() === message?.sender?.username?.toLowerCase(),
     )?.badges;
@@ -35,7 +34,7 @@ const Message = memo(
             handleOpenUserDialog={handleOpenUserDialog}
           />
         )}
-        {message.type === "reply" && (
+        {/* {message.type === "reply" && (
           <div className="chatMessageReply">
             <span className="chatMessageReplyText">
               <img className="chatMessageReplySymbol" src={ArrowReplyLineIcon} />
@@ -54,7 +53,7 @@ const Message = memo(
               handleOpenUserDialog={handleOpenUserDialog}
             />
           </div>
-        )}
+        )} */}
         {message.type === "system" && (
           <span className="systemMessage">
             {message.content === "connection-pending"

@@ -1,7 +1,6 @@
 export const urlRegex = /(https:\/\/[www.]?[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b[-a-zA-Z0-9()@:%_+.~#?&/=]*)/gi;
 export const kickEmoteRegex = /\[emote:(?<id>\d+)[:]?(?<name>[a-zA-Z0-9-_!]*)[:]?\]/g;
 export const kickEmoteInputRegex = /(?:^|\s)(:(?<emoteCase1>\w{3,}):)|(?:^|\s)(?<emoteCase2>\w{2,})\b/g;
-// export const sevenTVEmoteRegex;
 
 export const kickBadgeMap = {
   subscriber: (badge, subscriberBadges) => {
@@ -38,4 +37,6 @@ export const kickBadgeMap = {
 export const CHAT_ERROR_CODES = {
   ["FOLLOWERS_ONLY_ERROR"]: "You must be following this channel to send messages.",
   ["Unauthorized"]: "You must login to chat.",
+  ["BANNED_ERROR"]: "You are banned or temporarily banned from this channel.",
+  ["SLOW_MODE_ERROR"]: "Chatroom is in slow mode. Slow down your messages.",
 };

@@ -12,6 +12,187 @@
   position: relative;
 }
 
+.chatStreamerInfo {
+  display: flex;
+  align-items: center;
+  height: 40px;
+  padding: 0 16px;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.075);
+  background: rgba(255, 255, 255, 0.075);
+}
+
+.chatStreamerInfoContent {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.chatStreamerInfoContent img {
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+}
+
+.chatStreamerInfoContent > span {
+  font-size: 16px;
+  font-weight: 600;
+  color: #ffffff57;
+}
+
+.chatStreamerInfoActions button {
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.pinnedMessageBtn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  display: none;
+}
+
+.pinnedMessageBtn:disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.pinnedMessageBtn.show {
+  display: flex;
+}
+
+.pinnedMessageBtn:hover svg {
+  fill: rgba(255, 255, 255, 0.8);
+}
+
+.pinnedMessageBtn svg {
+  fill: rgba(255, 255, 255, 0.4);
+  transition: fill 0.2s ease;
+}
+
+/** [Pinned Message] **/
+
+.pinnedMessage {
+  position: absolute;
+  margin: 0 auto;
+  left: 0;
+  right: 0;
+  background: #102c1a;
+  border: 1px solid #314d3c;
+  width: calc(100% - 24px);
+  box-shadow: 0px 2px 4px #07150a;
+  top: 48px;
+  border-radius: 6px;
+  display: none;
+  gap: 8px;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 12px;
+  z-index: 9;
+}
+
+.pinnedMessage.open {
+  display: flex;
+}
+
+.pinnedMessage.expanded .pinnedMessageContent > p {
+  white-space: wrap;
+}
+
+.pinnedMessageFooterContent {
+  display: flex;
+  gap: 4px;
+  color: #71ad7f;
+  font-size: 14px;
+}
+
+.pinnedMessageFooter {
+  display: none;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid #213c2c;
+  padding-top: 10px;
+}
+
+.pinnedMessageFooterUsername {
+  display: flex;
+  align-items: center;
+}
+
+.pinnedMessageFooterUsername > .chatroomBadge {
+  margin-right: 4px;
+}
+
+.pinnedMessageFooterUsername > .chatroomBadge > img {
+  width: 18px;
+  height: 18px;
+}
+
+.pinnedMessageFooterUsername > span {
+  font-weight: 600;
+}
+
+.pinnedMessageFooter > span {
+  font-size: 14px;
+  color: #71ad7f;
+}
+
+.pinnedMessageFooter.open {
+  display: flex;
+}
+
+.pinnedMessageHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.pinnedMessageActions {
+  display: flex;
+  gap: 4px;
+}
+
+.pinnedMessageActions button {
+  background: none;
+  border: 1px solid #314d3c;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 20px;
+  transition: border-color 0.2s ease;
+}
+
+.pinnedMessageActions button:hover {
+  border-color: #50755f;
+}
+
+.pinnedMessageActions button svg {
+  fill: #527861;
+  transition: transform 0.2s ease;
+}
+
+.pinnedMessageHeader > p {
+  color: #71ad7f;
+  font-size: 14px;
+}
+
+.pinnedMessageContent > p {
+  font-size: 18px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+  color: #c5ebce;
+}
+
+/** [End of Pinned Message] **/
+
 .chatroomsEmptyState {
   height: calc(100vh - 128px);
   align-items: center;
@@ -30,6 +211,7 @@
   overflow-y: auto;
   height: 100vh;
   padding-left: 8px;
+  padding-top: 8px;
   margin-right: 0;
   display: flex;
   max-width: 100%;
@@ -38,11 +220,7 @@
 }
 
 .chatBody::-webkit-scrollbar {
-  width: 10px;
-}
-
-.chatBody::-webkit-scrollbar-corner {
-  background: rgba(255, 255, 255, 0.429);
+  width: 8px;
 }
 
 .chatBody::-webkit-scrollbar-thumb {
@@ -51,9 +229,6 @@
   background-clip: content-box;
   min-width: 32px;
   min-height: 32px;
-}
-.chatBody::-webkit-scrollbar-track {
-  background-color: #ffffff26;
 }
 
 .chatMessageItem {
@@ -72,7 +247,7 @@
 .chatMessageReplyText {
   display: inline-flex;
   gap: 4px;
-  opacity: 0.3;
+  opacity: 0.35;
 }
 
 .chatMessageReply {
@@ -141,12 +316,6 @@
   white-space: collapse;
 }
 
-.emote {
-  vertical-align: middle;
-  margin-left: 1px;
-  margin-right: 1px;
-}
-
 .kickEmote {
   font-weight: 900;
   margin-right: 4px;
@@ -162,19 +331,22 @@
 }
 
 .kickEmoteItem {
-  height: 32px;
-  width: fit-content;
+  height: 40px;
+  width: 40px;
   padding: 4px;
-  min-height: fit-content;
   border-radius: 4px;
   border: 1px solid #314d3c;
   background: none;
   cursor: pointer;
+  aspect-ratio: 1 / 1;
 }
 
 .kickEmoteItem img {
-  height: inherit;
-  width: inherit;
+  height: 32px;
+  width: 32px;
+  max-width: 100%;
+  aspect-ratio: 1 / 1;
+  vertical-align: middle;
 }
 
 .stvEmote {
@@ -225,19 +397,25 @@
 }
 
 .chatInputContainer {
-  width: calc(100% - 32px);
+  width: calc(100vw - 32px);
   margin: 0 auto;
+  display: flex;
   position: relative;
-  display: block;
+  align-items: center;
+  background: #182f21;
+  border: 1px solid rgba(80, 123, 97, 0.5);
+  border-bottom: none;
+  border-radius: 6px 6px 0 0;
+  box-shadow: 0px 2px 2px #07150a;
+}
+
+.chatBoxContainer {
+  position: relative;
 }
 
 .chatInputWrapper {
   display: flex;
-  background: #182f21;
-  border: 1px solid rgba(80, 123, 97, 0.5);
-  box-shadow: 0px 2px 2px #07150a;
-  border-radius: 6px 6px 0 0;
-  border-bottom: none;
+  flex-direction: column;
   align-items: center;
 }
 
@@ -246,16 +424,15 @@
   align-items: center;
   justify-content: space-between;
   padding: 8px 8px;
-  width: calc(100% - 16px);
-  background-color: rgb(20 41 28);
-  top: -32px;
-  z-index: 1;
+  width: calc(100% - 40px);
+  border: 1px solid rgba(80, 123, 97, 0.5);
+  border-bottom: none;
+  background: #213c2c;
   margin: 0 8px;
   height: 32px;
-  border-radius: 4px 4px 0 0;
-  font-size: 13px;
-  color: #658470;
-  position: absolute;
+  border-radius: 6px 6px 0 0;
+  font-size: 14px;
+  color: #668d75;
 }
 
 .chatInputBox {
@@ -266,7 +443,9 @@
 .chatInputActions {
   display: flex;
   align-items: center;
-  padding: 0 8px;
+  padding: 0 12px;
+  min-width: 112px;
+  justify-content: center;
   border-left: 1px solid rgba(80, 123, 97, 0.3);
 }
 
@@ -315,10 +494,15 @@
   padding: 8px 0;
 }
 
-.chatEmoteBtns button {
+.emoteBtn {
   background: none;
   border: none;
   cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  display: flex;
+  height: 32px;
+  width: 32px;
   padding: 4px;
   border-radius: 4px;
   transition: background-color 0.2s ease;
@@ -334,29 +518,17 @@
 
 .kickEmoteButton {
   height: 32px;
-  border-radius: 100px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-direction: row;
-  border: 10px solid #aacfb9;
-}
-
-.kickEmoteCarousel {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  background-color: rgba(255, 255, 255, 0.058);
-  justify-content: center;
-  border-radius: 100px;
-  overflow: hidden;
-  height: 32px;
-}
-
-.kickEmoteCarousel img {
-  transform: translateX(65%);
   width: 32px;
-  height: 32px;
+  background-color: #2c4b38;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.kickEmoteButton img {
+  width: inherit;
+  height: auto;
+  padding: 4px;
+  margin: 0;
 }
 
 .chatInput::-webkit-scrollbar {
@@ -487,11 +659,11 @@
   border-radius: 8px;
   padding: 4px;
   width: 80%;
+  max-width: 550px;
   height: 280px;
   background-color: rgba(22, 34, 25, 0.95);
   border: 1px solid #314d3c;
   box-shadow: 0 4px 5px #020a0580;
-  /* backdrop-filter: blur(8px); */
   z-index: 99;
   display: none;
   overflow: hidden;

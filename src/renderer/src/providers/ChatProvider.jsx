@@ -70,21 +70,26 @@ const useChatStore = create((set, get) => ({
     });
 
     // Channel Events
-    // pusher.addEventListener("channel", (event) => {
-    //   const parsedEvent = JSON.parse(event.detail.data);
-    //   console.log(event);
-    //   switch (event.detail.event) {
-    //     case "App\\Events\\ChatroomUpdatedEvent":
-    //       get().handleChatroomUpdated(chatroom.id, parsedEvent);
-    //       break;
-    //     case "App\\Events\\PinnedMessageCreatedEvent":
-    //       get().handlePinnedMessageCreated(chatroom.id, parsedEvent);
-    //       break;
-    //     case "App\\Events\\PinnedMessageDeletedEvent":
-    //       get().handlePinnedMessageDeleted(chatroom.id, parsedEvent);
-    //       break;
-    //   }
-    // });
+    pusher.addEventListener("channel", (event) => {
+      const parsedEvent = JSON.parse(event.detail.data);
+      switch (event.detail.event) {
+        // case "App\\Events\\ChatroomUpdatedEvent":
+        //   get().handleChatroomUpdated(chatroom.id, parsedEvent);
+        //   break;
+        // case "App\\Events\\StreamerIsLive":
+        //   get().handleStreamStatus(chatroom.id, parsedEvent);
+        //   break;
+        // case "App\\Events\\StopStreamBroadcast":
+        //   get().handleStreamStatus(chatroom.id, parsedEvent);
+        //   break;
+        case "App\\Events\\PinnedMessageCreatedEvent":
+          get().handlePinnedMessageCreated(chatroom.id, parsedEvent);
+          break;
+        case "App\\Events\\PinnedMessageDeletedEvent":
+          get().handlePinnedMessageDeleted(chatroom.id);
+          break;
+      }
+    });
 
     // Message Events
     pusher.addEventListener("message", (event) => {
@@ -148,6 +153,22 @@ const useChatStore = create((set, get) => ({
 
     fetchEmotes();
 
+    // Fetch initial messages
+    // TODO: Finish adding initial messages
+    const fetchInitialMessages = async () => {
+      const {
+        data: { data },
+      } = await window.app.kick.getInitialChatroomMessages(chatroom.streamerData.id);
+
+      if (!data) return;
+
+      if (data.pinned_message) {
+        get().handlePinnedMessageCreated(chatroom.id, data.pinned_message);
+      }
+    };
+
+    fetchInitialMessages();
+
     set((state) => ({
       connections: {
         ...state.connections,
@@ -166,8 +187,7 @@ const useChatStore = create((set, get) => ({
       const response = await queueChannelFetch(username);
       if (!response?.user) return;
 
-      const channel7TVEmotes = await window.app.utils.fetch7TVData(response.user.id);
-
+      const channel7TVEmotes = await window.app.stv.getChannelEmotes(response.user.id);
       const newChatroom = {
         id: response.chatroom.id,
         username: response.user.username,
@@ -290,6 +310,39 @@ const useChatStore = create((set, get) => ({
         },
       };
     });
+  },
+
+  handlePinnedMessageCreated: (chatroomId, event) => {
+    set((state) => ({
+      chatrooms: state.chatrooms.map((room) => {
+        if (room.id === chatroomId) {
+          return { ...room, pinnedMessage: event };
+        }
+        return room;
+      }),
+    }));
+  },
+
+  handlePinnedMessageDeleted: (chatroomId, event) => {
+    set((state) => ({
+      chatrooms: state.chatrooms.map((room) => {
+        if (room.id === chatroomId) {
+          return { ...room, pinnedMessage: null };
+        }
+        return room;
+      }),
+    }));
+  },
+
+  handleStreamStatus: (chatroomId, event) => {
+    set((state) => ({
+      chatrooms: state.chatrooms.map((room) => {
+        if (room.id === chatroomId) {
+          return { ...room, isStreamerLive: event.is_live, streamStatus: event };
+        }
+        return room;
+      }),
+    }));
   },
 }));
 

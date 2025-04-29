@@ -94,29 +94,13 @@ const EmoteDialogs = memo(
             <img src={STVLogo} height="24px" width="24px" alt="7TV Emotes" />
           </button>
           <button className="emoteBtn kickEmoteButton" onClick={() => setActiveDialog(activeDialog === "kick" ? null : "kick")}>
-            <div className="kickEmoteCarousel">
-              <img
-                className="kickEmote emote"
-                src={"https://files.kick.com/emotes/1730756/fullsize"}
-                loading="lazy"
-                fetchpriority="low"
-                decoding="async"
-              />
-              <img
-                className="kickEmote emote"
-                src={"https://files.kick.com/emotes/1730772/fullsize"}
-                loading="lazy"
-                fetchpriority="low"
-                decoding="async"
-              />
-              <img
-                className="kickEmote emote"
-                src={"https://files.kick.com/emotes/1730825/fullsize"}
-                loading="lazy"
-                fetchpriority="low"
-                decoding="async"
-              />
-            </div>
+            <img
+              className="kickEmote emote"
+              src={"https://files.kick.com/emotes/1730825/fullsize"}
+              loading="lazy"
+              fetchpriority="low"
+              decoding="async"
+            />
           </button>
         </div>
 

@@ -1,23 +1,31 @@
 import clsx from "clsx";
 import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { scrollToBottom } from "../utils/ChatUtils";
-import { MouseScroll } from "@phosphor-icons/react";
+import { MouseScroll, PushPin, PushPinSlash } from "@phosphor-icons/react";
 import Message from "../utils/Message";
 import ChatInput from "./ChatInput";
 import useChatStore from "../providers/ChatProvider";
+import PinnedMessage from "./Chat/PinnedMessage";
+
+import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
+dayjs.extend(relativeTime);
+
 // TODO: Separate chatroom inputs / history, each chatroom has its own input
 const Chat = memo(({ chatroomId }) => {
   const chatBodyRef = useRef();
 
-  const chatrooms = useChatStore((state) => state.chatrooms.filter((chatroom) => chatroom.id === chatroomId)[0]);
+  const chatroom = useChatStore((state) => state.chatrooms.filter((chatroom) => chatroom.id === chatroomId)[0]);
   const messages = useChatStore((state) => state.messages[chatroomId]);
 
   const [kickTalkBadges, setKickTalkBadges] = useState([]);
+  const [pinnedMessageExpanded, setPinnedMessageExpanded] = useState(false);
+  const [showPinnedMessage, setShowPinnedMessage] = useState(false);
 
   const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
   const [showScrollToBottom, setShowScrollToBottom] = useState(false);
 
-  const subscriberBadges = chatrooms?.streamerData?.subscriber_badges || [];
+  const subscriberBadges = chatroom?.streamerData?.subscriber_badges || [];
 
   const handleScroll = useCallback(() => {
     if (!chatBodyRef.current) return;
@@ -55,15 +63,41 @@ const Chat = memo(({ chatroomId }) => {
 
   return (
     <div className="chatContainer">
+      <div className="chatStreamerInfo">
+        <div className="chatStreamerInfoContent">
+          <span>{chatroom?.streamerData?.user?.username}</span>
+        </div>
+        <div className="chatStreamerInfoActions">
+          {!showPinnedMessage && (
+            <button
+              className={clsx("pinnedMessageBtn", !showPinnedMessage && "show")}
+              disabled={!chatroom?.pinnedMessage}
+              onClick={() => setShowPinnedMessage(!showPinnedMessage)}>
+              <PushPin size={18} weight="fill" />
+            </button>
+          )}
+        </div>
+      </div>
+
+      {chatroom?.pinnedMessage && (
+        <PinnedMessage
+          pinnedMessage={chatroom?.pinnedMessage}
+          showPinnedMessage={showPinnedMessage}
+          setShowPinnedMessage={setShowPinnedMessage}
+          pinnedMessageExpanded={pinnedMessageExpanded}
+          setPinnedMessageExpanded={setPinnedMessageExpanded}
+        />
+      )}
+
       <div className="chatBody" ref={chatBodyRef} onScroll={handleScroll}>
         {messages?.map((message) => {
           return (
             <Message
               key={message.id}
               chatroomId={chatroomId}
-              chatroomName={chatrooms?.slug}
+              chatroomName={chatroom?.slug}
               subscriberBadges={subscriberBadges}
-              sevenTVEmotes={chatrooms?.channel7TVEmotes}
+              sevenTVEmotes={chatroom?.channel7TVEmotes}
               kickTalkBadges={kickTalkBadges}
               message={message}
             />
@@ -71,7 +105,7 @@ const Chat = memo(({ chatroomId }) => {
         })}
       </div>
 
-      <div className="chatInputContainer">
+      <div className="chatBoxContainer">
         <button
           className={clsx("scrollToBottomBtn", showScrollToBottom && "show")}
           disabled={!showScrollToBottom}

@@ -89,12 +89,17 @@ ipcMain.handle("store:get", async (e, { key }) => {
   return store.get(key);
 });
 
-ipcMain.handle("store:set", async (e, { key, value }) => {
-  return store.set(key, value);
+ipcMain.handle("store:set", (e, { key, value }) => {
+  const result = store.set(key, value);
+  mainWindow.webContents.send("store:updated", { [key]: value });
+
+  return result;
 });
 
-ipcMain.handle("store:delete", async (e, { key }) => {
-  return store.delete(key);
+ipcMain.handle("store:delete", (e, { key }) => {
+  const result = store.delete(key);
+  mainWindow.webContents.send("store:updated", { [key]: null });
+  return result;
 });
 
 ipcMain.handle("chatLogs:get", async (e, { data }) => {
@@ -312,16 +317,28 @@ app.whenReady().then(() => {
 
   // Set Zoom Levels
   globalShortcut.register("Ctrl+Plus", () => {
-    if (mainWindow.webContents.getZoomFactor() < 1.5) {
-      const newZoomFactor = mainWindow.webContents.getZoomFactor() + 0.1;
-      mainWindow.webContents.setZoomFactor(newZoomFactor);
-      store.set("zoomFactor", newZoomFactor);
+    if (mainWindow && mainWindow.isFocused()) {
+      if (mainWindow.webContents.getZoomFactor() < 1.5) {
+        const newZoomFactor = mainWindow.webContents.getZoomFactor() + 0.1;
+        mainWindow.webContents.setZoomFactor(newZoomFactor);
+        store.set("zoomFactor", newZoomFactor);
+      }
     }
   });
 
   globalShortcut.register("Ctrl+-", () => {
-    if (mainWindow.webContents.getZoomFactor() > 0.8) {
-      const newZoomFactor = mainWindow.webContents.getZoomFactor() - 0.1;
+    if (mainWindow && mainWindow.isFocused()) {
+      if (mainWindow.webContents.getZoomFactor() > 0.8) {
+        const newZoomFactor = mainWindow.webContents.getZoomFactor() - 0.1;
+        mainWindow.webContents.setZoomFactor(newZoomFactor);
+        store.set("zoomFactor", newZoomFactor);
+      }
+    }
+  });
+
+  globalShortcut.register("Ctrl+Zero", () => {
+    if (mainWindow && mainWindow.isFocused()) {
+      const newZoomFactor = 1;
       mainWindow.webContents.setZoomFactor(newZoomFactor);
       store.set("zoomFactor", newZoomFactor);
     }

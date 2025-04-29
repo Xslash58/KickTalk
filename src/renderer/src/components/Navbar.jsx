@@ -85,7 +85,7 @@ const Navbar = ({ currentChatroomId, onSelectChatroom }) => {
               <span>{chatroom.username}</span>
             </div>
             <button className="closeChatroom" onClick={() => handleRemoveChatroom(chatroom.id)} aria-label="Remove chatroom">
-              <X size={16} weight="bold" />
+              <X size={12} weight="bold" />
             </button>
           </div>
         ))}

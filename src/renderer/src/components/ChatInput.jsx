@@ -71,7 +71,6 @@ const processEmoteInput = ({ node, kickEmotes }) => {
     const startIndex = match.index + match[0].indexOf(matchText);
     const endIndex = startIndex + matchText.length;
 
-    console.log(startIndex, endIndex, match[0].indexOf(matchText));
     if (startIndex < lastIndex) continue;
 
     node.splitText(startIndex, endIndex).forEach((part) => {
@@ -289,30 +288,32 @@ const ChatInput = memo(
         <div className="chatInfoBar">
           <p>Chat in slowmode</p>
         </div>
-        <LexicalComposer key={`composer-${chatroomId}`} initialConfig={initialConfig}>
-          <div className="chatInputBox">
-            <PlainTextPlugin
-              contentEditable={
-                <div className="chatInputBoxContainer">
-                  <ContentEditable
-                    className="chatInput"
-                    enterKeyHint="send"
-                    aria-placeholder={"Enter message..."}
-                    placeholder={<div className="chatInputPlaceholder">Send a message...</div>}
-                  />
-                </div>
-              }
-              ErrorBoundary={LexicalErrorBoundary}
-            />
-          </div>
-          <div className="chatInputActions">
-            <EmoteHandler chatroomId={chatroomId} />
-          </div>
-          <KeyHandler chatroomId={chatroomId} onSendMessage={handleSendMessage} />
-          <EmoteTransformer chatroomId={chatroomId} />
-          <HistoryPlugin />
-          <AutoFocusPlugin />
-        </LexicalComposer>
+        <div className="chatInputContainer">
+          <LexicalComposer key={`composer-${chatroomId}`} initialConfig={initialConfig}>
+            <div className="chatInputBox">
+              <PlainTextPlugin
+                contentEditable={
+                  <div className="chatInputBoxContainer">
+                    <ContentEditable
+                      className="chatInput"
+                      enterKeyHint="send"
+                      aria-placeholder={"Enter message..."}
+                      placeholder={<div className="chatInputPlaceholder">Send a message...</div>}
+                    />
+                  </div>
+                }
+                ErrorBoundary={LexicalErrorBoundary}
+              />
+            </div>
+            <div className="chatInputActions">
+              <EmoteHandler chatroomId={chatroomId} />
+            </div>
+            <KeyHandler chatroomId={chatroomId} onSendMessage={handleSendMessage} />
+            <EmoteTransformer chatroomId={chatroomId} />
+            <HistoryPlugin />
+            <AutoFocusPlugin />
+          </LexicalComposer>
+        </div>
       </div>
     );
   },
