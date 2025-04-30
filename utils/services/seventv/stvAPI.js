@@ -23,8 +23,18 @@ const getChannelEmotes = async (channelId) => {
 
     const channelEmoteIds = new Set(emoteChannelData.emote_set.emotes.map((emote) => emote.id));
     const filteredGlobalEmotes = emoteGlobalData.emotes.filter((emote) => !channelEmoteIds.has(emote.id));
-
     emoteChannelData.emote_set.emotes.push(...filteredGlobalEmotes);
+    emoteChannelData.emote_set.emotes = emoteChannelData.emote_set.emotes.map((emote) => {
+      return {
+        id: emote.id,
+        actor_id: emote.actor_id,
+        name: emote.name,
+        owner: emote.data.owner,
+        file: emote.data.host.files?.[0] || emote.data.host.files?.[1],
+      };
+    });
+
+    console.log(emoteChannelData);
 
     return emoteChannelData;
   } catch (error) {

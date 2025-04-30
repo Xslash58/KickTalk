@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useState, useEffect, useCallback } from "react";
 
 const SettingsContext = createContext({});
 
@@ -6,7 +6,7 @@ const SettingsProvider = ({ children }) => {
   const [settings, setSettings] = useState({});
 
   useEffect(() => {
-    const loadSettings = async () => {
+    async function loadSettings() {
       try {
         const settings = await window.app.store.get();
         setSettings(settings);
@@ -14,7 +14,7 @@ const SettingsProvider = ({ children }) => {
       } catch (error) {
         console.error("[SettingsProvider]: Error loading settings:", error);
       }
-    };
+    }
 
     loadSettings();
 
@@ -34,7 +34,7 @@ const SettingsProvider = ({ children }) => {
   return <SettingsContext.Provider value={{ settings, updateSettings }}>{children}</SettingsContext.Provider>;
 };
 
-const useSettings = () => {
+export const useSettings = () => {
   const context = useContext(SettingsContext);
   if (!context) {
     throw new Error("useSettings must be used within a SettingsProvider");

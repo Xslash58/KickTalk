@@ -6,7 +6,7 @@ import Message from "../utils/Message";
 import ChatInput from "./ChatInput";
 import useChatStore from "../providers/ChatProvider";
 import PinnedMessage from "./Chat/PinnedMessage";
-
+import { useSettings } from "../providers/SettingsProvider";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 dayjs.extend(relativeTime);
@@ -17,6 +17,7 @@ const Chat = memo(({ chatroomId }) => {
 
   const chatroom = useChatStore((state) => state.chatrooms.filter((chatroom) => chatroom.id === chatroomId)[0]);
   const messages = useChatStore((state) => state.messages[chatroomId]);
+  const { settings } = useSettings();
 
   const [kickTalkBadges, setKickTalkBadges] = useState([]);
   const [pinnedMessageExpanded, setPinnedMessageExpanded] = useState(false);
@@ -100,6 +101,7 @@ const Chat = memo(({ chatroomId }) => {
               sevenTVEmotes={chatroom?.channel7TVEmotes}
               kickTalkBadges={kickTalkBadges}
               message={message}
+              sevenTVSettings={settings}
             />
           );
         })}

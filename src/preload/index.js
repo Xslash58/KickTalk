@@ -128,7 +128,7 @@ if (process.contextIsolated) {
         get: async (key) => await ipcRenderer.invoke("store:get", { key }),
         set: async (key, value) => await ipcRenderer.invoke("store:set", { key, value }),
         delete: async (key) => await ipcRenderer.invoke("store:delete", { key }),
-        onUpdate: async (callback) => {
+        onUpdate: (callback) => {
           const handler = (_, data) => callback(data);
           ipcRenderer.on("store:updated", handler);
           return () => ipcRenderer.removeListener("store:updated", handler);

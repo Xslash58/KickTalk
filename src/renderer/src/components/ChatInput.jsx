@@ -24,7 +24,7 @@ import useChatStore from "../providers/ChatProvider";
 
 import EmoteDialogs from "./EmoteDialogs";
 import { useShallow } from "zustand/react/shallow";
-import { $isEmoteNode, EmoteNode } from "./EmoteNode";
+import { EmoteNode } from "./EmoteNode";
 import { kickEmoteInputRegex, kickEmoteRegex } from "../../../../utils/constants";
 
 const onError = (error) => {
@@ -241,8 +241,17 @@ const EmoteHandler = ({ chatroomId }) => {
       const selection = $getSelection();
       if (!$isRangeSelection(selection)) return;
 
-      const emoteNode = new EmoteNode(emote.id, emote.name);
-      selection.insertNodes([emoteNode]);
+      console.log(emote);
+
+      if (emote.actor_id) {
+        const emoteNode = new EmoteNode(emote.id, emote.name, "7tv");
+        selection.insertNodes([emoteNode]);
+      } else if (emote.channel_id) {
+        const emoteNode = new EmoteNode(emote.id, emote.name, "kick");
+        selection.insertNodes([emoteNode]);
+      } else {
+        return null;
+      }
     });
   };
 

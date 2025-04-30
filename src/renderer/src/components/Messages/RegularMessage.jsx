@@ -8,7 +8,9 @@ const RegularMessage = ({
   kickTalkBadges,
   sevenTVEmotes,
   handleOpenUserDialog,
+  sevenTVSettings,
 }) => {
+  console.log(sevenTVSettings);
   return (
     <span className={`chatMessageContainer ${message.deleted ? "deleted" : ""}`}>
       <div className="chatMessageUser">
@@ -26,7 +28,7 @@ const RegularMessage = ({
       </div>
 
       <span className="chatMessageContent">
-        <MessageParser message={message} sevenTVEmotes={sevenTVEmotes} />
+        <MessageParser message={message} sevenTVEmotes={sevenTVEmotes} sevenTVSettings={sevenTVSettings} />
       </span>
     </span>
   );

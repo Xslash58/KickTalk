@@ -81,7 +81,8 @@ const getUserChatroomInfo = (chatroomName, username, sessionCookie, kickSession)
 };
 
 const getKickEmotes = (chatroomName) => {
-  return axios.get(`${APIUrl}/emotes/${chatroomName}`);
+  const transformedChannelName = chatroomName.replace("_", "-");
+  return axios.get(`${APIUrl}/emotes/${transformedChannelName}`);
 };
 
 const getKickTalkBadges = () => {

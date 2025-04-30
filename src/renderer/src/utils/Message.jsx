@@ -1,10 +1,9 @@
 import { memo, useCallback } from "react";
 import ModActionMessage from "../components/Messages/ModActionMessage";
 import RegularMessage from "../components/Messages/RegularMessage";
-import ArrowReplyLineIcon from "../assets/app/arrow_reply_line.svg";
 
 const Message = memo(
-  ({ message, chatroomId, subscriberBadges, sevenTVEmotes, kickTalkBadges }) => {
+  ({ message, chatroomId, subscriberBadges, sevenTVEmotes, kickTalkBadges, sevenTVSettings }) => {
     const handleOpenUserDialog = useCallback(
       (e) => {
         e.preventDefault();
@@ -16,6 +15,8 @@ const Message = memo(
       },
       [message?.sender, chatroomId],
     );
+
+    console.log(sevenTVSettings);
 
     // TODO: Future Reply Dialog
     const userKickTalkBadges = kickTalkBadges?.find(
@@ -32,9 +33,10 @@ const Message = memo(
             kickTalkBadges={kickTalkBadges}
             sevenTVEmotes={sevenTVEmotes}
             handleOpenUserDialog={handleOpenUserDialog}
+            sevenTVSettings={sevenTVSettings}
           />
         )}
-        {/* {message.type === "reply" && (
+        {message.type === "reply" && (
           <div className="chatMessageReply">
             <span className="chatMessageReplyText">
               <img className="chatMessageReplySymbol" src={ArrowReplyLineIcon} />
@@ -51,9 +53,10 @@ const Message = memo(
               kickTalkBadges={kickTalkBadges}
               sevenTVEmotes={sevenTVEmotes}
               handleOpenUserDialog={handleOpenUserDialog}
+              sevenTVSettings={sevenTVSettings}
             />
           </div>
-        )} */}
+        )}
         {message.type === "system" && (
           <span className="systemMessage">
             {message.content === "connection-pending"
