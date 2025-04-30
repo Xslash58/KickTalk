@@ -59,7 +59,7 @@ const getEmoteData = (emoteName, sevenTVEmotes) => {
   return null;
 };
 
-export const MessageParser = ({ message, sevenTVEmotes, sevenTVSettings }) => {
+export const MessageParser = ({ message, sevenTVEmotes, settings }) => {
   if (!message?.content) return [];
 
   const parts = [];

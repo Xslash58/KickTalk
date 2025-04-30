@@ -101,7 +101,7 @@ const Chat = memo(({ chatroomId }) => {
               sevenTVEmotes={chatroom?.channel7TVEmotes}
               kickTalkBadges={kickTalkBadges}
               message={message}
-              sevenTVSettings={settings}
+              settings={settings}
             />
           );
         })}

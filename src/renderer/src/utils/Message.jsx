@@ -3,7 +3,8 @@ import ModActionMessage from "../components/Messages/ModActionMessage";
 import RegularMessage from "../components/Messages/RegularMessage";
 
 const Message = memo(
-  ({ message, chatroomId, subscriberBadges, sevenTVEmotes, kickTalkBadges, sevenTVSettings }) => {
+  ({ message, chatroomId, subscriberBadges, sevenTVEmotes, kickTalkBadges, settings }) => {
+    console.log("settings", settings);
     const handleOpenUserDialog = useCallback(
       (e) => {
         e.preventDefault();
@@ -16,57 +17,75 @@ const Message = memo(
       [message?.sender, chatroomId],
     );
 
-    console.log(sevenTVSettings);
-
     // TODO: Future Reply Dialog
     const userKickTalkBadges = kickTalkBadges?.find(
       (badge) => badge.username.toLowerCase() === message?.sender?.username?.toLowerCase(),
     )?.badges;
 
-    return (
-      <div className="chatMessageItem">
-        {message.type === "message" && (
-          <RegularMessage
-            message={message}
-            userKickTalkBadges={userKickTalkBadges}
-            subscriberBadges={subscriberBadges}
-            kickTalkBadges={kickTalkBadges}
-            sevenTVEmotes={sevenTVEmotes}
-            handleOpenUserDialog={handleOpenUserDialog}
-            sevenTVSettings={sevenTVSettings}
-          />
-        )}
-        {message.type === "reply" && (
-          <div className="chatMessageReply">
-            <span className="chatMessageReplyText">
-              <img className="chatMessageReplySymbol" src={ArrowReplyLineIcon} />
-              <span className="chatMessageReplyTextSender">{message?.metadata?.original_sender?.username}:</span>
-              <span className="chatMessageReplyTextContent" title={message?.metadata?.original_message?.content}>
-                {message?.metadata?.original_message?.content}
-              </span>
-            </span>
+    const checkForPhrases = () => {
+      if (settings.notifications?.enabled && settings.notifications.phrases?.length > 0) {
+      return settings.notifications.phrases.some((phrase) =>
+        message.content?.toLowerCase().includes(phrase.toLowerCase())
+      );
+      }
+      return false;
+    };
 
-            <RegularMessage
-              message={message}
-              userKickTalkBadges={userKickTalkBadges}
-              subscriberBadges={subscriberBadges}
-              kickTalkBadges={kickTalkBadges}
-              sevenTVEmotes={sevenTVEmotes}
-              handleOpenUserDialog={handleOpenUserDialog}
-              sevenTVSettings={sevenTVSettings}
-            />
-          </div>
-        )}
-        {message.type === "system" && (
-          <span className="systemMessage">
-            {message.content === "connection-pending"
-              ? "Connecting to Channel..."
-              : message.content === "connection-success"
-                ? "Connected to Channel"
-                : message.content}
+    const shouldHighlight = checkForPhrases();
+
+    // if (shouldHighlight && settings.notifications.sound) {
+    //   new Audio(settings.notifications.soundFile).play();
+    // }
+
+    return (
+      <div
+      className="chatMessageItem"
+      style={{
+        backgroundColor: shouldHighlight ? settings.notifications.backgroundColour : "transparent",
+      }}
+      >
+      {message.type === "message" && (
+        <RegularMessage
+        message={message}
+        userKickTalkBadges={userKickTalkBadges}
+        subscriberBadges={subscriberBadges}
+        kickTalkBadges={kickTalkBadges}
+        sevenTVEmotes={sevenTVEmotes}
+        handleOpenUserDialog={handleOpenUserDialog}
+        settings={settings}
+        />
+      )}
+      {message.type === "reply" && (
+        <div className="chatMessageReply">
+        <span className="chatMessageReplyText">
+          {/* <img className="chatMessageReplySymbol" src={ArrowReplyLineIcon} /> */}
+          <span className="chatMessageReplyTextSender">{message?.metadata?.original_sender?.username}:</span>
+          <span className="chatMessageReplyTextContent" title={message?.metadata?.original_message?.content}>
+          {message?.metadata?.original_message?.content}
           </span>
-        )}
-        {message.type === "mod_action" && <ModActionMessage message={message} />}
+        </span>
+
+        <RegularMessage
+          message={message}
+          userKickTalkBadges={userKickTalkBadges}
+          subscriberBadges={subscriberBadges}
+          kickTalkBadges={kickTalkBadges}
+          sevenTVEmotes={sevenTVEmotes}
+          handleOpenUserDialog={handleOpenUserDialog}
+          settings={settings}
+        />
+        </div>
+      )}
+      {message.type === "system" && (
+        <span className="systemMessage">
+        {message.content === "connection-pending"
+          ? "Connecting to Channel..."
+          : message.content === "connection-success"
+          ? "Connected to Channel"
+          : message.content}
+        </span>
+      )}
+      {message.type === "mod_action" && <ModActionMessage message={message} />}
       </div>
     );
   },
