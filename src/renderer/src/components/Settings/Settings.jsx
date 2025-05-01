@@ -1,49 +1,32 @@
-import { useState, useEffect } from "react";
-import "../styles/Settings.css";
+import "../../assets/styles/components/Settings.css";
+import { useState, useRef } from "react";
 import clsx from "clsx";
 import { Check, SignOut } from "@phosphor-icons/react";
+import { useSettings } from "../../providers/SettingsProvider";
+import ColorPicker from "./ColorPicker";
+import useClickOutside from "../../utils/useClickOutside";
 
-// TODO: Click away to close settings dropdown
-const Settings = ({ settingsModalOpen }) => {
-  const [settings, setSettings] = useState(null);
-
-  useEffect(() => {
-    const loadSettings = async () => {
-      const settingsStore = await window.app.store.get();
-      setSettings(settingsStore);
-    };
-
-    loadSettings();
-  }, []);
+const Settings = ({ settingsModalOpen, setSettingsModalOpen }) => {
+  const { settings, updateSettings } = useSettings();
+  const [openColorPicker, setOpenColorPicker] = useState(false);
 
   const changeSetting = async (key, value) => {
     try {
-      await window.app.store.set(key, value);
-      setSettings(await window.app.store.get());
+      await updateSettings(key, value);
     } catch (error) {
       console.error("Failed to save setting:", error);
     }
-  };
-
-  const handlePhraseAdd = (phrase) => {
-    if (phrase && !settings?.notifications?.phrases.includes(phrase)) {
-      changeSetting("notifications.phrases", [...settings?.notifications?.phrases, phrase]);
-    }
-  };
-
-  const handlePhraseRemove = (phrase) => {
-    changeSetting(
-      "notifications.phrases",
-      settings?.notifications?.phrases.filter((p) => p !== phrase),
-    );
   };
 
   const handleLogout = () => {
     window.app.logout();
   };
 
+  const settingsModalRef = useRef(null);
+  useClickOutside(settingsModalRef, () => setSettingsModalOpen(false));
+
   return (
-    <div className={clsx("settingsWrapper", settingsModalOpen && "show")}>
+    <div className={clsx("settingsWrapper", settingsModalOpen && "show")} ref={settingsModalRef}>
       <div className="settingsHead">
         <h4>Settings</h4>
         <button onClick={handleLogout}>
@@ -56,18 +39,19 @@ const Settings = ({ settingsModalOpen }) => {
       <div className="settingsSection settingsCosmetics">
         <h5>Emotes & Badges</h5>
 
-        <div className="settingsSwitch">
-          <button
-            className={clsx("settingSwitchItem", settings?.sevenTV?.emotes ? "checked" : "")}
-            onClick={() =>
-              changeSetting("sevenTV", {
-                ...settings?.sevenTV,
-                emotes: !settings?.sevenTV?.emotes,
-              })
-            }>
-            <div className="checkBox">{settings?.sevenTV?.emotes && <Check weight={"bold"} size={14} />}</div>
-            <span>7TV Emotes</span>
-          </button>
+        <div className="settingOptions cosmeticsSettingsOptions">
+          <div className="settingItem cosmeticsSetting">
+            <button
+              className={clsx("settingSwitchItem", settings?.sevenTV?.emotes ? "checked" : "")}
+              onClick={() => {
+                changeSetting("sevenTV", { ...settings?.sevenTV, emotes: !settings?.sevenTV?.emotes });
+              }}>
+              <div className="checkBox">
+                <Check weight={"bold"} size={14} />
+              </div>
+              <span>7TV Emotes</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -76,8 +60,8 @@ const Settings = ({ settingsModalOpen }) => {
       <div className="settingsSection chatroomSettings">
         <h5>Chatroom Settings</h5>
 
-        <div className="chatroomSettingsOptions">
-          <div className="chatroomSetting">
+        <div className="settingOptions chatroomSettingsOptions">
+          <div className="settingItem chatroomSetting">
             <button
               className={clsx("settingSwitchItem", settings?.chatrooms?.showModActions ? "checked" : "")}
               onClick={() =>
@@ -86,7 +70,9 @@ const Settings = ({ settingsModalOpen }) => {
                   showModActions: !settings?.chatrooms?.showModActions,
                 })
               }>
-              <div className="checkBox">{settings?.chatrooms?.showModActions && <Check weight={"bold"} size={14} />}</div>
+              <div className="checkBox">
+                <Check weight={"bold"} size={14} />
+              </div>
               <span>Show Mod Actions</span>
             </button>
           </div>
@@ -98,60 +84,52 @@ const Settings = ({ settingsModalOpen }) => {
       <div className="settingsSection notifications">
         <h5>Notifications</h5>
 
-        <div className="notificationOptions">
-          <div className="notificationSetting">
+        <div className="settingOptions notificationOptions">
+          <div className="settingItem notificationSetting">
             <button
               className={clsx("settingSwitchItem", settings?.notifications?.enabled ? "checked" : "")}
               onClick={() =>
-                changeSetting("notifications", {
-                  ...settings?.notifications,
-                  enabled: !settings?.notifications?.enabled,
-                })
+                changeSetting("notifications", { ...settings?.notifications, enabled: !settings?.notifications?.enabled })
               }>
-              <div className="checkBox">{settings?.notifications?.enabled && <Check weight={"bold"} size={14} />}</div>
+              <div className="checkBox">
+                <Check weight={"bold"} size={14} />
+              </div>
               <span>Enable Notifications</span>
             </button>
           </div>
-          <div className="notificationSetting">
+          <div className="settingItem notificationSetting">
             <button
               className={clsx("settingSwitchItem", settings?.notifications?.sound ? "checked" : "")}
               onClick={() =>
-                changeSetting("notifications", {
-                  ...settings?.notifications,
-                  sound: !settings?.notifications?.sound,
-                })
+                changeSetting("notifications", { ...settings?.notifications, sound: !settings?.notifications?.sound })
               }>
-              <div className="checkBox">{settings?.notifications?.sound && <Check weight={"bold"} size={14} />}</div>
+              <div className="checkBox">
+                <Check weight={"bold"} size={14} />
+              </div>
               <span>Notification Sound</span>
             </button>
           </div>
-          <div className="notificationSetting">
+          <div className="settingItem notificationSetting">
             <button
               className={clsx("settingSwitchItem", settings?.notifications?.background ? "checked" : "")}
               onClick={() =>
-                changeSetting("notifications", {
-                  ...settings?.notifications,
-                  background: !settings?.notifications?.background,
-                })
+                changeSetting("notifications", { ...settings?.notifications, background: !settings?.notifications?.background })
               }>
-              <div className="checkBox">{settings?.notifications?.background && <Check weight={"bold"} size={14} />}</div>
+              <div className="checkBox">
+                <Check weight={"bold"} size={14} />
+              </div>
               <span>Background Notifications</span>
             </button>
           </div>
-          <div className="notificationSetting">
-            <label>
-              Background Colour:
-              <input
-                type="color"
-                value={settings?.notifications?.backgroundColour || "#000000"}
-                onChange={(e) =>
-                  changeSetting("notifications", {
-                    ...settings?.notifications,
-                    backgroundColour: e.target.value,
-                  })
-                }
-              />
-            </label>
+          <div className="settingItem notificationSetting">
+            <ColorPicker
+              initialColor={settings?.notifications?.backgroundColour || "#000000"}
+              isColorPickerOpen={openColorPicker}
+              setIsColorPickerOpen={setOpenColorPicker}
+              handleColorChange={(color) =>
+                changeSetting("notifications", { ...settings?.notifications, backgroundColour: color })
+              }
+            />
           </div>
         </div>
       </div>

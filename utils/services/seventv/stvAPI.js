@@ -5,7 +5,6 @@ const getChannelEmotes = async (channelId) => {
 
   try {
     const response = await axios.get(`https://7tv.io/v3/users/kick/${channelId}`);
-    console.log(response);
 
     if (response.status !== 200) {
       throw new Error(`[7TV Emotes] Error while fetching channel. Status: ${response.status}`);
@@ -29,12 +28,11 @@ const getChannelEmotes = async (channelId) => {
         id: emote.id,
         actor_id: emote.actor_id,
         name: emote.name,
+        alias: emote.data.name !== emote.name ? emote.data.name : null,
         owner: emote.data.owner,
         file: emote.data.host.files?.[0] || emote.data.host.files?.[1],
       };
     });
-
-    console.log(emoteChannelData);
 
     return emoteChannelData;
   } catch (error) {

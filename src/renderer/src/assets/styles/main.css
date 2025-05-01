@@ -243,13 +243,14 @@ body {
 .kick-emote {
   width: 38px;
 }
+
 .badges {
-  display: contents;
+  display: inline-block;
   vertical-align: middle;
 }
 
 .badge {
-  width: 26px;
+  width: 24px;
   margin-right: 5px;
   position: relative;
   top: 0.5rem;

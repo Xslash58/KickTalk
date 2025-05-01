@@ -69,7 +69,7 @@ const Chat = memo(({ chatroomId }) => {
           <span>{chatroom?.streamerData?.user?.username}</span>
         </div>
         <div className="chatStreamerInfoActions">
-          {!showPinnedMessage && (
+          {chatroom?.pinnedMessage && !showPinnedMessage && (
             <button
               className={clsx("pinnedMessageBtn", !showPinnedMessage && "show")}
               disabled={!chatroom?.pinnedMessage}

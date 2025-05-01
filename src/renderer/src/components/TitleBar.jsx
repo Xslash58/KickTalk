@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { CaretDown, Minus, Square, X } from "@phosphor-icons/react";
 import "../assets/styles/components/TitleBar.css";
-import Settings from "./Settings";
+import Settings from "./Settings/Settings";
 import clsx from "clsx";
 
 const TitleBar = () => {
@@ -45,7 +45,7 @@ const TitleBar = () => {
           </button>
         )}
 
-        <Settings settingsModalOpen={settingsModalOpen} />
+        <Settings settingsModalOpen={settingsModalOpen} setSettingsModalOpen={setSettingsModalOpen} />
       </div>
 
       <div className="titleBarRight">

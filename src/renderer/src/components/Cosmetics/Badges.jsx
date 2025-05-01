@@ -1,6 +1,6 @@
-import { memo, useState } from "react";
+import { memo, useCallback, useState } from "react";
 import { kickBadgeMap } from "../../../../../utils/constants";
-import EmoteTooltip from "./EmoteTooltip";
+import BadgeTooltip from "./BadgeTooltip";
 
 const Badge = memo(({ badge, subscriberBadges }) => {
   const [showBadgeInfo, setShowBadgeInfo] = useState(false);
@@ -8,36 +8,40 @@ const Badge = memo(({ badge, subscriberBadges }) => {
 
   const badgeInfo = badge.type === "subscriber" ? kickBadgeMap[badge.type](badge, subscriberBadges) : kickBadgeMap[badge.type];
 
-  const handleMouseEnter = () => {
+  const handleMouseEnter = useCallback((e) => {
+    setMousePos({ x: e.clientX, y: e.clientY });
     setShowBadgeInfo(true);
-  };
+  }, []);
 
-  const handleMouseLeave = () => {
+  const handleMouseLeave = useCallback(() => {
     setShowBadgeInfo(false);
-  };
+  }, []);
 
-  const handleMouseMove = (e) => {
-    if (showBadgeInfo) {
-      setMousePos({ x: e.clientX, y: e.clientY });
-    }
-  };
+  const handleMouseMove = useCallback(
+    (e) => {
+      if (showBadgeInfo) {
+        setMousePos({ x: e.clientX, y: e.clientY });
+      }
+    },
+    [showBadgeInfo],
+  );
 
   return (
     <div className="chatroomBadge" key={badge.type} onMouseMove={handleMouseMove}>
-      <EmoteTooltip showBadgeInfo={showBadgeInfo} mousePos={mousePos} badgeInfo={badgeInfo} />
+      <BadgeTooltip showBadgeInfo={showBadgeInfo} mousePos={mousePos} badgeInfo={badgeInfo} />
       <img
         key={badge.type}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
         className="chatroomBadgeIcon"
-        src={badgeInfo.type === "subscriber" ? "https://www.kickdatabase.com/kickBadges/subscriber.svg" : badgeInfo.src}
+        src={badgeInfo.src}
         alt={badge.type}
       />
     </div>
   );
 });
 
-const KickBadges = memo(({ badges, subscriberBadges = null, kickTalkBadges = null }) => {
+const KickBadges = memo(({ badges, subscriberBadges = null }) => {
   if (!badges?.length) return null;
 
   return badges.map((badge) => <Badge key={badge.type} badge={badge} subscriberBadges={subscriberBadges} />);
@@ -47,25 +51,29 @@ const KickTalkBadges = memo(({ badges }) => {
   const [showBadgeInfo, setShowBadgeInfo] = useState(false);
   const [mousePos, setMousePos] = useState({ x: null, y: null });
 
-  const handleMouseEnter = () => {
+  const handleMouseEnter = useCallback((e) => {
+    setMousePos({ x: e.clientX, y: e.clientY });
     setShowBadgeInfo(true);
-  };
+  }, []);
 
-  const handleMouseLeave = () => {
+  const handleMouseLeave = useCallback(() => {
     setShowBadgeInfo(false);
-  };
+  }, []);
 
-  const handleMouseMove = (e) => {
-    if (showBadgeInfo) {
-      setMousePos({ x: e.clientX, y: e.clientY });
-    }
-  };
+  const handleMouseMove = useCallback(
+    (e) => {
+      if (showBadgeInfo) {
+        setMousePos({ x: e.clientX, y: e.clientY });
+      }
+    },
+    [showBadgeInfo],
+  );
 
   return badges.map((badge) => {
     const badgeUrl = `https://api.kicktalk.app/badges/${badge.type}`;
     return (
       <div className="chatroomBadge" key={badge.type} onMouseMove={handleMouseMove}>
-        <EmoteTooltip showBadgeInfo={showBadgeInfo} mousePos={mousePos} badgeInfo={{ ...badge, src: badgeUrl }} />
+        <BadgeTooltip showBadgeInfo={showBadgeInfo} mousePos={mousePos} badgeInfo={{ ...badge, src: badgeUrl }} />
         <img
           className="chatroomBadgeIcon"
           src={badgeUrl}
@@ -77,7 +85,5 @@ const KickTalkBadges = memo(({ badges }) => {
     );
   });
 });
-
-const SevenTVBadges = ({}) => {};
 
 export { KickBadges, KickTalkBadges };

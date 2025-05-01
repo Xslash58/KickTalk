@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import "../../assets/styles/components/Dialogs/UserDialog.css";
-import { KickBadges, KickTalkBadges } from "../Cosmetics/Badges";
-import { MessageParser } from "../../utils/MessageParser";
+import Message from "../../utils/Message";
 
 const User = () => {
   const [dialogData, setDialogData] = useState(null);
@@ -99,24 +98,17 @@ const User = () => {
         </div>
 
         <div className="dialogLogsContent" ref={dialogLogsRef}>
-          {userLogs?.map((log) => {
+          {userLogs?.map((message) => {
             return (
-              <div className="dialogLogItem" key={log.id}>
-                <div className="chatroomUser">
-                  <div className="chatroomBadges">
-                    {userKickTalkBadges && <KickTalkBadges badges={userKickTalkBadges} />}
-
-                    <KickBadges badges={log.sender.identity.badges} subscriberBadges={subscriberBadges} />
-                  </div>
-                  <p style={{ color: `${log.sender.identity.color}` }}>
-                    {log.sender.username}
-                    <span>:&nbsp;</span>
-                  </p>
-                </div>
-                <div className="dialogLogMessage">
-                  <MessageParser message={log} sevenTVEmotes={sevenTVEmotes} />
-                </div>
-              </div>
+              <Message
+                key={message.id}
+                message={message}
+                chatroomId={dialogData?.chatroomId}
+                subscriberBadges={subscriberBadges}
+                sevenTVEmotes={sevenTVEmotes}
+                kickTalkBadges={kickTalkBadges}
+                type={"dialog"}
+              />
             );
           })}
         </div>

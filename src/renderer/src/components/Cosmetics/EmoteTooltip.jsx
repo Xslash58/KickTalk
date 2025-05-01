@@ -1,20 +1,30 @@
 import clsx from "clsx";
 import { useEffect, useRef, useState } from "react";
 
-const EmoteTooltip = ({ showBadgeInfo, mousePos, badgeInfo }) => {
-  const toolTipRef = useRef(null);
+const EmoteTooltip = ({ showEmoteInfo, mousePos, emoteInfo, type }) => {
+  const emoteTooltipRef = useRef(null);
   const [position, setPosition] = useState({ top: 0, left: 0 });
 
   useEffect(() => {
-    const calculatePosition = () => {
-      if (!toolTipRef.current) return;
-      let top = mousePos.y - toolTipRef.current.offsetHeight + 140;
-      let left = mousePos.x - toolTipRef.current.offsetWidth / 8;
+    if (!mousePos.x || !mousePos.y || !showEmoteInfo) {
+      return;
+    }
 
-      if (left < 0) {
-        left = 0;
-      } else if (left + toolTipRef.current.offsetWidth > window.innerWidth) {
-        left = window.innerWidth - toolTipRef.current.offsetWidth - 10;
+    const calculatePosition = () => {
+      if (!emoteTooltipRef.current) return;
+
+      const tooltipHeight = 300;
+      const tooltipWidth = 400;
+
+      let top = mousePos.y + 15;
+      let left = mousePos.x + 15;
+
+      if (left - tooltipWidth > 80) {
+        left = mousePos.x - 180;
+      }
+
+      if (top - tooltipHeight > 70) {
+        top = mousePos.y - 140;
       }
 
       setPosition({ top, left });
@@ -23,16 +33,43 @@ const EmoteTooltip = ({ showBadgeInfo, mousePos, badgeInfo }) => {
     calculatePosition();
   }, [mousePos]);
 
+  if (!showEmoteInfo) return null;
+
   return (
     <div
-      ref={toolTipRef}
+      ref={emoteTooltipRef}
       style={{
-        top: showBadgeInfo && position.top,
-        left: showBadgeInfo && position.left,
+        top: showEmoteInfo && position.top,
+        left: showEmoteInfo && position.left,
+        opacity: showEmoteInfo ? 1 : 0,
       }}
-      className={clsx("emoteTooltip", showBadgeInfo ? "showTooltip" : "")}>
-      <img src={badgeInfo.type === "subscriber" ? "https://www.kickdatabase.com/kickBadges/subscriber.svg" : badgeInfo.src} />
-      <span>{badgeInfo.title}</span>
+      className={clsx("tooltipItem", showEmoteInfo ? "showTooltip" : "")}>
+      <img
+        src={
+          type === "stv"
+            ? `https://cdn.7tv.app/emote/${emoteInfo?.id}/1x.webp`
+            : `https://files.kick.com/emotes/${emoteInfo?.id}/fullsize`
+        }
+        className={type === "stv" ? "stvEmote emote" : "kickEmote emote"}
+        width={emoteInfo?.width}
+        height={emoteInfo?.height}
+        alt={emoteInfo?.name}
+        title={emoteInfo?.name}
+        loading="lazy"
+        fetchpriority="low"
+        decoding="async"
+      />
+      <div className="emoteTooltipInfo">
+        <div className="emoteTooltipInfoHeader">
+          <span>{emoteInfo?.name}</span>
+          <p>{emoteInfo?.alias ? `Alias of ${emoteInfo?.alias}` : ""}</p>
+        </div>
+        {type === "stv" && (
+          <p>
+            Made by <span>{emoteInfo?.owner?.username}</span>
+          </p>
+        )}
+      </div>
     </div>
   );
 };

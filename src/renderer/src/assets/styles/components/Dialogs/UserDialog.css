@@ -109,7 +109,7 @@
 .dialogLogsContent::-webkit-scrollbar-track {
   background-color: #ffffff26;
 }
-
+/* 
 .dialogLogMessage {
   overflow-wrap: anywhere;
   display: inline;
@@ -143,12 +143,6 @@
 .chatroomBadge {
   display: inline;
   margin-right: 4px;
-}
-
-.chatroomBadgeIcon {
-  width: calc(16px * 18 / 13);
-  height: calc(16px * 18 / 13);
-  vertical-align: middle;
 }
 
 .emoteTooltip {
@@ -197,4 +191,4 @@
   font-weight: 900;
   margin-right: 4px;
   white-space: normal;
-}
+} */

@@ -12,7 +12,6 @@ import {
   getInitialChatroomMessages,
 } from "../../utils/services/kick/kickAPI";
 import handleEmotes from "../../utils/emotes";
-import processBadges from "../../utils/badges";
 import { getChannelEmotes } from "../../utils/services/seventv/stvAPI";
 
 import Store from "electron-store";
@@ -119,7 +118,6 @@ if (process.contextIsolated) {
       utils: {
         openExternal: (url) => shell.openExternal(url),
         handleEmotes,
-        processBadges,
         getKickTalkBadges,
         getBadges: async () => await ipcRenderer.invoke("kicktalk:getBadges"),
       },

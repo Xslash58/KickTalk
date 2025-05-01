@@ -91,6 +91,7 @@ ipcMain.handle("store:get", async (e, { key }) => {
 
 ipcMain.handle("store:set", (e, { key, value }) => {
   const result = store.set(key, value);
+
   mainWindow.webContents.send("store:updated", { [key]: value });
 
   return result;
@@ -99,6 +100,7 @@ ipcMain.handle("store:set", (e, { key, value }) => {
 ipcMain.handle("store:delete", (e, { key }) => {
   const result = store.delete(key);
   mainWindow.webContents.send("store:updated", { [key]: null });
+
   return result;
 });
 

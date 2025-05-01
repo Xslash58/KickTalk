@@ -1,5 +1,6 @@
 # Custom Ignores
 dist
+settings.json
 
 # Logs
 logs

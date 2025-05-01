@@ -1,6 +1,6 @@
 import { HashRouter, Routes, Route } from "react-router-dom";
 import ChatPage from "./pages/ChatPage";
-import Settings from "./components/Settings";
+import Settings from "./components/Settings/Settings";
 import SettingsProvider from "./providers/SettingsProvider";
 
 function App() {

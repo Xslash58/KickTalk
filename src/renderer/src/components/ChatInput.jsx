@@ -1,3 +1,4 @@
+import "../assets/styles/components/Chat/Input.css";
 import {
   $getRoot,
   KEY_ENTER_COMMAND,
@@ -11,7 +12,7 @@ import {
   PASTE_COMMAND,
   TextNode,
 } from "lexical";
-import { memo, useEffect, useState } from "react";
+import { memo, useEffect } from "react";
 import { AutoFocusPlugin } from "@lexical/react/LexicalAutoFocusPlugin";
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
 import { PlainTextPlugin } from "@lexical/react/LexicalPlainTextPlugin";
@@ -241,16 +242,12 @@ const EmoteHandler = ({ chatroomId }) => {
       const selection = $getSelection();
       if (!$isRangeSelection(selection)) return;
 
-      console.log(emote);
-
-      if (emote.actor_id) {
+      if (emote.owner) {
         const emoteNode = new EmoteNode(emote.id, emote.name, "7tv");
         selection.insertNodes([emoteNode]);
-      } else if (emote.channel_id) {
+      } else {
         const emoteNode = new EmoteNode(emote.id, emote.name, "kick");
         selection.insertNodes([emoteNode]);
-      } else {
-        return null;
       }
     });
   };

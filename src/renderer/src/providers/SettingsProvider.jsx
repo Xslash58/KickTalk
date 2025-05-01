@@ -10,7 +10,6 @@ const SettingsProvider = ({ children }) => {
       try {
         const settings = await window.app.store.get();
         setSettings(settings);
-        console.log("settings loaded", settings);
       } catch (error) {
         console.error("[SettingsProvider]: Error loading settings:", error);
       }
@@ -19,16 +18,22 @@ const SettingsProvider = ({ children }) => {
     loadSettings();
 
     const cleanup = window.app.store.onUpdate((data) => {
-      console.log("settings updated", data);
-      setSettings(data);
+      setSettings((prev) => {
+        const newSettings = { ...prev };
+
+        Object.entries(data).forEach(([key, value]) => {
+          newSettings[key] = value;
+        });
+
+        return newSettings;
+      });
     });
 
     return () => cleanup();
   }, []);
 
-  const updateSettings = (newSettings) => {
-    setSettings(newSettings);
-    window.app.store.set("settings", newSettings);
+  const updateSettings = async (key, value) => {
+    window.app.store.set(key, value);
   };
 
   return <SettingsContext.Provider value={{ settings, updateSettings }}>{children}</SettingsContext.Provider>;

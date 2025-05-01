@@ -4,6 +4,14 @@ export const kickEmoteInputRegex = /(?:^|\s)(:(?<emoteCase1>\w{3,}):)|(?:^|\s)(?
 
 export const kickBadgeMap = {
   subscriber: (badge, subscriberBadges) => {
+    if (!subscriberBadges.length) {
+      return {
+        src: "https://www.kickdatabase.com/kickBadges/subscriber.svg",
+        title: `${badge.text}-${badge.count}`,
+        info: `${badge.count} Month Subscriber`,
+      };
+    }
+
     const badgeData = subscriberBadges.sort((a, b) => b.months - a.months).find((b) => badge.count >= b.months);
     return badgeData
       ? {

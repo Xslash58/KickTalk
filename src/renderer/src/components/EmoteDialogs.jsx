@@ -6,6 +6,7 @@ import { useShallow } from "zustand/react/shallow";
 import STVLogo from "../assets/icons/stvLogo.svg";
 import { CaretUp } from "@phosphor-icons/react";
 import { useRef, useEffect } from "react";
+import useClickOutside from "../utils/useClickOutside";
 
 const EmoteSection = ({ emotes, title, handleEmoteClick, type }) => {
   const [isSectionOpen, setIsSectionOpen] = useState(true);
@@ -65,12 +66,13 @@ const EmoteSection = ({ emotes, title, handleEmoteClick, type }) => {
 
 const SevenTVEmoteDialog = ({ isDialogOpen, sevenTVEmotes, handleEmoteClick }) => {
   const emotes = sevenTVEmotes?.emote_set?.emotes;
+
   return (
     <>
       {isDialogOpen && (
         <div className={clsx("emoteDialog", isDialogOpen && "show")}>
-          <div className="dialogHead">
-            <img src={STVLogo} height={20} alt="Kick.com" />
+          <div className={clsx("dialogHead", !emotes?.length && "dialogHeadEmpty")}>
+            <img src={STVLogo} height={20} alt="7TV Emotes" />
             {/* <div className="dialogHeadSearch">
               <input type="text" placeholder="Search" />
         </div> */}
@@ -123,7 +125,10 @@ const EmoteDialogs = memo(
     );
 
     const [activeDialog, setActiveDialog] = useState(null);
-    console.log(kickEmotes);
+
+    const emoteDialogRef = useRef(null);
+    useClickOutside(emoteDialogRef, () => setActiveDialog(null));
+
     return (
       <>
         <div className="chatEmoteBtns">
@@ -141,7 +146,7 @@ const EmoteDialogs = memo(
           </button>
         </div>
 
-        <div className="emoteDialogs">
+        <div className="emoteDialogs" ref={emoteDialogRef}>
           <SevenTVEmoteDialog
             isDialogOpen={activeDialog === "7tv"}
             sevenTVEmotes={sevenTVEmotes}
