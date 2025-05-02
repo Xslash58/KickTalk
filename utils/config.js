@@ -27,6 +27,10 @@ const schema = {
         type: "boolean",
         default: true,
       },
+      soundFile: {
+        type: "string",
+        default: "../resources/sounds/default.wav",
+      },
       background: {
         type: "boolean",
         default: true,

@@ -6,7 +6,7 @@ import ArrowReplyLineIcon from "../assets/app/arrow_reply_line.svg?asset";
 import clsx from "clsx";
 
 const Message = memo(
-  ({ message, chatroomId, subscriberBadges, sevenTVEmotes, kickTalkBadges, settings, type }) => {
+  ({ message, chatroomId, subscriberBadges, sevenTVEmotes, kickTalkBadges, settings, type, updatedPlayedSound }) => {
     const handleOpenUserDialog = useCallback(
       (e) => {
         e.preventDefault();
@@ -32,9 +32,14 @@ const Message = memo(
 
     const shouldHighlight = checkForPhrases();
 
-    // if (shouldHighlight && settings.notifications.sound) {
-    //   new Audio(settings.notifications.soundFile).play();
-    // }
+    if (shouldHighlight && settings.notifications.sound && message.soundPlayed !== true) {
+      const audio = new Audio(settings?.notifications?.soundFile);
+      audio.volume = settings?.notifications?.soundVolume || 0.1;
+      audio.play().catch((error) => {
+        console.error("Error playing sound:", error);
+      });
+      updatedPlayedSound(message.id, chatroomId);
+    }
 
     return (
       <div

@@ -45,6 +45,21 @@ const useChatStore = create((set, get) => ({
     }
   },
 
+  updatedPlayedSound: (messageId, chatroomId) => {
+    set((state) => ({
+      messages: {
+        ...state.messages,
+        [chatroomId]: 
+          state.messages[chatroomId].map((message) => {
+            if (message.id === messageId) {
+              return { ...message, soundPlayed: true };
+            }
+            return message;
+          }),      
+      },
+    }));
+  },
+
   addMessage: (chatroomId, message) => {
     set((state) => ({
       messages: {

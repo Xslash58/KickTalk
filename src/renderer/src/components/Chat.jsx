@@ -20,6 +20,7 @@ const Chat = memo(({ chatroomId }) => {
 
   const chatroom = useChatStore((state) => state.chatrooms.filter((chatroom) => chatroom.id === chatroomId)[0]);
   const messages = useChatStore((state) => state.messages[chatroomId]);
+  const updatedPlayedSound = useChatStore((state) => state.updatedPlayedSound);
   const { settings } = useSettings();
 
   const [kickTalkBadges, setKickTalkBadges] = useState([]);
@@ -104,6 +105,7 @@ const Chat = memo(({ chatroomId }) => {
               sevenTVEmotes={chatroom?.channel7TVEmotes}
               kickTalkBadges={kickTalkBadges}
               message={message}
+              updatedPlayedSound={updatedPlayedSound}
               settings={settings}
             />
           );
