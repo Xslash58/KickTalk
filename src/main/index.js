@@ -190,8 +190,6 @@ const createWindow = () => {
     },
   });
 
-  setAlwaysOnTop(mainWindow);
-
   mainWindow.on("ready-to-show", () => {
     mainWindow.show();
     initializeKickTalkBadges();
