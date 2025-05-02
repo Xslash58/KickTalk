@@ -70,6 +70,14 @@
   background-color: #3a5343;
 }
 
+.miniDivider {
+  display: block;
+  height: 1px;
+  margin: 8px 0;
+  width: 100%;
+  background-color: #23372a;
+}
+
 .settingsSection {
   padding: 16px;
   display: flex;
@@ -108,19 +116,21 @@
   border-radius: 2px;
   border: 1.5px solid #3a5343;
   background-color: transparent;
-  transition: all 0.15s ease-in-out;
   display: flex;
   align-items: center;
   justify-content: center;
+  transition:
+    border-color 0.15s ease-in-out,
+    background-color 0.15s ease-in-out;
 }
 
-.settingSwitchItem > .checkBox > svg {
-  fill: transparent;
-  transition: fill 0.15s ease-in-out;
+.settingSwitchItem > .checkBox > img {
+  opacity: 0;
+  transition: opacity 0.15s ease-in-out;
 }
 
-.settingSwitchItem.checked > .checkBox > svg {
-  fill: white;
+.settingSwitchItem.checked > .checkBox > img {
+  opacity: 1;
 }
 
 .settingSwitchItem > span {
@@ -195,7 +205,6 @@
 
 /** [Color Picker] */
 .colorPicker {
-  padding: 4px 0;
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -207,6 +216,16 @@
   align-items: center;
   justify-content: space-between;
   cursor: pointer;
+}
+
+.colorPickerHeader > p {
+  color: rgba(255, 255, 255, 0.5);
+  font-weight: 600;
+  transition: color 0.15s ease-in-out;
+}
+
+.colorPickerHeader:hover > p {
+  color: rgba(255, 255, 255, 1);
 }
 
 .colorPickerPreview {

@@ -2,7 +2,8 @@ import "../assets/styles/components/Navbar.css";
 import clsx from "clsx";
 import { useEffect, useRef, useState } from "react";
 import useChatStore from "../providers/ChatProvider";
-import { Plus, X } from "@phosphor-icons/react";
+import Plus from "../assets/icons/plus-bold.svg?asset";
+import X from "../assets/icons/x-bold.svg?asset";
 
 const Navbar = ({ currentChatroomId, onSelectChatroom }) => {
   const addChatroom = useChatStore((state) => state.addChatroom);
@@ -85,7 +86,7 @@ const Navbar = ({ currentChatroomId, onSelectChatroom }) => {
               <span>{chatroom.username}</span>
             </div>
             <button className="closeChatroom" onClick={() => handleRemoveChatroom(chatroom.id)} aria-label="Remove chatroom">
-              <X size={12} weight="bold" />
+              <img src={X} width={12} height={12} alt="Remove chatroom" />
             </button>
           </div>
         ))}
@@ -99,7 +100,7 @@ const Navbar = ({ currentChatroomId, onSelectChatroom }) => {
               className="navbarAddChatroomDialogClose"
               onClick={() => setAddChatroomDialog(false)}
               aria-label="Close Add Chatroom">
-              <X size={16} weight="bold" />
+              {/* <X size={16} weight="bold" /> */}
             </button>
           </div>
           <form onSubmit={handleSubmit} className="navbarAddForm">
@@ -118,7 +119,8 @@ const Navbar = ({ currentChatroomId, onSelectChatroom }) => {
           className="navbarAddChatroomButton"
           onClick={() => setAddChatroomDialog(!showAddChatroomDialog)}
           disabled={isConnecting}>
-          Add <Plus size={16} weight="bold" />
+          Add
+          <img src={Plus} width={16} height={16} alt="Add chatroom" />
         </button>
       </div>
     </div>

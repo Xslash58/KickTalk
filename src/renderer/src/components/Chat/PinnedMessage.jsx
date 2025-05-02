@@ -1,4 +1,5 @@
-import { CaretDown, PushPinSlash } from "@phosphor-icons/react";
+import CaretDown from "../../assets/icons/caret-down-bold.svg?asset";
+import PushPinSlash from "../../assets/icons/push-pin-slash-fill.svg?asset";
 import { clsx } from "clsx";
 import { MessageParser } from "../../utils/MessageParser";
 import dayjs from "dayjs";
@@ -18,10 +19,16 @@ const PinnedMessage = ({
         <p>Pinned Message by {originalSender?.username}</p>
         <div className="pinnedMessageActions">
           <button onClick={() => setPinnedMessageExpanded(!pinnedMessageExpanded)}>
-            <CaretDown size={16} weight="bold" style={{ transform: pinnedMessageExpanded ? "rotate(180deg)" : "none" }} />
+            <img
+              src={CaretDown}
+              width={16}
+              height={16}
+              alt="Expand Pinned Message"
+              style={{ transform: pinnedMessageExpanded ? "rotate(180deg)" : "none" }}
+            />
           </button>
           <button onClick={() => setShowPinnedMessage(!showPinnedMessage)}>
-            <PushPinSlash size={14} weight="fill" />
+            <img src={PushPinSlash} width={14} height={14} alt="Hide Pinned Message" />
           </button>
         </div>
       </div>

@@ -1,7 +1,8 @@
 import "../../assets/styles/components/Settings.css";
 import { useState, useRef } from "react";
 import clsx from "clsx";
-import { Check, SignOut } from "@phosphor-icons/react";
+import SignOut from "../../assets/icons/sign-out-bold.svg?asset";
+import Check from "../../assets/icons/check-bold.svg?asset";
 import { useSettings } from "../../providers/SettingsProvider";
 import ColorPicker from "./ColorPicker";
 import useClickOutside from "../../utils/useClickOutside";
@@ -30,7 +31,7 @@ const Settings = ({ settingsModalOpen, setSettingsModalOpen }) => {
       <div className="settingsHead">
         <h4>Settings</h4>
         <button onClick={handleLogout}>
-          <SignOut size={20} weight="bold" />
+          <img src={SignOut} width={20} height={20} alt="Sign Out" />
         </button>
       </div>
 
@@ -47,7 +48,7 @@ const Settings = ({ settingsModalOpen, setSettingsModalOpen }) => {
                 changeSetting("sevenTV", { ...settings?.sevenTV, emotes: !settings?.sevenTV?.emotes });
               }}>
               <div className="checkBox">
-                <Check weight={"bold"} size={14} />
+                <img src={Check} width={14} height={14} alt="Check" />
               </div>
               <span>7TV Emotes</span>
             </button>
@@ -71,7 +72,7 @@ const Settings = ({ settingsModalOpen, setSettingsModalOpen }) => {
                 })
               }>
               <div className="checkBox">
-                <Check weight={"bold"} size={14} />
+                <img src={Check} width={14} height={14} alt="Check" />
               </div>
               <span>Show Mod Actions</span>
             </button>
@@ -92,7 +93,7 @@ const Settings = ({ settingsModalOpen, setSettingsModalOpen }) => {
                 changeSetting("notifications", { ...settings?.notifications, enabled: !settings?.notifications?.enabled })
               }>
               <div className="checkBox">
-                <Check weight={"bold"} size={14} />
+                <img src={Check} width={14} height={14} alt="Check" />
               </div>
               <span>Enable Notifications</span>
             </button>
@@ -104,7 +105,7 @@ const Settings = ({ settingsModalOpen, setSettingsModalOpen }) => {
                 changeSetting("notifications", { ...settings?.notifications, sound: !settings?.notifications?.sound })
               }>
               <div className="checkBox">
-                <Check weight={"bold"} size={14} />
+                <img src={Check} width={14} height={14} alt="Check" />
               </div>
               <span>Notification Sound</span>
             </button>
@@ -116,11 +117,14 @@ const Settings = ({ settingsModalOpen, setSettingsModalOpen }) => {
                 changeSetting("notifications", { ...settings?.notifications, background: !settings?.notifications?.background })
               }>
               <div className="checkBox">
-                <Check weight={"bold"} size={14} />
+                <img src={Check} width={14} height={14} alt="Check" />
               </div>
               <span>Background Notifications</span>
             </button>
           </div>
+
+          <span className="miniDivider" />
+
           <div className="settingItem notificationSetting">
             <ColorPicker
               initialColor={settings?.notifications?.backgroundColour || "#000000"}
@@ -131,6 +135,23 @@ const Settings = ({ settingsModalOpen, setSettingsModalOpen }) => {
               }
             />
           </div>
+        </div>
+      </div>
+
+      <span className="settingsDivider" />
+
+      <div className="settingsSection generalSettings">
+        <h5>General Settings</h5>
+
+        <div className="settingItem notificationSetting">
+          <button
+            className={clsx("settingSwitchItem", settings?.alwaysOnTop ? "checked" : "")}
+            onClick={() => changeSetting("alwaysOnTop", !settings?.alwaysOnTop)}>
+            <div className="checkBox">
+              <img src={Check} width={14} height={14} alt="Check" />
+            </div>
+            <span>Always On Top</span>
+          </button>
         </div>
       </div>
 

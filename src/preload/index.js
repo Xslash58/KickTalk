@@ -58,6 +58,8 @@ if (process.contextIsolated) {
       bringToFront: () => ipcRenderer.invoke("bring-to-front"),
       logout: () => ipcRenderer.invoke("logout"),
 
+      alwaysOnTop: () => ipcRenderer.invoke("alwaysOnTop"),
+
       authDialog: {
         open: (data) => ipcRenderer.invoke("authDialog:open", { data }),
         auth: (data) => ipcRenderer.invoke("authDialog:auth", { data }),

@@ -165,6 +165,12 @@ const useChatStore = create((set, get) => ({
       if (data.pinned_message) {
         get().handlePinnedMessageCreated(chatroom.id, data.pinned_message);
       }
+
+      // Add initial messages to the chatroom
+      if (data.messages) {
+        console.log("Adding initial messages to the chatroom");
+        get().addInitialChatroomMessages(chatroom.id, data.messages);
+      }
     };
 
     fetchInitialMessages();
@@ -342,6 +348,22 @@ const useChatStore = create((set, get) => ({
         }
         return room;
       }),
+    }));
+  },
+
+  addInitialChatroomMessages: (chatroomId, data) => {
+    data.map((message) => {
+      message.is_old = true;
+      message.metadata = JSON.parse(message.metadata);
+    });
+
+    console.log("Adding initial chatroom messages:", data);
+
+    set((state) => ({
+      messages: {
+        ...state.messages,
+        [chatroomId]: [...(state.messages[chatroomId] || []), ...data],
+      },
     }));
   },
 }));

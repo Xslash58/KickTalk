@@ -262,7 +262,7 @@
   min-height: max-content;
 }
 
-.dialogBodySection.opened .dialogRowHeadBtn > svg {
+.dialogBodySection.opened .dialogRowHeadBtn > img {
   transform: rotate(180deg);
 }
 
@@ -274,9 +274,15 @@
   margin: 0;
 }
 
-.dialogRowHeadBtn > svg {
-  fill: #779c85;
-  transition: transform 0.2s ease-in-out;
+.dialogRowHeadBtn > img {
+  opacity: 0.5;
+  transition:
+    transform 0.2s ease-in-out,
+    opacity 0.2s ease-in-out;
+}
+
+.dialogRowHeadBtn:hover > img {
+  opacity: 1;
 }
 
 .dialogRowHead {

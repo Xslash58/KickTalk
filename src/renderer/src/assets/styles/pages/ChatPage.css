@@ -64,13 +64,13 @@
   display: flex;
 }
 
-.pinnedMessageBtn:hover svg {
-  fill: rgba(255, 255, 255, 0.8);
+.pinnedMessageBtn:hover img {
+  opacity: 0.8;
 }
 
-.pinnedMessageBtn svg {
-  fill: rgba(255, 255, 255, 0.4);
-  transition: fill 0.2s ease;
+.pinnedMessageBtn img {
+  opacity: 0.4;
+  transition: opacity 0.2s ease;
 }
 
 /** [Pinned Message] **/
@@ -172,9 +172,13 @@
   border-color: #50755f;
 }
 
-.pinnedMessageActions button svg {
-  fill: #527861;
-  transition: transform 0.2s ease;
+.pinnedMessageActions > button > img {
+  opacity: 0.4;
+  transition: opacity 0.2s ease;
+}
+
+.pinnedMessageActions > button:hover > img {
+  opacity: 1;
 }
 
 .pinnedMessageHeader > p {

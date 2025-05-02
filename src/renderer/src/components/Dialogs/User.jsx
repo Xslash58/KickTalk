@@ -98,10 +98,10 @@ const User = () => {
         </div>
 
         <div className="dialogLogsContent" ref={dialogLogsRef}>
-          {userLogs?.map((message) => {
+          {userLogs?.map((message, i) => {
             return (
               <Message
-                key={message.id}
+                key={`${message.id}-${i}`}
                 message={message}
                 chatroomId={dialogData?.chatroomId}
                 subscriberBadges={subscriberBadges}

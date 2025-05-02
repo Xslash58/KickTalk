@@ -1,5 +1,10 @@
 import { useState, useEffect } from "react";
-import { CaretDown, Minus, Square, X } from "@phosphor-icons/react";
+
+import CaretDown from "../assets/icons/caret-down-bold.svg?asset";
+import Minus from "../assets/icons/minus-bold.svg?asset";
+import Square from "../assets/icons/square-bold.svg?asset";
+import X from "../assets/icons/x-bold.svg?asset";
+
 import "../assets/styles/components/TitleBar.css";
 import Settings from "./Settings/Settings";
 import clsx from "clsx";
@@ -37,7 +42,7 @@ const TitleBar = () => {
         {userData?.id ? (
           <button className="titleBarSettingsBtn" onClick={() => setSettingsModalOpen(!settingsModalOpen)}>
             <span className="titleBarUsername">{userData?.username || "Loading..."}</span>
-            <CaretDown weight={"bold"} size={14} />
+            <img src={CaretDown} width={14} height={14} alt="Caret Down" />
           </button>
         ) : (
           <button className="titleBarLoginBtn" onClick={handleAuthBtn}>
@@ -51,13 +56,13 @@ const TitleBar = () => {
       <div className="titleBarRight">
         <div className="titleBarControls">
           <button className="minimize" onClick={() => window.app.minimize()}>
-            <Minus weight={"bold"} size={14} />
+            <img src={Minus} width={14} height={14} alt="Minimize" />
           </button>
           <button className="maximize" onClick={() => window.app.maximize()}>
-            <Square weight={"bold"} size={14} />
+            <img src={Square} width={14} height={14} alt="Maximize" />
           </button>
           <button className="close" onClick={() => window.app.close()}>
-            <X weight={"bold"} size={16} />
+            <img src={X} width={16} height={16} alt="Close" />
           </button>
         </div>
       </div>

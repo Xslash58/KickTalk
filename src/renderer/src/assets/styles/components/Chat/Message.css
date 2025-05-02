@@ -9,6 +9,10 @@
   border-radius: 4px;
 }
 
+.old {
+  opacity: 0.4;
+}
+
 .dialogChatMessageItem {
   padding: 0px;
 }
@@ -174,7 +178,7 @@
   font-weight: 900;
   margin-right: 4px;
   white-space: normal;
-  width: 38px;
+  width: 32px;
 }
 
 .stvEmote {

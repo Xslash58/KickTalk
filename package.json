@@ -21,7 +21,6 @@
     "@electron-toolkit/preload": "^3.0.1",
     "@electron-toolkit/utils": "^4.0.0",
     "@lexical/react": "^0.30.0",
-    "@phosphor-icons/react": "^2.1.7",
     "axios": "^1.8.4",
     "cloudscraper": "^4.6.0",
     "clsx": "^2.1.1",

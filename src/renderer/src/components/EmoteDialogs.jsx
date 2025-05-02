@@ -1,10 +1,10 @@
 import clsx from "clsx";
-import KickLogoFull from "../assets/icons/kickLogoFull.svg";
-import { memo, useMemo, useState } from "react";
+import KickLogoFull from "../assets/logos/kickLogoFull.svg?asset";
+import { memo, useState } from "react";
 import useChatStore from "../providers/ChatProvider";
 import { useShallow } from "zustand/react/shallow";
-import STVLogo from "../assets/icons/stvLogo.svg";
-import { CaretUp } from "@phosphor-icons/react";
+import STVLogo from "../assets/logos/stvLogo.svg?asset";
+import CaretDown from "../assets/icons/caret-down-bold.svg?asset";
 import { useRef, useEffect } from "react";
 import useClickOutside from "../utils/useClickOutside";
 
@@ -45,7 +45,7 @@ const EmoteSection = ({ emotes, title, handleEmoteClick, type }) => {
       <div className="dialogRowHead">
         <span>{title}</span>
         <button onClick={() => setIsSectionOpen(!isSectionOpen)} className="dialogRowHeadBtn">
-          <CaretUp size={20} weight={"bold"} />
+          <img src={CaretDown} width={20} height={20} alt="Caret Down" />
         </button>
       </div>
       <div className="emoteItems">

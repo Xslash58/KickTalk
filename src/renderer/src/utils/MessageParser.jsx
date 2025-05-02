@@ -48,12 +48,7 @@ const getEmoteData = (emoteName, sevenTVEmotes) => {
       height: emote?.data?.host?.files[0].height || emote.file.height,
       name: emote.name,
       alias: emote.alias,
-      owner: {
-        id: emote.owner.id,
-        username: emote.owner.username,
-        displayName: emote.owner.display_name,
-        avatarUrl: emote.owner.avatar_url,
-      },
+      owner: emote.owner,
     };
 
     // Cache the emote data

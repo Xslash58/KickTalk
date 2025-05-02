@@ -27,7 +27,7 @@ const Emote = memo(({ emote, type }) => {
 
   return (
     <div className="chatroomEmote" onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave} onMouseMove={handleMouseMove}>
-      {showEmoteInfo && <EmoteTooltip type={type} showEmoteInfo={showEmoteInfo} mousePos={mousePos} emoteInfo={emote} />}
+      <EmoteTooltip type={type} showEmoteInfo={showEmoteInfo} mousePos={mousePos} emoteInfo={emote} />
       <img
         className={type === "stv" ? "stvEmote emote" : "kickEmote emote"}
         src={type === "stv" ? `https://cdn.7tv.app/emote/${id}/1x.webp` : `https://files.kick.com/emotes/${id}/fullsize`}

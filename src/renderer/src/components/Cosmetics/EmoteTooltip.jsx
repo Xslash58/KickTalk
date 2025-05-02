@@ -43,7 +43,7 @@ const EmoteTooltip = ({ showEmoteInfo, mousePos, emoteInfo, type }) => {
         left: showEmoteInfo && position.left,
         opacity: showEmoteInfo ? 1 : 0,
       }}
-      className={clsx("tooltipItem", showEmoteInfo ? "showTooltip" : "")}>
+      className={clsx("tooltipItem showTooltip", showEmoteInfo ? "showTooltip" : "")}>
       <img
         src={
           type === "stv"
@@ -53,8 +53,6 @@ const EmoteTooltip = ({ showEmoteInfo, mousePos, emoteInfo, type }) => {
         className={type === "stv" ? "stvEmote emote" : "kickEmote emote"}
         width={emoteInfo?.width}
         height={emoteInfo?.height}
-        alt={emoteInfo?.name}
-        title={emoteInfo?.name}
         loading="lazy"
         fetchpriority="low"
         decoding="async"

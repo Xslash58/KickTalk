@@ -2,7 +2,7 @@ import "../assets/styles/components/Chat/Message.css";
 import { memo, useCallback } from "react";
 import ModActionMessage from "../components/Messages/ModActionMessage";
 import RegularMessage from "../components/Messages/RegularMessage";
-import ArrowReplyLineIcon from "../assets/app/arrow_reply_line.svg";
+import ArrowReplyLineIcon from "../assets/app/arrow_reply_line.svg?asset";
 import clsx from "clsx";
 
 const Message = memo(

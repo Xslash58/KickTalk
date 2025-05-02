@@ -129,6 +129,16 @@
 
 .navbarAddChatroomButton:hover {
   background: rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 1);
+}
+
+.navbarAddChatroomButton > img {
+  opacity: 0.5;
+  transition: opacity 0.2s ease-in-out;
+}
+
+.navbarAddChatroomButton:hover > img {
+  opacity: 1;
 }
 
 .navbarAddChatroomDialog {

@@ -1,7 +1,10 @@
 import clsx from "clsx";
 import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { scrollToBottom } from "../utils/ChatUtils";
-import { MouseScroll, PushPin, PushPinSlash } from "@phosphor-icons/react";
+
+import MouseScroll from "../assets/icons/mouse-scroll-fill.svg?asset";
+import PushPin from "../assets/icons/push-pin-fill.svg?asset";
+
 import Message from "../utils/Message";
 import ChatInput from "./ChatInput";
 import useChatStore from "../providers/ChatProvider";
@@ -74,7 +77,7 @@ const Chat = memo(({ chatroomId }) => {
               className={clsx("pinnedMessageBtn", !showPinnedMessage && "show")}
               disabled={!chatroom?.pinnedMessage}
               onClick={() => setShowPinnedMessage(!showPinnedMessage)}>
-              <PushPin size={18} weight="fill" />
+              <img src={PushPin} width={24} height={24} alt="Pin Message" />
             </button>
           )}
         </div>
@@ -116,7 +119,8 @@ const Chat = memo(({ chatroomId }) => {
             setShouldAutoScroll(true);
             scrollToBottom(chatBodyRef, setShowScrollToBottom);
           }}>
-          Scroll To Bottom <MouseScroll size={32} weight="fill" />
+          Scroll To Bottom
+          <img src={MouseScroll} width={24} height={24} alt="Scroll To Bottom" />
         </button>
         <ChatInput chatroomId={chatroomId} setShouldAutoScroll={setShouldAutoScroll} />
       </div>

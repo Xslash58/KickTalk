@@ -1,4 +1,4 @@
-import { app, shell, BrowserWindow, ipcMain, screen, globalShortcut, session, safeStorage } from "electron";
+import { app, shell, BrowserWindow, ipcMain, screen, globalShortcut, session, Menu, safeStorage } from "electron";
 import { join } from "path";
 import { getKickTalkBadges } from "../../utils/services/kick/kickAPI";
 import { electronApp, optimizer } from "@electron-toolkit/utils";
@@ -94,6 +94,10 @@ ipcMain.handle("store:set", (e, { key, value }) => {
 
   mainWindow.webContents.send("store:updated", { [key]: value });
 
+  if (key === "alwaysOnTop") {
+    mainWindow.setAlwaysOnTop(value);
+  }
+
   return result;
 });
 
@@ -107,8 +111,12 @@ ipcMain.handle("store:delete", (e, { key }) => {
 ipcMain.handle("chatLogs:get", async (e, { data }) => {
   const { chatroomId, userId } = data;
 
-  const roomLogs = chatLogsStore.get(chatroomId) || {};
-  return roomLogs.get(userId) || { message: [] };
+  const roomLogs = chatLogsStore.get(chatroomId);
+  if (!roomLogs) {
+    return { messages: [] };
+  }
+
+  return roomLogs.get(userId) || { messages: [] };
 });
 
 ipcMain.handle("chatLogs:add", async (e, { data }) => {
@@ -122,7 +130,7 @@ ipcMain.handle("chatLogs:add", async (e, { data }) => {
 
   const userLogs = roomLogs.get(userId) || { messages: [] };
   const updatedLogs = {
-    messages: [...userLogs.messages, { ...message, timestamp: Date.now() }].slice(-100),
+    messages: [...userLogs.messages.filter((m) => m.id !== message.id), { ...message, timestamp: Date.now() }].slice(-100),
     lastUpdate: Date.now(),
   };
 
@@ -147,6 +155,19 @@ ipcMain.handle("bring-to-front", () => {
   }
 });
 
+const setAlwaysOnTop = (window) => {
+  window.setAlwaysOnTop(store.get("alwaysOnTop"));
+
+  if (process.platform === "darwin") {
+    window.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
+    window.setFullScreenable(false);
+  } else if (process.platform === "win32") {
+    window.setAlwaysOnTop(true, "always-on-top", 1);
+  } else if (process.platform === "linux") {
+    window.setAlwaysOnTop(true, "screen-saver");
+  }
+};
+
 const createWindow = () => {
   mainWindow = new BrowserWindow({
     width: store.get("lastMainWindowState.width"),
@@ -158,9 +179,8 @@ const createWindow = () => {
     show: false,
     backgroundColor: "#06190e",
     autoHideMenuBar: true,
-    // alwaysOnTop: store.get("alwaysOnTop"),
     titleBarStyle: "hidden",
-    icon: join(__dirname, "../../resources/icons/win/KickTalk_v1.ico"),
+    icon: join(__dirname, "../../resources/logos/win/KickTalk_v1.ico"),
     webPreferences: {
       devTools: true,
       nodeIntegration: false,
@@ -169,6 +189,8 @@ const createWindow = () => {
       sandbox: false,
     },
   });
+
+  setAlwaysOnTop(mainWindow);
 
   mainWindow.on("ready-to-show", () => {
     mainWindow.show();
@@ -190,6 +212,10 @@ const createWindow = () => {
   });
 
   mainWindow.webContents.setZoomFactor(store.get("zoomFactor"));
+
+  mainWindow.on("always-on-top-changed", (event, isAlwaysOnTop) => {
+    console.log(isAlwaysOnTop, "changed");
+  });
 
   // HMR for renderer base on electron-vite cli.
   // Load the remote URL for development or the local html file for production.
@@ -287,6 +313,25 @@ const loginToKick = async (method) => {
     });
   });
 };
+
+const buildMenuTemplate = (params) => {
+  const menuTemplate = [
+    {
+      label: "Copy",
+      click: () => {
+        console.log("Copy");
+      },
+    },
+    {
+      label: "Paste",
+      click: () => {
+        console.log("Paste");
+      },
+    },
+  ];
+  return menuTemplate;
+};
+
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
@@ -338,12 +383,18 @@ app.whenReady().then(() => {
     }
   });
 
-  globalShortcut.register("Ctrl+Zero", () => {
+  globalShortcut.register("CommandOrControl+0", () => {
     if (mainWindow && mainWindow.isFocused()) {
       const newZoomFactor = 1;
       mainWindow.webContents.setZoomFactor(newZoomFactor);
       store.set("zoomFactor", newZoomFactor);
     }
+  });
+
+  mainWindow.webContents.on("context-menu", (e, params) => {
+    const menuTemplate = buildMenuTemplate(params);
+    const contextMenu = Menu.buildFromTemplate(menuTemplate);
+    contextMenu.popup({ window: mainWindow.webContents });
   });
 });
 
@@ -488,6 +539,12 @@ ipcMain.handle("authDialog:close", () => {
   if (authDialog) {
     authDialog.close();
     authDialog = null;
+  }
+});
+
+ipcMain.handle("alwaysOnTop", () => {
+  if (mainWindow) {
+    mainWindow.setAlwaysOnTop(!mainWindow.isAlwaysOnTop());
   }
 });
 
