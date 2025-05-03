@@ -8,6 +8,7 @@ import StvWebSocket from "../../../../utils/services/seventv/stvWebsocket";
 // Load initial state from local storage
 const getInitialState = () => {
   const savedChatrooms = JSON.parse(localStorage.getItem("chatrooms")) || [];
+
   return {
     chatrooms: savedChatrooms,
     messages: {},
@@ -48,17 +49,16 @@ const useChatStore = create((set, get) => ({
     }
   },
 
-  updatedPlayedSound: (messageId, chatroomId) => {
+  updateSoundPlayed: (chatroomId, messageId) => {
     set((state) => ({
       messages: {
         ...state.messages,
-        [chatroomId]: 
-          state.messages[chatroomId].map((message) => {
-            if (message.id === messageId) {
-              return { ...message, soundPlayed: true };
-            }
-            return message;
-          }),      
+        [chatroomId]: state.messages[chatroomId].map((message) => {
+          if (message.id === messageId) {
+            return { ...message, soundPlayed: true };
+          }
+          return message;
+        }),
       },
     }));
   },
@@ -68,7 +68,7 @@ const useChatStore = create((set, get) => ({
     set((state) => ({
       messages: {
         ...state.messages,
-        [chatroomId]: [...(state.messages[chatroomId] || []), { ...message, deleted: false }].slice(-300), // Keep last 300 messages
+        [chatroomId]: [...(state.messages[chatroomId] || []), { ...message, deleted: false }].slice(-250), // Keep last 300 messages
       },
     }));
   },
@@ -129,7 +129,7 @@ const useChatStore = create((set, get) => ({
   },
 
   connectToChatroom: (chatroom) => {
-    const pusher = new KickPusher(chatroom.id);
+    const pusher = new KickPusher(chatroom.id, chatroom.streamerData.id);
 
     // Connection Events
     pusher.addEventListener("connection", (event) => {
@@ -150,12 +150,14 @@ const useChatStore = create((set, get) => ({
         // case "App\\Events\\ChatroomUpdatedEvent":
         //   get().handleChatroomUpdated(chatroom.id, parsedEvent);
         //   break;
-        // case "App\\Events\\StreamerIsLive":
-        //   get().handleStreamStatus(chatroom.id, parsedEvent);
-        //   break;
-        // case "App\\Events\\StopStreamBroadcast":
-        //   get().handleStreamStatus(chatroom.id, parsedEvent);
-        //   break;
+        case "App\\Events\\StreamerIsLive":
+          console.log("Streamer is live", parsedEvent);
+          get().handleStreamStatus(chatroom.id, parsedEvent, true);
+          break;
+        case "App\\Events\\StopStreamBroadcast":
+          console.log("Streamer is offline", parsedEvent);
+          get().handleStreamStatus(chatroom.id, parsedEvent, false);
+          break;
         case "App\\Events\\PinnedMessageCreatedEvent":
           get().handlePinnedMessageCreated(chatroom.id, parsedEvent);
           break;
@@ -214,7 +216,7 @@ const useChatStore = create((set, get) => ({
     pusher.connect();
 
     const fetchEmotes = async () => {
-      const { data } = await window.app.kick.getEmotes(chatroom.slug);
+      const data = await window.app.kick.getEmotes(chatroom.slug);
       set((state) => ({
         chatrooms: state.chatrooms.map((room) => {
           if (room.id === chatroom.id) {
@@ -227,6 +229,27 @@ const useChatStore = create((set, get) => ({
 
     fetchEmotes();
 
+    // Fetch Initial Chatroom Info
+    const fetchInitialChatroomInfo = async () => {
+      const { data } = await window.app.kick.getChannelChatroomInfo(chatroom.slug);
+
+      set((state) => ({
+        chatrooms: state.chatrooms.map((room) => {
+          if (room.id === chatroom.id) {
+            return {
+              ...room,
+              chatroomInfo: { ...data },
+              isStreamerLive: data?.livestream?.is_live,
+              streamStatus: data?.livestream,
+            };
+          }
+          return room;
+        }),
+      }));
+    };
+
+    fetchInitialChatroomInfo();
+
     // Fetch initial messages
     // TODO: Finish adding initial messages
     const fetchInitialMessages = async () => {
@@ -236,14 +259,13 @@ const useChatStore = create((set, get) => ({
 
       if (!data) return;
 
-      if (data.pinned_message) {
+      if (data?.pinned_message) {
         get().handlePinnedMessageCreated(chatroom.id, data.pinned_message);
       }
 
       // Add initial messages to the chatroom
-      if (data.messages) {
-        console.log("Adding initial messages to the chatroom");
-        get().addInitialChatroomMessages(chatroom.id, data.messages);
+      if (data?.messages) {
+        get().addInitialChatroomMessages(chatroom.id, data.messages.reverse());
       }
     };
 
@@ -320,7 +342,7 @@ const useChatStore = create((set, get) => ({
   },
 
   initializeConnections: () => {
-    get().chatrooms.forEach((chatroom) => {
+    get()?.chatrooms?.forEach((chatroom) => {
       if (!get().connections[chatroom.id]) {
         get().connectToStvWebSocket(chatroom);
         get().connectToChatroom(chatroom);
@@ -351,6 +373,20 @@ const useChatStore = create((set, get) => ({
           ...state.messages,
           [chatroomId]: updatedMessages,
         },
+      };
+    });
+  },
+
+  handleUpdatePlaySound: (chatroomId, messageId) => {
+    set((state) => {
+      return {
+        ...state,
+        messages: state.messages[chatroomId].map((message) => {
+          if (message.id === messageId) {
+            return { ...message, playSound: !message.playSound };
+          }
+          return message;
+        }),
       };
     });
   },
@@ -421,11 +457,11 @@ const useChatStore = create((set, get) => ({
     }));
   },
 
-  handleStreamStatus: (chatroomId, event) => {
+  handleStreamStatus: (chatroomId, event, isLive) => {
     set((state) => ({
       chatrooms: state.chatrooms.map((room) => {
         if (room.id === chatroomId) {
-          return { ...room, isStreamerLive: event.is_live, streamStatus: event };
+          return { ...room, isStreamerLive: isLive, streamStatus: event };
         }
         return room;
       }),
