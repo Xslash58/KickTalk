@@ -2,6 +2,8 @@ import { create } from "zustand";
 import KickPusher from "../../../../utils/services/kick/kickPusher";
 import { chatroomErrorHandler } from "../utils/chatErrors";
 import queueChannelFetch from "../../../../utils/fetchQueue";
+import StvWebSocket from "../../../../utils/services/seventv/stvWebsocket";
+
 
 // Load initial state from local storage
 const getInitialState = () => {
@@ -10,6 +12,7 @@ const getInitialState = () => {
     chatrooms: savedChatrooms,
     messages: {},
     connections: {},
+    chatroomCosmetics: {},
   };
 };
 
@@ -61,12 +64,68 @@ const useChatStore = create((set, get) => ({
   },
 
   addMessage: (chatroomId, message) => {
+    console.log("saved cosmetics", get().chatroomCosmetics);
     set((state) => ({
       messages: {
         ...state.messages,
         [chatroomId]: [...(state.messages[chatroomId] || []), { ...message, deleted: false }].slice(-300), // Keep last 300 messages
       },
     }));
+  },
+
+  connectToStvWebSocket: (chatroom) => {
+    
+  const stvId = chatroom?.channel7TVEmotes.user.id || null;
+  const stvEmoteSets = chatroom?.channel7TVEmotes.emote_set.id || [];
+  const stvSocket = new StvWebSocket(chatroom.streamerData.user_id, stvId, stvEmoteSets);
+  set((state) => ({
+    connections: {
+      ...state.connections,
+      [chatroom.streamerData.user_id]: {
+        ...state.connections[chatroom.streamerData.user_id],
+       stvSocket: stvSocket,
+      },
+    },
+  }));
+  stvSocket.connect();
+   stvSocket.addEventListener("message", (event) => {
+    console.log("messages", get().messages);
+      const SevenTVEvent = event.detail;
+      const { type, body } = SevenTVEvent;
+      console.log("7TV WebSocket message:", type, body);
+      if (type === "cosmetic.create") {
+      console.log("cosmetic.creation", body);
+      set((state) => ({
+        chatroomCosmetics: {
+          ...state.chatroomCosmetics,
+          chatroomCosmetics: body,
+        }
+      }));
+      }
+      if(type === "entitlement.create") {
+        console.log("entitlement.create", body);
+        set((state) => ({
+          chatroomCosmetics: {
+            ...state.chatroomCosmetics,
+              userInfo: {
+                ...state.chatroomCosmetics.userInfo,
+                [body.object.user.username]: {
+                  ...state.chatroomCosmetics[body.id],
+                  entitlement: body,
+                }
+              }
+          }
+        }));
+      }
+    });
+
+    stvSocket.addEventListener("open", () => {
+      console.log("7TV WebSocket connected");
+    });
+
+    stvSocket.addEventListener("close", () => {
+      console.log("7TV WebSocket disconnected");
+    });
   },
 
   connectToChatroom: (chatroom) => {
@@ -193,7 +252,9 @@ const useChatStore = create((set, get) => ({
     set((state) => ({
       connections: {
         ...state.connections,
-        [chatroom.id]: pusher,
+        [chatroom.id]:{
+          kickpusher: pusher,
+        }
       },
     }));
   },
@@ -223,6 +284,7 @@ const useChatStore = create((set, get) => ({
 
       // Connect to chatroom
       get().connectToChatroom(newChatroom);
+      get().connectToStvWebSocket(newChatroom);
 
       // Save to local storage
       localStorage.setItem("chatrooms", JSON.stringify([...savedChatrooms, newChatroom]));
@@ -236,7 +298,10 @@ const useChatStore = create((set, get) => ({
   removeChatroom: (chatroomId) => {
     const { connections } = get();
     const connection = connections[chatroomId];
-    if (connection) connection.close();
+    const stvSocket = connection?.stvSocket;
+    const kickpusher = connection?.kickpusher;
+    if (stvSocket) stvSocket.close();
+    if (kickpusher) kickpusher.close();
 
     set((state) => {
       const { [chatroomId]: _, ...messages } = state.messages;
@@ -257,6 +322,7 @@ const useChatStore = create((set, get) => ({
   initializeConnections: () => {
     get().chatrooms.forEach((chatroom) => {
       if (!get().connections[chatroom.id]) {
+        get().connectToStvWebSocket(chatroom);
         get().connectToChatroom(chatroom);
       }
     });

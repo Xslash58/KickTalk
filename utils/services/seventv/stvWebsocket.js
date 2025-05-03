@@ -1,13 +1,190 @@
+// This websocket class originally made by https://github.com/Fiszh and edited by ftk789
+
+const cosmetics = {
+  paints: [],
+  badges: [],
+}
+
+async function updateCosmetics(body) {
+  if (!body) { return; }
+
+  if (body.object) {
+      if (body.object.kind === "BADGE") {
+          const object = body.object
+
+          if (!object.user) {
+              const data = object.data
+
+              const foundBadge = cosmetics.badges.find(badge =>
+                  badge &&
+                  badge.id === (data && data.id === "00000000000000000000000000" ? data.ref_id : data.id)
+              );
+
+              if (foundBadge) { return; }
+
+              cosmetics.badges.push({
+                  id: data.id === "00000000000000000000000000" ? data.ref_id || "default_id" : data.id,
+                  title: data.tooltip,
+                  url: `${data.host.url}/${data.host.files[data.host.files.length - 1].name}`
+              });
+          }
+      }
+
+      if (body.object.kind === "PAINT") {
+          const object = body.object
+
+          if (!object.user) {
+              const data = object.data
+
+              const foundPaint = cosmetics.paints.find(paint =>
+                  paint &&
+                  paint.id === (data && data.id === "00000000000000000000000000" ? data.ref_id : data.id)
+              );
+
+              if (foundPaint) { return; }
+
+              const randomColor = "#00f742";
+
+              let push = {};
+
+              if (data.stops.length) {
+                  const normalizedColors = data.stops.map((stop) => ({
+                      at: stop.at * 100,
+                      color: stop.color
+                  }));
+
+                  const gradient = normalizedColors.map(stop =>
+                      `${argbToRgba(stop.color)} ${stop.at}%`
+                  ).join(', ');
+
+                  if (data.repeat) {
+                      data.function = `repeating-${data.function}`;
+                  }
+
+                  data.function = data.function.toLowerCase().replace('_', '-')
+
+                  let isDeg_or_Shape = `${data.angle}deg`
+
+                  if (data.function !== "linear-gradient" && data.function !== "repeating-linear-gradient") {
+                      isDeg_or_Shape = data.shape
+                  }
+
+                  push = {
+                      id: data.id === "00000000000000000000000000" ? data.ref_id || "default_id" : data.id,
+                      name: data.name,
+                      style: data.function,
+                      shape: data.shape,
+                      backgroundImage: `${data.function || "linear-gradient"}(${isDeg_or_Shape}, ${gradient})` || `${data.style || "linear-gradient"}(${data.shape || ""} 0deg, ${randomColor}, ${randomColor})`,
+                      shadows: null,
+                      KIND: 'non-animated',
+                      url: data.image_url
+                  }
+              } else {
+                  push = {
+                      id: data.id === "00000000000000000000000000" ? data.ref_id || "default_id" : data.id,
+                      name: data.name,
+                      style: data.function,
+                      shape: data.shape,
+                      backgroundImage: `url('${[data.image_url]}')` || `${data.style || "linear-gradient"}(${data.shape || ""} 0deg, ${randomColor}, ${randomColor})`,
+                      shadows: null,
+                      KIND: 'animated',
+                      url: data.image_url
+                  }
+              }
+
+              // SHADOWS
+              let shadow = null;
+
+              if (data.shadows.length) {
+                  const shadows = data.shadows;
+
+                  shadow = await shadows.map(shadow => {
+                      let rgbaColor = argbToRgba(shadow.color);
+
+                      rgbaColor = rgbaColor.replace(/rgba\((\d+), (\d+), (\d+), (\d+(\.\d+)?)\)/, `rgba($1, $2, $3)`);
+
+                      return `drop-shadow(${rgbaColor} ${shadow.x_offset}px ${shadow.y_offset}px ${shadow.radius}px)`;
+                  }).join(' ');
+
+                  push["shadows"] = shadow
+              }
+
+              cosmetics.paints.push(push);
+          }
+      } else if (body.object?.name === "Personal Emotes" || body.object?.name === "Personal Emotes Set" || body.object?.user || body.object?.id === "00000000000000000000000000" || (body.object?.flags && (body.object.flags === 11 || body.object.flags === 4))) {
+          if (body.object?.id === "00000000000000000000000000" && body.object?.ref_id) {
+              body.object.id = body.object.ref_id;
+          }
+      
+          createCosmetic7TVProfile(body);
+      } else if (body?.object?.kind == "BADGE") {
+          const object = body.object
+          const data = object.data
+
+          const foundBadge = cosmetics.badges.find(badge =>
+              badge &&
+              badge.id === (data && data.id === "00000000000000000000000000" ? data.ref_id : data.id)
+          );
+
+          if (foundBadge) { return; }
+
+          cosmetics.badges.push({
+              id: data.id === "00000000000000000000000000" ? data.ref_id || "default_id" : data.id,
+              title: data.tooltip,
+              url: `${data.host.url}/${data.host.files[data.host.files.length - 1].name}`
+          });
+      } else {
+          console.log("Didn't process", body);
+      }
+  }
+  console.log("Cosmetics", cosmetics);
+}
+
+async function createCosmetic7TVProfile(body) {
+  if ((!body.object.owner || !body.object.owner.id) && !body.object.user.id) {
+      return;
+  }
+
+  const owner = body.object.owner || body.object.user;
+
+  let infoTable = {
+      lastUpdate: Date.now(),
+      user_id: owner.id,
+      ttv_user_id: null,
+      paint_id: null,
+      badge_id: null,
+      avatar_url: null,
+      personal_emotes: [],
+      personal_set_id: [],
+  };
+
+  if (owner.connections) {
+      const twitchConnection = owner.connections.find(connection => connection["platform"] === "TWITCH");
+      if (twitchConnection) {
+          infoTable["ttv_user_id"] = twitchConnection.id;
+      }
+  }
+
+  if (owner.style) {
+      const styleInfo = owner.style;
+      if (styleInfo["paint_id"]) {
+          infoTable["paint_id"] = styleInfo["paint_id"];
+      }
+      if (styleInfo["badge_id"]) {
+          infoTable["badge_id"] = styleInfo["badge_id"];
+      }
+  }
+}
 class StvWebSocket extends EventTarget {
-  constructor(chatroomNumber, channelTwitchID) {
+  constructor(channelKickID, stvId = "0", stvEmoteSetId = "0") {
     super();
     this.reconnectDelay = 5000;
     this.chat = null;
-    this.chatroomNumber = chatroomNumber;
-    this.channelTwitchID = channelTwitchID;
+    this.channelKickID = String(channelKickID);
+    this.stvId = stvId;
+    this.stvEmoteSetId = stvEmoteSetId;
     this.shouldReconnect = true;
   }
-
   connect() {
     console.log(`[7TV]: Connecting to WebSocket`);
 
@@ -17,23 +194,8 @@ class StvWebSocket extends EventTarget {
       let waitStartTime = Date.now();
       console.log(`[7TV]: Connection opened`);
 
-      while (Date.now() - waitStartTime < 10000) {
+      while (Date.now() - waitStartTime < 1000) {
         await new Promise((resolve) => setTimeout(resolve, 100));
-      }
-
-      const subscribeEntitlementCreateMessage = {
-        op: 35,
-        t: Date.now(),
-        d: {
-          type: "entitlement.create",
-          condition: { platform: "TWITCH", ctx: "channel", id: this.channelTwitchID },
-        },
-      };
-
-      if (this.channelTwitchID !== "0") {
-        await this.chat.send(JSON.stringify(subscribeEntitlementCreateMessage));
-
-        console.log(`[7TV]: Subscribed to entitlement.create`);
       }
 
       waitStartTime = Date.now();
@@ -44,242 +206,115 @@ class StvWebSocket extends EventTarget {
 
       console.log(`[7TV]: Subscribed to emote.set`);
 
-      const subscribeEmoteMessage = {
+      const subscribeuserMessage = {
         op: 35,
         t: Date.now(),
         d: {
           type: "user.*",
-          condition: { id: this.stvId },
+          condition: { object_id: this.stvId },
         },
       };
 
       if (this.stvId !== "0") {
-        await this.chat.send(JSON.stringify(subscribeEmoteSetMessage));
+        this.chat.send(JSON.stringify(subscribeuserMessage));
 
         console.log(`[7TV]: Subscribed to user.*`);
       }
 
-      const subscribeEmoteSetMessage = {
+      const subscribecosmeticcreate  = {
         op: 35,
         t: Date.now(),
         d: {
-          type: "emote_set.update",
-          condition: { id: this.stvEmoteSetId },
+          type: "cosmetic.*",
+          condition: { platform: "KICK", ctx: "channel", id: this.channelKickID },
         },
       };
 
-      if (this.stvEmoteSetId !== "0") {
-        await this.chat.send(JSON.stringify(subscribeEmoteSetMessage));
+      if (this.stvId !== "0") {
+        this.chat.send(JSON.stringify(subscribecosmeticcreate));
 
-        console.log(`[7TV]: Subscribed to emote_set.update`);
+        console.log(`[7TV]: Subscribed to subscribecosmeticcreate`);
       }
 
-      console.log(`[7TV]: Subscribed to all events`);
+
+      const subscribeAllentitlements = {
+        op: 35,
+        t: Date.now(),
+        d: {
+          type: "entitlement.*",
+          condition: { platform: "KICK", ctx: "channel", id: this.channelKickID },
+        },
+      };
+
+      if (this.channelKickID !== "0") {
+        this.chat.send(JSON.stringify(subscribeAllentitlements));
+
+        console.log(`[7TV]: Subscribed to entitlement.update`);
+      }
 
       this.chat.onmessage = (event) => {
-        console.log(`[7TV]: Message received: ${event.data}`);
-
+        
         try {
           const msg = JSON.parse(event.data);
 
           if (msg && msg.d && msg.d.body) {
             const body = msg.d.body;
-            let canProceed = false;
-
-            if (msg.d.type === "cosmetic.create" || !msg.d.body["actor"]) {
+            const type = msg.d.type;
+            switch (type) {
+            case "user.update":
+              console.log(type, body);
+              this.dispatchEvent(
+                new CustomEvent("message", {
+                  detail: { body, type: "user.update", },
+                })
+              );
+              break;
+            case "cosmetic.create":
+              console.log(type, body);
               updateCosmetics(body);
-              return;
-            }
-
-            let tableData = {
-              name: "none",
-              url: "4x.avif",
-              flags: 0,
-              site: "",
-              action: "other",
-            };
-
-            if (body["pushed"]) {
-              if (!body.pushed[0]) {
-                return;
-              }
-
-              const owner = body.pushed[0].value.data?.owner;
-
-              const creator = owner && Object.keys(owner).length ? owner.display_name || owner.username || "UNKNOWN" : "NONE";
-
-              tableData = {
-                name: body.pushed[0].value.name,
-                url: `https://cdn.7tv.app/emote/${body.pushed[0]["value"].id}/4x.avif`,
-                flags: body.pushed[0].value.data?.flags,
-                original_name: body.pushed[0].value.data?.name,
-                creator,
-                site: "7TV",
-                user: body.actor["display_name"] || "UNKNOWN",
-                action: "add",
-              };
-
-              canProceed = true;
-            } else if (body["pulled"]) {
-              if (!body.pulled[0]) {
-                return;
-              }
-              tableData = {
-                name: body.pulled[0]["old_value"].name,
-                url: `https://cdn.7tv.app/emote/${body.pulled[0]["old_value"].id}/4x.avif`,
-                user: body.actor["display_name"] || "UNKNOWN",
-                action: "remove",
-              };
-
-              canProceed = true;
-            } else if (body["updated"]) {
-              if (!body.updated[0]) {
-                return;
-              }
-
-              if (body["updated"][0]["key"] === "connections") {
-                tableData = "emote_set.change";
-
-                tableData = {
-                  newSetName: body.updated[0]["value"][0]["value"].name,
-                  newSetId: body.updated[0]["value"][0]["value"].id,
-                  oldSetName: body.updated[0]["value"][0]["old_value"].name,
-                  oldSetId: body.updated[0]["value"][0]["old_value"].id,
-                  user: body.actor["display_name"] || "UNKNOWN",
-                  site: "7TV",
-                  action: "emote_set.change",
-                };
-
-                canProceed = true;
-              } else {
-                if (!body.updated[0]["value"] || !body.updated[0]["old_value"]) {
-                  return;
+              this.dispatchEvent(
+                new CustomEvent("message", {
+                  detail: { body: cosmetics, type: "cosmetic.create", },
+                })
+              );
+              break;
+              case "entitlement.create":
+                if(body.kind === 10){
+                  console.log(type, body);
+                  this.dispatchEvent(
+                    new CustomEvent("message", {
+                      detail: { body, type: "entitlement.create", },
+                    })
+                  );
+                  break;
                 }
-
-                tableData = {
-                  newName: body.updated[0]["value"].name,
-                  oldName: body.updated[0]["old_value"].name,
-                  user: body.actor["display_name"] || "UNKNOWN",
-                  site: "7TV",
-                  action: "update",
-                };
-
-                canProceed = true;
-              }
             }
-
-            if (canProceed) {
-              update7TVEmoteSet(tableData);
             }
+          } catch (error) {
+            console.log("Error parsing message:", error);
           }
-        } catch (error) {
-          console.log("Error parsing message:", error);
-        }
+          };
+
+         this.chat.onerror = (event) => {
+         console.log(`[7TV]: Error: ${event.message}`);
       };
-
-      // this.chat.onerror = (event) => {
-      //   console.log(`[7TV]: Error: ${event.message}`);
-      // };
     };
-    // close() {
-    //   console.log(`Closing connection for chatroom ${this.chatroomNumber}`);
-    //   this.shouldReconnect = false;
-
-    //   if (this.chat && this.chat.readyState === WebSocket.OPEN) {
-    //     try {
-    //       this.chat.send(
-    //         JSON.stringify({
-    //           event: "pusher:unsubscribe",
-    //           data: {
-    //             channel: `chatrooms.${this.chatroomNumber}.v2`,
-    //           },
-    //         }),
-    //       );
-
-    //       console.log(`Unsubscribed from channel: chatrooms.${this.chatroomNumber}.v2`);
-
-    //       this.chat.close();
-    //       this.chat = null;
-
-    //       console.log("WebSocket connection closed");
-    //     } catch (error) {
-    //       console.error("Error during closing of connection:", error);
-    //     }
-    //   }
-    // }
-  }
-}
-
-async function update7TVEmoteSet(table) {
-  if (table.url === "4x.avif") {
-    return;
   }
 
-  if (table.action === "add") {
-    delete table.action;
-    SevenTVEmoteData.push(table);
+  close() {
+    console.log(`Closing connection for chatroom ${this.chatroomNumber}`);
+    this.shouldReconnect = false;
 
-    console.log(FgBlue + "SevenTV " + FgWhite + `${table.user} added ${table.name}`);
-  } else if (table.action === "remove") {
-    let foundEmote = SevenTVEmoteData.find((emote) => emote.original_name === table.name);
-
-    console.log(FgBlue + "SevenTV " + FgWhite + `${table.user} removed ${foundEmote.name}`);
-
-    SevenTVEmoteData = SevenTVEmoteData.filter((emote) => emote.url !== table.url);
-  } else if (table.action === "update") {
-    if (!table.newName || !table.newName) {
-      return;
+    if (this.chat && this.chat.readyState === WebSocket.OPEN) {
+      try {
+        this.chat.close();
+        this.chat = null;
+        console.log("WebSocket connection closed");
+      } catch (error) {
+        console.error("Error during closing of connection:", error);
+      }
     }
-
-    let foundEmote = SevenTVEmoteData.find((emote) => emote.name === table.oldName);
-    foundEmote.name = table.newName;
-    //SevenTVEmoteData.push(table);
-
-    console.log(FgBlue + "SevenTV " + FgWhite + `${table.user} renamed ${table.oldName} to ${table.newName}`);
-
-    //SevenTVEmoteData = SevenTVEmoteData.filter(emote => emote.name !== table.oldName);
-  } else if (table.action === "emote_set.change") {
-    const unsubscribeEmoteSetMessage = {
-      op: 36,
-      t: Date.now(),
-      d: {
-        type: `emote_set.update`,
-        condition: {
-          object_id: SevenTVemoteSetId,
-        },
-      },
-    };
-
-    await SevenTVWebsocket.send(JSON.stringify(unsubscribeEmoteSetMessage));
-
-    console.log(FgBlue + "SevenTV " + FgWhite + "UnSubscribed to emote_set.update");
-
-    SevenTVemoteSetId = table.newSetId;
-
-    SevenTVEmoteData = await fetch7TVEmoteData(SevenTVemoteSetId);
-
-    console.log(FgBlue + "SevenTV " + FgWhite + `Emote set changed to ${table["newSetName"]}`);
-
-    const subscribeEmoteSetMessage = {
-      op: 35,
-      t: Date.now(),
-      d: {
-        type: `emote_set.update`,
-        condition: {
-          object_id: SevenTVemoteSetId,
-        },
-      },
-    };
-
-    await SevenTVWebsocket.send(JSON.stringify(subscribeEmoteSetMessage));
-
-    console.log(FgBlue + "SevenTV " + FgWhite + "Subscribed to emote_set.update");
-
-    //WEBSOCKET
-    //await SevenTVWebsocket.close();
   }
-
-  await updateAllEmoteData();
 }
 
 function argbToRgba(color) {
