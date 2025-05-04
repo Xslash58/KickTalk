@@ -42,6 +42,8 @@ const Message = memo(
       updateSoundPlayed(chatroomId, message.id);
     }
 
+    console.log("test", stvCosmetics);
+
     return (
       <div
         className={clsx(
@@ -107,7 +109,8 @@ const Message = memo(
       prevProps.message.id === nextProps.message.id &&
       prevProps.message.deleted === nextProps.message.deleted &&
       prevProps.settings === nextProps.settings &&
-      prevProps.kickTalkBadges === nextProps.kickTalkBadges
+      prevProps.kickTalkBadges === nextProps.kickTalkBadges &&
+      prevProps.stvCosmetics === nextProps.stvCosmetics
     );
   },
 );

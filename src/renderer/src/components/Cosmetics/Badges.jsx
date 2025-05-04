@@ -107,20 +107,19 @@ const StvBadges = memo(({ badge }) => {
     },
     [showBadgeInfo],
   );
-
-    const badgeUrl = badge.url;
-    return (
-      <div className="chatroomBadge" key={badge.type} onMouseMove={handleMouseMove}>
-        <BadgeTooltip showBadgeInfo={showBadgeInfo} mousePos={mousePos} badgeInfo={{ ...badge, src: badgeUrl }} />
-        <img
-          className="chatroomBadgeIcon"
-          src={badgeUrl}
-          alt={badge.title}
-          onMouseEnter={handleMouseEnter}
-          onMouseLeave={handleMouseLeave}
-        />
-      </div>
-    );
+  const badgeUrl = badge.url;
+  return (
+    <div className="chatroomBadge" key={badge.type} onMouseMove={handleMouseMove}>
+      <BadgeTooltip showBadgeInfo={showBadgeInfo} mousePos={mousePos} badgeInfo={{ ...badge, src: badgeUrl }} />
+      <img
+        className="chatroomBadgeIcon"
+        src={badgeUrl}
+        alt={badge.title}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+      />
+    </div>
+  );
 });
 
 export { KickBadges, KickTalkBadges, StvBadges };
