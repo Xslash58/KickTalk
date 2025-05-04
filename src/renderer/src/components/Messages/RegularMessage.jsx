@@ -1,6 +1,7 @@
 import { memo } from "react";
 import { MessageParser } from "../../utils/MessageParser";
 import { KickBadges, KickTalkBadges } from "../Cosmetics/Badges";
+import CopyIcon from "../../assets/icons/copy-simple-fill.svg";
 
 const RegularMessage = memo(
   ({
@@ -35,6 +36,16 @@ const RegularMessage = memo(
         <span className="chatMessageContent">
           <MessageParser type={type} message={message} sevenTVEmotes={sevenTVEmotes} sevenTVSettings={sevenTVSettings} />
         </span>
+
+        <div className="chatMessageActions">
+          <button
+            onClick={() => {
+              navigator.clipboard.writeText(message.content);
+            }}
+            className="chatMessageActionButton">
+            <img src={CopyIcon} alt="Copy Message" width={16} height={16} />
+          </button>
+        </div>
       </span>
     );
   },
