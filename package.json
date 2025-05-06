@@ -41,7 +41,7 @@
       "directories": {
         "output": "dist"
       },
-    "icon": "./public/icon.ico"
+    "icon": "../resources/icons/win/KickTalk_v1.ico"
   },
   "dependencies": {
     "@electron-toolkit/preload": "^3.0.1",

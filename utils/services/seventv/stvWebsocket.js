@@ -182,7 +182,7 @@ class StvWebSocket extends EventTarget {
       if (this.channelKickID !== "0") {
         this.subscribeToEntitlementEvents();
         if (this.stvEmoteSetId !== "0") {
-          this.subscribeToEmoteSetEvents();
+          //this.subscribeToEmoteSetEvents();
         }
       }
 
@@ -251,19 +251,19 @@ class StvWebSocket extends EventTarget {
   /**
    * Subscribe to all emote set events
    */
-  subscribeToEmoteSetEvents() {
-    const subscribeAllEmoteSets = {
-      op: 35,
-      t: Date.now(),
-      d: {
-        type: "emote_set.*",
-        condition: { object_id: this.stvEmoteSetId },
-      },
-    };
+  // subscribeToEmoteSetEvents() {
+  //   const subscribeAllEmoteSets = {
+  //     op: 35,
+  //     t: Date.now(),
+  //     d: {
+  //       type: "emote_set.*",
+  //       condition: { object_id: this.stvEmoteSetId },
+  //     },
+  //   };
 
-    this.chat.send(JSON.stringify(subscribeAllEmoteSets));
-    console.log(`[7TV]: Subscribed to emote_set.* events`);
-  }
+  //   this.chat.send(JSON.stringify(subscribeAllEmoteSets));
+  //   console.log(`[7TV]: Subscribed to emote_set.* events`);
+  // }
 
   setupMessageHandler() {
     this.chat.onmessage = (event) => {

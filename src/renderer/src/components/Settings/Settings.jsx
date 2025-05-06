@@ -83,7 +83,7 @@ const Settings = ({ settingsModalOpen, setSettingsModalOpen, appInfo }) => {
               <div className="checkBox">
                 <img src={Check} width={14} height={14} alt="Check" />
               </div>
-              <span>Notification Sound</span>
+              {/*<span>Notification Sound</span>*/}
             </button>
           </div>
           <div className="settingItem notificationSetting">
