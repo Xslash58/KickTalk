@@ -5,6 +5,7 @@ import {
   COMMAND_PRIORITY_HIGH,
   KEY_ARROW_UP_COMMAND,
   KEY_ARROW_DOWN_COMMAND,
+  KEY_TAB_COMMAND,
   $createTextNode,
   $createParagraphNode,
   $getSelection,
@@ -331,6 +332,26 @@ const KeyHandler = ({ chatroomId, onSendMessage }) => {
       COMMAND_PRIORITY_HIGH,
     );
 
+    // TAB Command
+    const registerTabCommand = editor.registerCommand(
+      KEY_TAB_COMMAND,
+      (e) => {
+        if (e.shiftKey) return false;
+        e.preventDefault();
+
+        if (suggestions?.length > 0) {
+          insertEmote(suggestions[selectedIndex]);
+          return true;
+        }
+
+        const content = $rootTextContent();
+        if (!content.trim()) return true;
+
+        return true;
+      },
+      COMMAND_PRIORITY_HIGH,
+    );
+
     const registerUpdateListener = editor.registerUpdateListener(({ editorState }) => {
       editorState.read(() => {
         const selection = $getSelection();
@@ -383,6 +404,7 @@ const KeyHandler = ({ chatroomId, onSendMessage }) => {
       registerUpdateListener();
       registerArrowUpCommand();
       registerArrowDownCommand();
+      registerTabCommand();
       registerPasteCommand();
     };
   }, [editor, searchEmotes, suggestions, selectedIndex, insertEmote]);

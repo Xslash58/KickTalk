@@ -3,7 +3,7 @@ import { ipcMain } from "electron";
 console.log("AutoUpdater initialized");
 const startDownload = (callback, completedCallback) => {
   autoUpdater.on("download-progress", (progress) => {
-    mainWindow.webContents.send("autoUpdater:downloadProgress", progress);
+    //mainWindow.webContents.send("autoUpdater:downloadProgress", progress);
   });
 
   autoUpdater.on("error", (error) => {
@@ -72,8 +72,7 @@ export const update = (mainWindow) => {
       },
       () => {
         event.sender.send("autoUpdater:downloadCompleted");
-      },
-    );
+      });
   });
 
   ipcMain.on("autoUpdater:quitAndInstall", () => {

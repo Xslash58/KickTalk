@@ -156,16 +156,12 @@ const useChatStore = create((set, get) => ({
     // Connection Events
     pusher.addEventListener("connection", (event) => {
       console.info("Connected to chatroom:", chatroom.id);
-
-      if (!get().connections[chatroom.id]) {
         get().addMessage(chatroom.id, {
           id: crypto.randomUUID(),
           type: "system",
           ...event?.detail,
           timestamp: new Date().toISOString(),
         });
-      }
-
       return;
     });
 

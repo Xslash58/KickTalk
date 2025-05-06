@@ -225,6 +225,7 @@ const createWindow = () => {
   mainWindow.on("ready-to-show", async () => {
     mainWindow.show();
     setAlwaysOnTop(mainWindow);
+    update(mainWindow);
 
     if (isDev) {
       mainWindow.webContents.openDevTools();
@@ -254,7 +255,6 @@ const createWindow = () => {
     mainWindow.loadFile(join(__dirname, "../renderer/index.html"));
   }
 
-  update(mainWindow);
 };
 
 const loginToKick = async (method) => {

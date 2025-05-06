@@ -8,8 +8,6 @@ const useCosmeticsStore = create((set, get) => ({
   },
 
   addUserStyle: async (username, body) => {
-    console.log("addUserStyle", body);
-
     if (!body?.object?.user?.style) return;
     const transformedUsername = username.toLowerCase();
     const userStyle = body.object.user;
