@@ -92,7 +92,6 @@ const getEmoteData = (emoteName, sevenTVEmotes, chatroomId) => {
 
 export const MessageParser = ({ message, sevenTVEmotes, sevenTVSettings, type }) => {
   if (!message?.content) return [];
-
   const parts = [];
   let lastIndex = 0;
 

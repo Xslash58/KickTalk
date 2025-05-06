@@ -15,24 +15,24 @@ function serialize(arg) {
     return `${arg.name}: ${arg.message}\n${arg.stack}`;
   }
   try {
-    return typeof arg === 'string' ? arg : JSON.stringify(arg, null, 2);
+    return typeof arg === "string" ? arg : JSON.stringify(arg, null, 2);
   } catch {
-    return '[Unserializable Object]';
+    return "[Unserializable Object]";
   }
 }
 
 function setupLogging() {
-  const logPath = path.join(app.getPath('userData'), 'log.txt');
-  const logStream = fs.createWriteStream(logPath, { flags: 'a' });
+  const logPath = path.join(app.getPath("userData"), "log.txt");
+  const logStream = fs.createWriteStream(logPath, { flags: "a" });
 
   const writeLog = (level, ...args) => {
     const timestamp = new Date().toISOString();
-    const message = args.map(serialize).join(' ');
+    const message = args.map(serialize).join(" ");
     logStream.write(`[${level} ${timestamp}] ${message}\n`);
   };
 
-  console.log = (...args) => writeLog('LOG', ...args);
-  console.error = (...args) => writeLog('ERROR', ...args);
+  console.log = (...args) => writeLog("LOG", ...args);
+  console.error = (...args) => writeLog("ERROR", ...args);
 }
 
 setupLogging();
@@ -50,7 +50,6 @@ const authStore = new Store({
 });
 
 ipcMain.setMaxListeners(100);
-
 
 const isDev = process.env.NODE_ENV === "development";
 
@@ -227,7 +226,7 @@ const createWindow = () => {
     mainWindow.show();
     setAlwaysOnTop(mainWindow);
 
-    if (true) {
+    if (isDev) {
       mainWindow.webContents.openDevTools();
     }
   });
@@ -473,7 +472,6 @@ ipcMain.handle("userDialog:open", (e, { data }) => {
     });
   });
 
-  // TODO: Handle Pin of Dialog
   userDialog.on("blur", () => {
     if (userDialog && !userDialog.isAlwaysOnTop()) {
       userDialog.close();

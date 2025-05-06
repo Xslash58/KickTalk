@@ -26,7 +26,11 @@ const MessagesHandler = memo(
     );
   },
   (prevProps, nextProps) => {
-    return prevProps.chatroomId === nextProps.chatroomId && prevProps.settings === nextProps.settings;
+    return (
+      prevProps.chatroomId === nextProps.chatroomId &&
+      prevProps.settings === nextProps.settings &&
+      prevProps.channel7TVEmotes === nextProps.channel7TVEmotes
+    );
   },
 );
 

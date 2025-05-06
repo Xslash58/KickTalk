@@ -117,9 +117,9 @@ const useChatStore = create((set, get) => ({
       switch (type) {
         case "connection_established":
           break;
-        case "emote_set.update":
-          get().handleEmoteSetUpdate(body);
-          break;
+        // case "emote_set.update":
+        //   get().handleEmoteSetUpdate(chatroom.id, body);
+        //   break;
         case "cosmetic.create":
           useCosmeticsStore?.getState()?.addCosmetics(body);
           break;
@@ -148,7 +148,7 @@ const useChatStore = create((set, get) => ({
     });
   },
 
-  connectToChatroom: (chatroom) => {
+  connectToChatroom: async (chatroom) => {
     if (!chatroom?.id) return;
     const pusher = new KickPusher(chatroom.id, chatroom.streamerData.id);
 
@@ -240,6 +240,23 @@ const useChatStore = create((set, get) => ({
     });
 
     pusher.connect();
+
+    if (pusher.chat.OPEN) {
+      const channel7TVEmotes = await window.app.stv.getChannelEmotes(chatroom.streamerData.user_id);
+
+      if (channel7TVEmotes) {
+        localStorage.setItem("channel7TVEmotes", JSON.stringify(channel7TVEmotes));
+      }
+
+      set((state) => ({
+        chatrooms: state.chatrooms.map((room) => {
+          if (room.id === chatroom.id) {
+            return { ...room, channel7TVEmotes };
+          }
+          return room;
+        }),
+      }));
+    }
 
     const fetchEmotes = async () => {
       const data = await window.app.kick.getEmotes(chatroom.slug);
@@ -339,13 +356,12 @@ const useChatStore = create((set, get) => ({
       const response = await queueChannelFetch(username);
       if (!response?.user) return;
 
-      const channel7TVEmotes = await window.app.stv.getChannelEmotes(response.user.id);
       const newChatroom = {
         id: response.chatroom.id,
         username: response.user.username,
         slug: username,
         streamerData: response,
-        channel7TVEmotes,
+        channel7TVEmotes: [],
       };
 
       set((state) => ({
@@ -547,9 +563,94 @@ const useChatStore = create((set, get) => ({
     }));
   },
 
-  handleEmoteSetUpdate: (body) => {
-    if (!body?.pulled?.length) return;
-  },
+  // handleEmoteSetUpdate: (chatroomId, body) => {
+  //   if (!body) return;
+
+  //   const { pulled, pushed, updated } = body;
+
+  //   const chatroom7TVEmoteSet = get().chatrooms?.filter((room) => room.id === chatroomId)[0]?.channel7TVEmotes;
+  //   let updatedEmoteSet = [...chatroom7TVEmoteSet?.emote_set?.emotes];
+
+  //   switch (true) {
+  //     case pulled?.length > 0:
+  //       pulled?.forEach((emote) => {
+  //         console.log("[7TV] Emote Pulled from chatroom:", chatroomId, emote, chatroom7TVEmoteSet);
+  //         console.log(updatedEmoteSet.filter((emote) => emote.id !== emote));
+  //         // updatedEmoteSet = updatedEmoteSet.filter((emote) => emote.id !== emote);
+  //       });
+  //       break;
+  //     case pushed?.length > 0:
+  //       pushed?.forEach((emote) => {
+  //         const { value } = emote;
+  //         if (!value?.id) return;
+
+  //         if (updatedEmoteSet.find((emote) => emote.id === value.id)) {
+  //           return;
+  //         }
+
+  //         const newEmote = {
+  //           id: value.id,
+  //           actor_id: value.actor_id,
+  //           name: value.name,
+  //           alias: value.data?.name !== value.name ? value.data?.name : null,
+  //           owner: value.data?.owner,
+  //           file: value.data?.host.files?.[0] || value.data?.host.files?.[1],
+  //           platform: "7tv",
+  //         };
+
+  //         console.log("new emote:", newEmote);
+
+  //         updatedEmoteSet.push(newEmote);
+  //       });
+  //       break;
+  //     case updated?.length > 0:
+  //       updated?.forEach((emote) => {
+  //         console.log("[7TV] Emote Updated in chatroom:", chatroomId, emote, chatroom7TVEmoteSet);
+
+  //         const { old_value, value } = emote;
+  //         if (!old_value?.id || !value?.id) return;
+
+  //         updatedEmoteSet = updatedEmoteSet.filter((emote) => emote.id !== old_value.id);
+
+  //         const newEmote = {
+  //           id: value.id,
+  //           actor_id: value.actor_id,
+  //           name: value.name,
+  //           alias: value.data?.name !== value.name ? value.data?.name : null,
+  //           owner: value.data?.owner,
+  //           file: value.data?.host.files?.[0] || value.data?.host.files?.[1],
+  //           platform: "7tv",
+  //         };
+
+  //         updatedEmoteSet.push(newEmote);
+
+  //         console.log(emote);
+  //       });
+  //       // updatedEmoteSet = chatroom7TVEmotes.map((emote) => {
+  //       //   if (body?.updated?.includes(emote.id)) {
+  //       //     return { ...emote, ...body?.updated };
+  //       //   }
+  //       //   return emote;
+  //       // });
+  //       break;
+  //   }
+
+  //   console.log("updated emote set:", updatedEmoteSet);
+  //   const updatedChannel7TVEmotes = { ...chatroom7TVEmoteSet, emote_set: { emotes: updatedEmoteSet } };
+
+  //   localStorage.setItem("channel7TVEmotes", JSON.stringify(updatedChannel7TVEmotes));
+
+  //   console.log("updated channel 7tv emotes:", updatedChannel7TVEmotes);
+
+  //   set((state) => ({
+  //     chatrooms: state.chatrooms.map((room) => {
+  //       if (room.id === chatroomId) {
+  //         return { ...room, channel7TVEmotes: updatedChannel7TVEmotes };
+  //       }
+  //       return room;
+  //     }),
+  //   }));
+  // },
 }));
 
 // Initialize connections when the store is created

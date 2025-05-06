@@ -107,7 +107,6 @@ const Chat = memo(
             channel7TVEmotes={chatroom?.channel7TVEmotes}
             subscriberBadges={subscriberBadges}
             kickTalkBadges={userKickTalkBadges}
-            // updateSoundPlayed={updateSoundPlayed}
             settings={settings}
           />
         </div>
@@ -129,7 +128,12 @@ const Chat = memo(
     );
   },
   (prevProps, nextProps) => {
-    return prevProps.chatroomId === nextProps.chatroomId && prevProps.settings === nextProps.settings;
+    return (
+      prevProps.chatroomId === nextProps.chatroomId &&
+      prevProps.settings === nextProps.settings &&
+      prevProps.chatroom?.pinnedMessage === nextProps.chatroom?.pinnedMessage &&
+      prevProps.channel7TVEmotes === nextProps.channel7TVEmotes
+    );
   },
 );
 

@@ -97,19 +97,19 @@ if (process.contextIsolated) {
         },
       },
 
-      update:{
+      update: {
         onUpdate: (callback) => {
           const handler = (_, data) => callback(data);
           ipcRenderer.on("autoUpdater:download", handler);
           ipcRenderer.on("autoUpdater:update-available", handler);
-          ipcRenderer.on("update-not-available", handler);
+          ipcRenderer.on("autoUpdater:update-not-available", handler);
           ipcRenderer.on("autoUpdater:downloadError", handler);
           ipcRenderer.on("autoUpdater:downloadProgress", handler);
           ipcRenderer.on("autoUpdater:downloadCompleted", handler);
           return () => {
             ipcRenderer.removeListener("autoUpdater:download", handler);
             ipcRenderer.removeListener("autoUpdater:update-available", handler);
-            ipcRenderer.removeListener("update-not-available", handler);
+            ipcRenderer.removeListener("autoUpdater:update-not-available", handler);
             ipcRenderer.removeListener("autoUpdater:downloadError", handler);
             ipcRenderer.removeListener("autoUpdater:downloadProgress", handler);
             ipcRenderer.removeListener("autoUpdater:downloadCompleted", handler);

@@ -135,17 +135,4 @@ const getUserStvId = async (platformId) => {
   }
 };
 
-// const getGlobalEmotes = async () => {
-//   const response = await axios.get(`https://7tv.io/v3/emote-sets/global`);
-
-//   if (response.status !== 200) {
-//     console.error(`[7TV Emotes] Error while fetching Global Emotes. Status: ${response.status}`);
-//     return [];
-//   }
-
-//   return response.data;
-// };
-
-// const getUserCosmetics = async (id) => {};
-
 export { getChannelEmotes, sendUserPresence, getUserStvId };

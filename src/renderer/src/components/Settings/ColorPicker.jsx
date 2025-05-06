@@ -1,5 +1,5 @@
 import { HexColorPicker } from "react-colorful";
-import { useMemo, useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect } from "react";
 import clsx from "clsx";
 import useClickOutside from "../../utils/useClickOutside";
 const ColorPicker = ({ initialColor, handleColorChange, isColorPickerOpen, setIsColorPickerOpen }) => {

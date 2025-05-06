@@ -47,7 +47,7 @@ export const update = (mainWindow) => {
   });
 
   autoUpdater.on("update-not-available", (info) => {
-    mainWindow.webContents.send("audoUpdater:update-not-available", info);
+    mainWindow.webContents.send("autoUpdater:update-not-available", info);
     console.log("Update not available:", info);
   });
 

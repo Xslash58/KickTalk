@@ -52,7 +52,7 @@ const PinnedMessage = memo(
     return (
       prevProps.showPinnedMessage === nextProps.showPinnedMessage &&
       prevProps.pinnedMessageExpanded === nextProps.pinnedMessageExpanded &&
-      prevProps.pinnedMessage?.id === nextProps.pinnedMessage?.id
+      prevProps.pinnedMessage?.message?.id === nextProps.pinnedMessage?.message?.id
     );
   },
 );

@@ -13,3 +13,13 @@ export const convertMinutesToHumanReadable = (minutes) => {
     return `${Math.floor(minutes / 1440)} ${Math.floor(minutes / 1440) > 1 ? "days" : "day"}`;
   }
 };
+
+export const convertSecondsToHumanReadable = (seconds) => {
+  if (seconds < 60) {
+    return `${seconds} ${seconds > 1 ? "seconds" : "second"}`;
+  } else if (seconds < 3600) {
+    return `${Math.floor(seconds / 60)} ${Math.floor(seconds / 60) > 1 ? "minutes" : "minute"}`;
+  } else {
+    return `${Math.floor(seconds / 3600)} ${Math.floor(seconds / 3600) > 1 ? "hours" : "hour"}`;
+  }
+};

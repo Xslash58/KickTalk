@@ -1,5 +1,5 @@
 import "../../assets/styles/components/Settings.scss";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import clsx from "clsx";
 import SignOut from "../../assets/icons/sign-out-bold.svg?asset";
 import Check from "../../assets/icons/check-bold.svg?asset";
@@ -55,30 +55,6 @@ const Settings = ({ settingsModalOpen, setSettingsModalOpen, appInfo }) => {
           </div>
         </div>
       </div>
-
-      {/* <span className="settingsDivider" /> */}
-
-      {/* <div className="settingsSection chatroomSettings">
-        <h5>Chatroom Settings</h5>
-
-        <div className="settingOptions chatroomSettingsOptions">
-          <div className="settingItem chatroomSetting">
-            <button
-              className={clsx("settingSwitchItem", settings?.chatrooms?.showModActions ? "checked" : "")}
-              onClick={() =>
-                changeSetting("chatrooms", {
-                  ...settings?.chatrooms,
-                  showModActions: !settings?.chatrooms?.showModActions,
-                })
-              }>
-              <div className="checkBox">
-                <img src={Check} width={14} height={14} alt="Check" />
-              </div>
-              <span>Show Mod Actions</span>
-            </button>
-          </div>
-        </div>
-      </div> */}
 
       <span className="settingsDivider" />
 

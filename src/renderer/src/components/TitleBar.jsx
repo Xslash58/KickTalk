@@ -67,8 +67,6 @@ const TitleBar = () => {
         <Settings settingsModalOpen={settingsModalOpen} setSettingsModalOpen={setSettingsModalOpen} appInfo={appInfo} />
       </div>
 
-      <Updater />
-
       <div className="titleBarRight">
         <div className="titleBarControls">
           <button className="minimize" onClick={() => window.app.minimize()}>

@@ -28,6 +28,7 @@ import { useShallow } from "zustand/react/shallow";
 import { EmoteNode } from "./EmoteNode";
 import { kickEmoteInputRegex, kickEmoteRegex } from "../../../../utils/constants";
 import clsx from "clsx";
+import { convertSecondsToHumanReadable } from "../utils/ChatUtils";
 
 const onError = (error) => {
   console.error(error);
@@ -445,142 +446,6 @@ const EmoteTransformer = ({ chatroomId }) => {
   }, [editor, kickEmotes]);
 };
 
-// const KeyHandler = ({ chatroomId, onSendMessage }) => {
-//   const [editor] = useLexicalComposerContext();
-
-//   useEffect(() => {
-//     if (!editor) return;
-
-//     editor.registerCommand(
-//       PASTE_COMMAND,
-//       (event) => {
-//         const clipboardData = event.clipboardData;
-//         if (!clipboardData) return false;
-
-//         const pastedText = clipboardData.getData("text");
-//         if (!pastedText) return false;
-
-//         editor.update(() => {
-//           const selection = $getSelection();
-//           if (!$isRangeSelection(selection)) return;
-
-//           let lastIndex = 0;
-//           const matches = [...pastedText.matchAll(kickEmoteRegex)];
-
-//           matches.forEach((match) => {
-//             // Insert text node before emote node
-//             if (match.index > lastIndex) {
-//               const textNode = $createTextNode(pastedText.slice(lastIndex, match.index));
-//               selection.insertNodes([textNode]);
-//             }
-
-//             // Insert emote node
-//             const emoteNode = new EmoteNode(match.groups.id, match.groups.name);
-//             selection.insertNodes([emoteNode]);
-
-//             lastIndex = match.index + match[0].length;
-//           });
-
-//           if (lastIndex < pastedText.length) {
-//             const textNode = $createTextNode(pastedText.slice(lastIndex));
-//             selection.insertNodes([textNode]);
-//           }
-//         });
-
-//         return true;
-//       },
-//       COMMAND_PRIORITY_HIGH,
-//     );
-
-//     const registerEnterCommand = editor.registerCommand(
-//       KEY_ENTER_COMMAND,
-//       (e) => {
-//         if (e.shiftKey) return false;
-//         e.preventDefault();
-
-//         const content = $rootTextContent();
-//         if (!content.trim()) return true;
-
-//         onSendMessage(content);
-//         editor.update(() => {
-//           $getRoot().clear();
-//         });
-
-//         return true;
-//       },
-//       COMMAND_PRIORITY_HIGH,
-//     );
-
-//     const registerArrowUpCommand = editor.registerCommand(
-//       KEY_ARROW_UP_COMMAND,
-//       () => {
-//         const history = messageHistory.get(chatroomId);
-//         if (!history?.sentMessages?.length) return false;
-
-//         const currentIndex = history.selectedIndex !== undefined ? history.selectedIndex - 1 : history.sentMessages.length - 1;
-//         if (currentIndex < 0) return false;
-
-//         messageHistory.set(chatroomId, {
-//           ...history,
-//           selectedIndex: currentIndex,
-//         });
-
-//         editor.update(() => {
-//           const root = $getRoot();
-//           root.clear();
-
-//           const paragraph = $createParagraphNode();
-//           const text = $createTextNode(history.sentMessages[currentIndex]);
-
-//           paragraph.append(text);
-//           root.append(paragraph);
-//         });
-
-//         return true;
-//       },
-//       COMMAND_PRIORITY_HIGH,
-//     );
-
-//     const registerArrowDownCommand = editor.registerCommand(
-//       KEY_ARROW_DOWN_COMMAND,
-//       () => {
-//         const history = messageHistory.get(chatroomId);
-//         if (!history?.sentMessages?.length) return false;
-
-//         const currentIndex = history.selectedIndex >= 0 ? history.selectedIndex + 1 : 0;
-//         if (currentIndex > history.sentMessages.length) return false;
-
-//         messageHistory.set(chatroomId, {
-//           ...history,
-//           selectedIndex: currentIndex,
-//         });
-
-//         editor.update(() => {
-//           const root = $getRoot();
-//           root.clear();
-
-//           const paragraph = $createParagraphNode();
-//           const text = $createTextNode(history.sentMessages[currentIndex]);
-
-//           paragraph.append(text);
-//           root.append(paragraph);
-//         });
-
-//         return true;
-//       },
-//       COMMAND_PRIORITY_HIGH,
-//     );
-
-//     return () => {
-//       registerEnterCommand();
-//       registerArrowUpCommand();
-//       registerArrowDownCommand();
-//     };
-//   }, [editor, chatroomId]);
-
-//   return null;
-// };
-
 const EmoteHandler = ({ chatroomId }) => {
   const [editor] = useLexicalComposerContext();
 
@@ -641,24 +506,22 @@ const ChatInput = memo(
     const chatroomMode = useMemo(() => {
       if (!chatroomInfo) return null;
 
-      const secondsToMinutes = (seconds) => Math.ceil(seconds / 60);
-
       if (chatroomInfo?.chatroom) {
-      if (chatroomInfo?.chatroom?.followers_mode) {
-        return `Followers Only Mode [${secondsToMinutes(chatroomInfo?.chatroom?.following_min_duration)} minutes]`;
-      } else if (chatroomInfo?.chatroom?.emotes_mode) {
-        return `Emote Only Mode`;
-      } else if (chatroomInfo?.chatroom?.slow_mode) {
-        return `Slow Mode [${secondsToMinutes(chatroomInfo?.chatroom?.message_interval)} minutes]`;
-      }
+        if (chatroomInfo?.chatroom?.followers_mode) {
+          return `Followers Only Mode [${convertSecondsToHumanReadable(chatroomInfo?.chatroom?.following_min_duration)}]`;
+        } else if (chatroomInfo?.chatroom?.emotes_mode) {
+          return `Emote Only Mode`;
+        } else if (chatroomInfo?.chatroom?.slow_mode) {
+          return `Slow Mode [${convertSecondsToHumanReadable(chatroomInfo?.chatroom?.message_interval)}]`;
+        }
       } else {
-      if (chatroomInfo?.followers_mode?.enabled) {
-        return `Followers Only Mode [${secondsToMinutes(chatroomInfo?.followers_mode?.min_duration)} minutes]`;
-      } else if (chatroomInfo?.emotes_mode?.enabled) {
-        return `Emote Only Mode [${secondsToMinutes(chatroomInfo?.emotes_mode?.min_duration)} minutes]`;
-      } else if (chatroomInfo?.slow_mode?.enabled) {
-        return `Slow Mode [${secondsToMinutes(chatroomInfo?.slow_mode?.message_interval)} minutes]`;
-      }
+        if (chatroomInfo?.followers_mode?.enabled) {
+          return `Followers Only Mode [${convertSecondsToHumanReadable(chatroomInfo?.followers_mode?.min_duration)}]`;
+        } else if (chatroomInfo?.emotes_mode?.enabled) {
+          return `Emote Only Mode [${convertSecondsToHumanReadable(chatroomInfo?.emotes_mode?.min_duration)}]`;
+        } else if (chatroomInfo?.slow_mode?.enabled) {
+          return `Slow Mode [${convertSecondsToHumanReadable(chatroomInfo?.slow_mode?.message_interval)}]`;
+        }
       }
 
       return null;
