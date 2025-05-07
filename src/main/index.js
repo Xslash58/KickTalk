@@ -275,13 +275,14 @@ const loginToKick = async (method) => {
 
   return new Promise((resolve) => {
     const loginDialog = new BrowserWindow({
-      width: 1280,
-      height: 720,
+      width: 460,
+      height: 630,
       x: newX,
       y: newY,
       show: true,
       resizable: false,
       transparent: true,
+      autoHideMenuBar: true,
       parent: authDialog,
       roundedCorners: true,
       webPreferences: {
@@ -296,6 +297,16 @@ const loginToKick = async (method) => {
       case "kick":
         loginDialog.loadURL("https://kick.com/login");
         loginDialog.webContents.on("did-finish-load", () => {
+          loginDialog.webContents.executeJavaScript(
+            `const interval = setInterval(() => {
+              const el = document.querySelector('div.flex.items-center.gap-4 > button:last-child');
+              console.log(el);
+              if (el) {
+                el.click();
+                clearInterval(interval);  
+              }
+            }, 100);`
+          );
           loginDialog.webContents.setAudioMuted(true);
         });
         break;
