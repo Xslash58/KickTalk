@@ -79,7 +79,10 @@ class KickPusher extends EventTarget {
         const dataString = event.data;
         const jsonData = JSON.parse(dataString);
 
-        if (jsonData.channel === `chatrooms.${this.chatroomNumber}.v2` && jsonData.event === "pusher_internal:subscription_succeeded") {
+        if (
+          jsonData.channel === `chatrooms.${this.chatroomNumber}.v2` &&
+          jsonData.event === "pusher_internal:subscription_succeeded"
+        ) {
           console.log(`Subscription successful for chatroom: ${this.chatroomNumber}`);
           this.dispatchEvent(
             new CustomEvent("connection", {

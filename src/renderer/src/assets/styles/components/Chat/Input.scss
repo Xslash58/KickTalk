@@ -23,6 +23,41 @@
     border-radius: 6px 6px 0 0;
     font-size: 14px;
     color: #668d75;
+
+    > .chatInfoBarIcon {
+      position: relative;
+
+      > .chatInfoBarIconTooltipContent {
+        display: none;
+        position: absolute;
+        bottom: 32px;
+        right: -8px;
+        backdrop-filter: blur(4px);
+        min-width: 240px;
+        background-color: rgba(23, 41, 29, 0.9725490196);
+        border: 1px solid #3a5343;
+        border-radius: 6px;
+        padding: 16px 12px;
+        color: #6a8875;
+        gap: 4px;
+        flex-direction: column;
+        z-index: 9999;
+
+        &.show {
+          display: flex;
+        }
+      }
+
+      > .chatInfoBarIconTooltip {
+        opacity: 0.4;
+        transition: opacity 0.2s ease-in-out;
+        cursor: pointer;
+
+        &:hover {
+          opacity: 0.7;
+        }
+      }
+    }
   }
 
   > .chatInputContainer {
@@ -109,9 +144,9 @@
 }
 
 .editor-paragraph {
-  padding: 18px 0;
   padding-right: 16px;
   width: 100%;
+  line-height: 32px;
 
   > * {
     display: inline;

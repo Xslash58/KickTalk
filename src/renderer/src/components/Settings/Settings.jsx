@@ -74,7 +74,7 @@ const Settings = ({ settingsModalOpen, setSettingsModalOpen, appInfo }) => {
               <span>Enable Notifications</span>
             </button>
           </div>
-          <div className="settingItem notificationSetting">
+          {/* <div className="settingItem notificationSetting">
             <button
               className={clsx("settingSwitchItem", settings?.notifications?.sound ? "checked" : "")}
               onClick={() =>
@@ -83,9 +83,9 @@ const Settings = ({ settingsModalOpen, setSettingsModalOpen, appInfo }) => {
               <div className="checkBox">
                 <img src={Check} width={14} height={14} alt="Check" />
               </div>
-              {/*<span>Notification Sound</span>*/}
+              <span>Notification Sound</span>
             </button>
-          </div>
+          </div> */}
           <div className="settingItem notificationSetting">
             <button
               className={clsx("settingSwitchItem", settings?.notifications?.background ? "checked" : "")}
@@ -158,7 +158,7 @@ const Settings = ({ settingsModalOpen, setSettingsModalOpen, appInfo }) => {
             type="text"
             placeholder="Add new phrase..."
             onKeyDown={(e) => {
-              if (e.key === "Enter") {
+              if (e.key === "Enter" && e.target.value.trim().length > 0) {
                 changeSetting("notifications", {
                   ...settings?.notifications,
                   phrases: [...settings?.notifications?.phrases, e.target.value],

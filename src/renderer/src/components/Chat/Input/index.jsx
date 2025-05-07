@@ -1,4 +1,5 @@
-import "../assets/styles/components/Chat/Input.scss";
+import "../../../assets/styles/components/Chat/Input.scss";
+import clsx from "clsx";
 import {
   $getRoot,
   KEY_ENTER_COMMAND,
@@ -22,14 +23,14 @@ import { HistoryPlugin } from "@lexical/react/LexicalHistoryPlugin";
 import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { $rootTextContent } from "@lexical/text";
-import useChatStore from "../providers/ChatProvider";
+import useChatStore from "../../../providers/ChatProvider";
 
 import EmoteDialogs from "./EmoteDialogs";
 import { useShallow } from "zustand/react/shallow";
 import { EmoteNode } from "./EmoteNode";
-import { kickEmoteInputRegex, kickEmoteRegex } from "../../../../utils/constants";
-import clsx from "clsx";
-import { convertSecondsToHumanReadable } from "../utils/ChatUtils";
+import { kickEmoteInputRegex, kickEmoteRegex } from "../../../../../../utils/constants";
+import InfoIcon from "../../../assets/icons/info-fill.svg?asset";
+import { convertSecondsToHumanReadable } from "../../../utils/ChatUtils";
 
 const onError = (error) => {
   console.error(error);
@@ -102,7 +103,12 @@ const EmoteSuggestions = memo(
     );
   },
   (prevProps, nextProps) => {
-    return prevProps.selectedIndex === nextProps.selectedIndex && prevProps.suggestions === nextProps.suggestions;
+    return (
+      prevProps.selectedIndex === nextProps.selectedIndex &&
+      prevProps.suggestions === nextProps.suggestions &&
+      prevProps.selectedTabIndex === nextProps.selectedTabIndex &&
+      prevProps.tabSuggestions === nextProps.tabSuggestions
+    );
   },
 );
 
@@ -110,7 +116,9 @@ const KeyHandler = ({ chatroomId, onSendMessage }) => {
   const [editor] = useLexicalComposerContext();
   const [suggestions, setSuggestions] = useState([]);
   const [searchText, setSearchText] = useState("");
+  const [tabSuggestions, setTabSuggestions] = useState([]);
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [selectedTabIndex, setSelectedTabIndex] = useState(0);
   const [position, setPosition] = useState(null);
 
   const sevenTVEmotes = useChatStore(
@@ -324,6 +332,7 @@ const KeyHandler = ({ chatroomId, onSendMessage }) => {
 
         onSendMessage(content);
         editor.update(() => {
+          if (e.ctrlKey) return;
           $getRoot().clear();
         });
 
@@ -332,20 +341,105 @@ const KeyHandler = ({ chatroomId, onSendMessage }) => {
       COMMAND_PRIORITY_HIGH,
     );
 
-    // TAB Command
+    // Tab Command
     const registerTabCommand = editor.registerCommand(
       KEY_TAB_COMMAND,
       (e) => {
         if (e.shiftKey) return false;
         e.preventDefault();
 
-        if (suggestions?.length > 0) {
+        if (suggestions?.length) {
           insertEmote(suggestions[selectedIndex]);
           return true;
         }
 
-        const content = $rootTextContent();
-        if (!content.trim()) return true;
+        // if (tabSuggestions?.length) {
+        //   const nextIndex = (selectedTabIndex + 1) % tabSuggestions.length;
+        //   setSelectedTabIndex(nextIndex);
+
+        //   editor.update(() => {
+        //     const selection = $getSelection();
+        //     if (!$isRangeSelection(selection)) return;
+
+        //     const node = selection.anchor.getNode();
+        //     if (!node) return;
+
+        //     const textContent = node.getTextContent();
+        //     const currentEmote = tabSuggestions[nextIndex - 1];
+        //     const startIndex = textContent.lastIndexOf(tabSuggestions[nextIndex - 1]);
+        //     const endIndex = startIndex + tabSuggestions[nextIndex].length;
+
+        //     const textBefore = textContent.slice(startIndex, endIndex);
+        //     const textAfter = textContent.slice(endIndex);
+
+        //     // Delete the current word
+        //     node.setTextContent(textBefore + textAfter);
+
+        //     // Set text after emote
+        //     if (textAfter) {
+        //       const afterNode = $createTextNode(textAfter);
+        //       selection.insertNodes([afterNode]);
+        //     }
+        //   });
+        //   return true;
+        // }
+
+        // const content = $rootTextContent();
+        // if (!content.trim()) return false;
+
+        // // Get the text before the cursor in the current node
+        // const cursorOffset = $getSelection().anchor.offset;
+        // const textBeforeCursor = content.slice(0, cursorOffset);
+
+        // // Find the last word before the cursor
+        // const words = textBeforeCursor.split(/\s+/);
+        // const currentWord = words[words.length - 1];
+
+        // const foundEmotes = [];
+
+        // // Search 7TV Emotes for matches
+        // sevenTVEmotes?.emote_set?.emotes?.filter((emote) => {
+        //   if (emote.name.toLowerCase().startsWith(currentWord.toLowerCase())) {
+        //     foundEmotes.push(emote);
+        //   }
+        // });
+
+        // if (foundEmotes.length > 0) {
+        //   setTabSuggestions(foundEmotes);
+        //   setSelectedTabIndex(0);
+
+        //   editor.update(() => {
+        //     const selection = $getSelection();
+        //     if (!$isRangeSelection(selection)) return;
+
+        //     const node = selection.anchor.getNode();
+        //     if (!node) return;
+
+        //     const textContent = node.getTextContent();
+        //     const startIndex = textContent.lastIndexOf(currentWord);
+        //     console.log(startIndex);
+        //     const endIndex = startIndex + currentWord.length;
+
+        //     const textBefore = textContent.slice(0, startIndex);
+        //     const textAfter = textContent.slice(endIndex);
+
+        //     // Delete the current word
+        //     node.setTextContent(textBefore + textAfter + foundEmotes[0]?.name);
+
+        //     // Set text after emote
+        //     if (textAfter) {
+        //       const afterNode = $createTextNode(textAfter);
+        //       selection.insertNodes([afterNode]);
+        //     }
+        //   });
+        //   return true;
+        // }
+        // const emote = getEmoteData(currentWord, sevenTVEmotes, chatroomId);
+
+        // if (emote) {
+        //   insertEmote(emote);
+        //   return true;
+        // }
 
         return true;
       },
@@ -497,11 +591,8 @@ const initialConfig = {
 const ChatInput = memo(
   ({ chatroomId }) => {
     const sendMessage = useChatStore((state) => state.sendMessage);
-
-    const chatroomInfo = useChatStore(
-      useShallow((state) => state.chatrooms.find((room) => room.id === chatroomId)?.chatroomInfo),
-    );
-
+    const chatroom = useChatStore(useShallow((state) => state.chatrooms.find((room) => room.id === chatroomId)));
+    const [showInfoBarTooltip, setShowInfoBarTooltip] = useState(false);
     // Reset selected index when changing chatrooms
     useEffect(() => {
       const history = messageHistory.get(chatroomId);
@@ -526,32 +617,80 @@ const ChatInput = memo(
     };
 
     const chatroomMode = useMemo(() => {
-      if (!chatroomInfo) return null;
-
-      if (chatroomInfo?.chatroom) {
-        if (chatroomInfo?.chatroom?.followers_mode) {
-          return `Followers Only Mode [${convertSecondsToHumanReadable(chatroomInfo?.chatroom?.following_min_duration)}]`;
-        } else if (chatroomInfo?.chatroom?.emotes_mode) {
-          return `Emote Only Mode`;
-        } else if (chatroomInfo?.chatroom?.slow_mode) {
-          return `Slow Mode [${convertSecondsToHumanReadable(chatroomInfo?.chatroom?.message_interval)}]`;
+      if (chatroom?.chatroomInfo) {
+        switch (true) {
+          case chatroom?.chatroomInfo?.followers_mode?.enabled:
+            return `Followers Only Mode [${convertSecondsToHumanReadable(chatroom?.chatroomInfo?.followers_mode?.min_duration * 60)}]`;
+          case chatroom?.chatroomInfo?.subscribers_mode?.enabled:
+            return `Subscribers Only Mode`;
+          case chatroom?.chatroomInfo?.emotes_mode?.enabled:
+            return `Emote Only Mode`;
+          case chatroom?.chatroomInfo?.slow_mode?.enabled:
+            return `Slow Mode [${convertSecondsToHumanReadable(chatroom?.chatroomInfo?.slow_mode?.message_interval)}]`;
+          default:
+            return "";
         }
-      } else {
-        if (chatroomInfo?.followers_mode?.enabled) {
-          return `Followers Only Mode [${convertSecondsToHumanReadable(chatroomInfo?.followers_mode?.min_duration)}]`;
-        } else if (chatroomInfo?.emotes_mode?.enabled) {
-          return `Emote Only Mode [${convertSecondsToHumanReadable(chatroomInfo?.emotes_mode?.min_duration)}]`;
-        } else if (chatroomInfo?.slow_mode?.enabled) {
-          return `Slow Mode [${convertSecondsToHumanReadable(chatroomInfo?.slow_mode?.message_interval)}]`;
+      } else if (chatroom?.initialChatroomInfo) {
+        const { followers_mode, subscribers_mode, emotes_mode, slow_mode, message_interval, following_min_duration } =
+          chatroom?.initialChatroomInfo?.chatroom;
+
+        switch (true) {
+          case followers_mode:
+            return `Followers Only Mode [${convertSecondsToHumanReadable(following_min_duration * 60)}]`;
+          case subscribers_mode:
+            return `Subscribers Only Mode`;
+          case emotes_mode:
+            return `Emote Only Mode`;
+          case slow_mode:
+            return `Slow Mode [${convertSecondsToHumanReadable(message_interval)}]`;
+          default:
+            return "";
         }
       }
-
-      return null;
-    }, [chatroomInfo]);
+    }, [chatroom?.chatroomInfo, chatroom?.initialChatroomInfo]);
 
     return (
       <div className="chatInputWrapper">
-        {chatroomMode && <div className="chatInfoBar">{chatroomMode}</div>}
+        {chatroomMode && (
+          <div className="chatInfoBar">
+            <span>{chatroomMode}</span>
+
+            <div className="chatInfoBarIcon">
+              <div className={clsx("chatInfoBarIconTooltipContent", showInfoBarTooltip && "show")}>
+                {chatroom?.chatroomInfo?.followers_mode?.enabled ||
+                  (chatroom?.initialChatroomInfo?.chatroom?.followers_mode && (
+                    <div className="chatInfoBarTooltipItem">
+                      <span>Followers Only Mode Enabled</span>
+                    </div>
+                  ))}
+                {chatroom?.chatroomInfo?.subscribersmessageHistory_mode?.enabled ||
+                  (chatroom?.initialChatroomInfo?.chatroom?.subscribers_mode && (
+                    <div className="chatInfoBarTooltipItem">
+                      <span>Subscribers Only Mode Enabled</span>
+                    </div>
+                  ))}
+                {chatroom?.chatroomInfo?.emotes_mode?.enabled ||
+                  (chatroom?.initialChatroomInfo?.chatroom?.emotes_mode && (
+                    <div className="chatInfoBarTooltipItem">
+                      <span>Emote Only Mode Enabled</span>
+                    </div>
+                  ))}
+                {chatroom?.chatroomInfo?.slow_mode?.enabled ||
+                  (chatroom?.initialChatroomInfo?.chatroom?.slow_mode && (
+                    <div className="chatInfoBarTooltipItem">
+                      <span>Slow Mode Enabled</span>
+                    </div>
+                  ))}
+              </div>
+              <div
+                className="chatInfoBarIconTooltip"
+                onMouseOver={() => setShowInfoBarTooltip(true)}
+                onMouseLeave={() => setShowInfoBarTooltip(false)}>
+                <img src={InfoIcon} alt="Info" width={16} height={16} />
+              </div>
+            </div>
+          </div>
+        )}
         <div className="chatInputContainer">
           <LexicalComposer key={`composer-${chatroomId}`} initialConfig={initialConfig}>
             <div className="chatInputBox">

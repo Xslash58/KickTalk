@@ -4,8 +4,42 @@
   color: white;
   display: flex;
   align-items: center;
+  gap: 8px;
   justify-content: space-between;
   app-region: drag;
+}
+
+.updater {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 0 8px;
+  border-radius: 4px;
+  width: max-content;
+  app-region: no-drag;
+  transition: 0.2s ease-in-out background-color;
+
+  &.updateAvailable {
+    display: flex;
+    background-color: rgba(255, 141, 27, 0.5);
+    cursor: pointer;
+
+    &:hover {
+      background-color: rgba(255, 141, 27, 0.773);
+
+      button {
+        opacity: 1;
+      }
+    }
+
+    button {
+      opacity: 0.8;
+      background-color: #ffffff0a;
+      transition:
+        0.2s ease-in-out background-color,
+        0.2s ease-in-out opacity;
+    }
+  }
 }
 
 .titleBarLeft {

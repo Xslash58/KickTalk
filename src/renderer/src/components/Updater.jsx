@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import downloadIcon from "../../src/assets/icons/cloud-arrow-down-fill.svg?asset";
+import clsx from "clsx";
 
 const Updater = () => {
   const [isUpdateAvailable, setIsUpdateAvailable] = useState(false);
@@ -17,8 +18,8 @@ const Updater = () => {
   }, []);
 
   return (
-    <div className="updater">
-      <button>
+    <div className={clsx("updater", isUpdateAvailable?.files?.length && "updateAvailable")}>
+      <button onClick={() => window.open("https://kicktalk.app/download", "_blank")}>
         <img src={downloadIcon} alt="Update" width={20} height={20} />
       </button>
     </div>

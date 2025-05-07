@@ -195,7 +195,7 @@ const createWindow = () => {
     height: store.get("lastMainWindowState.height"),
     x: store.get("lastMainWindowState.x"),
     y: store.get("lastMainWindowState.y"),
-    minWidth: 400,
+    minWidth: 335,
     minHeight: 250,
     show: false,
     backgroundColor: "#06190e",
@@ -254,7 +254,6 @@ const createWindow = () => {
   } else {
     mainWindow.loadFile(join(__dirname, "../renderer/index.html"));
   }
-
 };
 
 const loginToKick = async (method) => {
@@ -522,7 +521,7 @@ ipcMain.handle("authDialog:open", (e) => {
 
   authDialog = new BrowserWindow({
     width: 600,
-    minHeight: 450,
+    minHeight: 400,
     x: newX,
     y: newY,
     show: true,

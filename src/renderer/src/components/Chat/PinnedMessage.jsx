@@ -1,9 +1,9 @@
-import CaretDown from "../../assets/icons/caret-down-bold.svg?asset";
-import PushPinSlash from "../../assets/icons/push-pin-slash-fill.svg?asset";
 import { clsx } from "clsx";
 import { MessageParser } from "../../utils/MessageParser";
 import dayjs from "dayjs";
 import { memo } from "react";
+import CaretDown from "../../assets/icons/caret-down-bold.svg?asset";
+import PushPinSlash from "../../assets/icons/push-pin-slash-fill.svg?asset";
 
 const PinnedMessage = memo(
   ({ pinnedMessage, showPinnedMessage, setShowPinnedMessage, pinnedMessageExpanded, setPinnedMessageExpanded }) => {

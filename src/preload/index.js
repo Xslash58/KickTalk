@@ -21,9 +21,9 @@ const authStore = new Store({
   fileExtension: "env",
 });
 
-function retrieveToken(token_name) {
+const retrieveToken = (token_name) => {
   return authStore.get(token_name);
-}
+};
 
 const authSession = {
   token: retrieveToken("SESSION_TOKEN"),
@@ -100,19 +100,9 @@ if (process.contextIsolated) {
       update: {
         onUpdate: (callback) => {
           const handler = (_, data) => callback(data);
-          ipcRenderer.on("autoUpdater:download", handler);
           ipcRenderer.on("autoUpdater:update-available", handler);
-          ipcRenderer.on("autoUpdater:update-not-available", handler);
-          ipcRenderer.on("autoUpdater:downloadError", handler);
-          ipcRenderer.on("autoUpdater:downloadProgress", handler);
-          ipcRenderer.on("autoUpdater:downloadCompleted", handler);
           return () => {
-            ipcRenderer.removeListener("autoUpdater:download", handler);
             ipcRenderer.removeListener("autoUpdater:update-available", handler);
-            ipcRenderer.removeListener("autoUpdater:update-not-available", handler);
-            ipcRenderer.removeListener("autoUpdater:downloadError", handler);
-            ipcRenderer.removeListener("autoUpdater:downloadProgress", handler);
-            ipcRenderer.removeListener("autoUpdater:downloadCompleted", handler);
           };
         },
       },

@@ -10,11 +10,10 @@ const schema = {
     properties: {
       alwaysOnTop: {
         type: "boolean",
-        default: true,
       },
     },
     default: {
-      alwaysOnTop: true,
+      alwaysOnTop: false,
     },
   },
   chatrooms: {

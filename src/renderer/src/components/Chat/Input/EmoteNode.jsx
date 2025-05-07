@@ -78,7 +78,7 @@ export class EmoteNode extends DecoratorNode {
   }
 
   isIsolated() {
-    return true;
+    return false;
   }
 
   getTextContent() {

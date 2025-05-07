@@ -1,7 +1,7 @@
 import { autoUpdater } from "electron-updater";
 import { ipcMain } from "electron";
-console.log("AutoUpdater initialized");
 
+console.log("AutoUpdater initialized");
 export const update = (mainWindow) => {
   autoUpdater.autoDownload = false;
   autoUpdater.disableWebInstaller = true;
@@ -35,50 +35,50 @@ export const update = (mainWindow) => {
   });
 
   autoUpdater.on("update-not-available", (info) => {
-    mainWindow.webContents.send("autoUpdater:update-not-available", info);
+    // mainWindow.webContents.send("autoUpdater:update-not-available", info);
     console.log("Update not available:", info);
   });
 
-  autoUpdater.on("error", (error) => {
-    console.log("Error:", error);
-  });
+  // autoUpdater.on("error", (error) => {
+  //   console.log("Error:", error);
+  // });
 
-  ipcMain.on("autoUpdater:checkForUpdates", () => {
-    autoUpdater.checkForUpdatesAndNotify();
-  });
+  // ipcMain.on("autoUpdater:checkForUpdates", () => {
+  //   autoUpdater.checkForUpdatesAndNotify();
+  // });
 
   autoUpdater.checkForUpdatesAndNotify();
 
-  ipcMain.on("autoUpdater:download", (event, callback) => {
-    // startDownload(
-    //   (error, progressInfo) => {
-    //     if (error) {
-    //       event.reply("autoUpdater:downloadError", error);
-    //     } else {
-    //       event.reply("autoUpdater:downloadProgress", progressInfo);
-    //     }
-    //   },
-    //   () => {
-    //     event.sender.send("autoUpdater:downloadCompleted");
-    //   });
-  });
+  // ipcMain.on("autoUpdater:download", (event, callback) => {
+  //   startDownload(
+  //     (error, progressInfo) => {
+  //       if (error) {
+  //         event.reply("autoUpdater:downloadError", error);
+  //       } else {
+  //         event.reply("autoUpdater:downloadProgress", progressInfo);
+  //       }
+  //     },
+  //     () => {
+  //       event.sender.send("autoUpdater:downloadCompleted");
+  //     },
+  //   );
+  // });
 
-  ipcMain.on("autoUpdater:quitAndInstall", () => {
-    autoUpdater.quitAndInstall();
-  });
+  // ipcMain.on("autoUpdater:quitAndInstall", () => {
+  //   autoUpdater.quitAndInstall();
+  // });
 
-  const startDownload = (callback, completedCallback) => {
-    autoUpdater.on("download-progress", (progress) => {
-      mainWindow.webContents.send("autoUpdater:downloadProgress", progress);
-    });
-  
-    autoUpdater.on("error", (error) => {
-      console.log("autoUpdater:downloadError", error);
-    });
-  
-    autoUpdater.on("update-downloaded", completedCallback);
-  
-    autoUpdater.downloadUpdate();
-  };
-  
+  // const startDownload = (callback, completedCallback) => {
+  //   autoUpdater.on("download-progress", (progress) => {
+  //     // mainWindow.webContents.send("autoUpdater:downloadProgress", progress);
+  //   });
+
+  //   autoUpdater.on("error", (error) => {
+  //     console.log("autoUpdater:downloadError", error);
+  //   });
+
+  //   autoUpdater.on("update-downloaded", completedCallback);
+
+  //   autoUpdater.downloadUpdate();
+  // };
 };

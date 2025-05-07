@@ -34,13 +34,12 @@
   },
   "product-name": "KickTalk",
   "win": {
-    "target":
-      {
-        "target": "nsis"
-      },
-      "directories": {
-        "output": "dist"
-      },
+    "target": {
+      "target": "nsis"
+    },
+    "directories": {
+      "output": "dist"
+    },
     "icon": "../resources/icons/win/KickTalk_v1.ico"
   },
   "dependencies": {

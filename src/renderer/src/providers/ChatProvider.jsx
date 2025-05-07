@@ -121,12 +121,14 @@ const useChatStore = create((set, get) => ({
         //   get().handleEmoteSetUpdate(chatroom.id, body);
         //   break;
         case "cosmetic.create":
+          console.log("Cosmetic create event:", body);
           useCosmeticsStore?.getState()?.addCosmetics(body);
           break;
         case "entitlement.create":
           const username = body?.object?.user?.connections?.find((c) => c.platform === "KICK")?.username;
-          console.log("Entitlement create event:", body);
-          useCosmeticsStore?.getState()?.addUserStyle(username, body);
+          const transformedUsername = username?.replace("-", "_");
+          console.log("Entitlement create event:", body, transformedUsername);
+          useCosmeticsStore?.getState()?.addUserStyle(transformedUsername, body);
           break;
 
         default:
@@ -156,12 +158,12 @@ const useChatStore = create((set, get) => ({
     // Connection Events
     pusher.addEventListener("connection", (event) => {
       console.info("Connected to chatroom:", chatroom.id);
-        get().addMessage(chatroom.id, {
-          id: crypto.randomUUID(),
-          type: "system",
-          ...event?.detail,
-          timestamp: new Date().toISOString(),
-        });
+      get().addMessage(chatroom.id, {
+        id: crypto.randomUUID(),
+        type: "system",
+        ...event?.detail,
+        timestamp: new Date().toISOString(),
+      });
       return;
     });
 
@@ -169,6 +171,10 @@ const useChatStore = create((set, get) => ({
     pusher.addEventListener("channel", (event) => {
       const parsedEvent = JSON.parse(event.detail.data);
       switch (event.detail.event) {
+        case "App\\Events\\LivestreamUpdated":
+          console.log(parsedEvent);
+          // get().handleStreamStatus(chatroom.id, parsedEvent, true);
+          break;
         case "App\\Events\\ChatroomUpdatedEvent":
           get().handleChatroomUpdated(chatroom.id, parsedEvent);
           break;
@@ -278,7 +284,7 @@ const useChatStore = create((set, get) => ({
           if (room.id === chatroom.id) {
             return {
               ...room,
-              chatroomInfo: data,
+              initialChatroomInfo: data,
               isStreamerLive: data?.livestream?.is_live,
               streamStatus: data?.livestream,
             };

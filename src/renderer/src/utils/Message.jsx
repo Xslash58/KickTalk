@@ -6,7 +6,7 @@ import ArrowReplyLineIcon from "../assets/app/arrow_reply_line.svg?asset";
 import clsx from "clsx";
 
 const Message = memo(
-  ({ message, chatroomId, subscriberBadges, sevenTVEmotes, kickTalkBadges, settings, type }) => {
+  ({ message, chatroomId, subscriberBadges, sevenTVEmotes, kickTalkBadges, settings, type, username }) => {
     const messageRef = useRef(null);
 
     const handleOpenUserDialog = useCallback(
@@ -26,8 +26,10 @@ const Message = memo(
     )?.badges;
 
     const checkForPhrases = () => {
-      if (settings?.notifications?.enabled && settings?.notifications?.phrases?.length) {
-        return settings?.notifications?.phrases?.some((phrase) => message.content?.toLowerCase().includes(phrase.toLowerCase()));
+      if (settings?.notifications?.enabled && settings?.notifications?.phrases?.length && message?.sender?.slug !== username) {
+        return settings?.notifications?.phrases?.some((phrase) => {
+          return message.content?.toLowerCase().includes(phrase.toLowerCase());
+        });
       }
     };
 

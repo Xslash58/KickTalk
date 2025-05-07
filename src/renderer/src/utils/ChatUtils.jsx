@@ -15,11 +15,22 @@ export const convertMinutesToHumanReadable = (minutes) => {
 };
 
 export const convertSecondsToHumanReadable = (seconds) => {
-  if (seconds < 60) {
-    return `${seconds} ${seconds > 1 ? "seconds" : "second"}`;
-  } else if (seconds < 3600) {
-    return `${Math.floor(seconds / 60)} ${Math.floor(seconds / 60) > 1 ? "minutes" : "minute"}`;
-  } else {
-    return `${Math.floor(seconds / 3600)} ${Math.floor(seconds / 3600) > 1 ? "hours" : "hour"}`;
+  switch (true) {
+    case seconds < 60:
+      return `${seconds} ${seconds > 1 ? "seconds" : "second"}`;
+    case seconds < 3600:
+      return `${Math.floor(seconds / 60)} ${Math.floor(seconds / 60) > 1 ? "minutes" : "minute"}`;
+    case seconds < 86400:
+      return `${Math.floor(seconds / 3600)} ${Math.floor(seconds / 3600) > 1 ? "hours" : "hour"}`;
+    case seconds < 604800:
+      return `${Math.floor(seconds / 86400)} ${Math.floor(seconds / 86400) > 1 ? "days" : "day"}`;
+    case seconds < 2592000:
+      return `${Math.floor(seconds / 604800)} ${Math.floor(seconds / 604800) > 1 ? "weeks" : "week"}`;
+    case seconds < 31536000:
+      return `${Math.floor(seconds / 2592000)} ${Math.floor(seconds / 2592000) > 1 ? "months" : "month"}`;
+    case seconds >= 31536000:
+      return `${Math.floor(seconds / 31536000)} ${Math.floor(seconds / 31536000) > 1 ? "years" : "year"}`;
+    default:
+      return "";
   }
 };

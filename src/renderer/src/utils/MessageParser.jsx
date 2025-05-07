@@ -59,13 +59,13 @@ const rules = [
 ];
 
 const getEmoteData = (emoteName, sevenTVEmotes, chatroomId) => {
-  if (!chatroomEmotes.has(chatroomId)) {
+  if (!chatroomEmotes?.has(chatroomId)) {
     chatroomEmotes.set(chatroomId, new Map());
   }
 
   const roomEmotes = chatroomEmotes.get(chatroomId);
 
-  if (roomEmotes.has(emoteName)) {
+  if (roomEmotes?.has(emoteName)) {
     return roomEmotes.get(emoteName);
   }
 
@@ -138,7 +138,7 @@ export const MessageParser = ({ message, sevenTVEmotes, sevenTVSettings, type })
     const lastIndex = textParts.length - 1;
 
     textParts.forEach((textPart, j) => {
-      const emoteData = getEmoteData(textPart, sevenTVEmotes, message.chatroomId);
+      const emoteData = getEmoteData(textPart, sevenTVEmotes, message?.chatroom_id);
 
       if (emoteData) {
         finalParts.push(<Emote key={`stvEmote-${emoteData.id}-${message.timestamp}-${i}-${j}`} emote={emoteData} type={"stv"} />);

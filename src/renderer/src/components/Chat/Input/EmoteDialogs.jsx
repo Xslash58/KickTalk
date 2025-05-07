@@ -1,13 +1,12 @@
-import clsx from "clsx";
-import KickLogoFull from "../assets/logos/kickLogoFull.svg?asset";
-import { memo, useCallback, useState } from "react";
-import useChatStore from "../providers/ChatProvider";
-import { useShallow } from "zustand/react/shallow";
-import STVLogo from "../assets/logos/stvLogo.svg?asset";
-import CaretDown from "../assets/icons/caret-down-bold.svg?asset";
 import { useRef, useEffect } from "react";
-import useClickOutside from "../utils/useClickOutside";
-import { debounce } from "lodash";
+import clsx from "clsx";
+import { useShallow } from "zustand/react/shallow";
+import KickLogoFull from "../../../assets/logos/kickLogoFull.svg?asset";
+import { memo, useCallback, useState } from "react";
+import useChatStore from "../../../providers/ChatProvider";
+import STVLogo from "../../../assets/logos/stvLogo.svg?asset";
+import CaretDown from "../../../assets/icons/caret-down-bold.svg?asset";
+import useClickOutside from "../../../utils/useClickOutside";
 
 const EmoteSection = ({ emotes, title, handleEmoteClick, type }) => {
   const [isSectionOpen, setIsSectionOpen] = useState(true);

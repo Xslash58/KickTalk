@@ -1,16 +1,15 @@
 import clsx from "clsx";
 import { memo, useCallback, useEffect, useRef, useState } from "react";
-import { scrollToBottom } from "../utils/ChatUtils";
+import { scrollToBottom } from "../../utils/ChatUtils";
+import ChatInput from "./Input";
+import useChatStore from "../../providers/ChatProvider";
+import PinnedMessage from "./PinnedMessage";
+import MessagesHandler from "../Messages/MessagesHandler";
+import { useSettings } from "../../providers/SettingsProvider";
+import { userKickTalkBadges } from "../../../../../utils/kickTalkBadges";
 
-import MouseScroll from "../assets/icons/mouse-scroll-fill.svg?asset";
-import PushPin from "../assets/icons/push-pin-fill.svg?asset";
-
-import ChatInput from "./ChatInput";
-import useChatStore from "../providers/ChatProvider";
-import PinnedMessage from "./Chat/PinnedMessage";
-import MessagesHandler from "./Messages/MessagesHandler";
-import { useSettings } from "../providers/SettingsProvider";
-import { userKickTalkBadges } from "../../../../utils/kickTalkBadges";
+import MouseScroll from "../../assets/icons/mouse-scroll-fill.svg?asset";
+import PushPin from "../../assets/icons/push-pin-fill.svg?asset";
 
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
@@ -42,7 +41,7 @@ const Chat = memo(
     const handleScroll = useCallback(() => {
       if (!chatBodyRef.current) return;
       const { scrollHeight, clientHeight, scrollTop } = chatBodyRef.current;
-      const nearBottom = scrollHeight - clientHeight - scrollTop < 150;
+      const nearBottom = scrollHeight - clientHeight - scrollTop < 100;
 
       setShouldAutoScroll(nearBottom);
       setShowScrollToBottom(!nearBottom);
@@ -62,6 +61,8 @@ const Chat = memo(
         chatBodyRef.current.scrollTop = chatBodyRef.current.scrollHeight - chatBodyRef.current.clientHeight;
       }
     }, [chatroomId]);
+
+    const kickUsername = localStorage.getItem("kickUsername");
 
     return (
       <div className="chatContainer">
@@ -107,6 +108,7 @@ const Chat = memo(
             channel7TVEmotes={chatroom?.channel7TVEmotes}
             subscriberBadges={subscriberBadges}
             kickTalkBadges={userKickTalkBadges}
+            username={kickUsername}
             settings={settings}
           />
         </div>
