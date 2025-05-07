@@ -3,12 +3,12 @@ import { ipcMain } from "electron";
 console.log("AutoUpdater initialized");
 
 export const update = (mainWindow) => {
-  autoUpdater.autoDownload = true;
-  autoUpdater.disableWebInstaller = false;
+  autoUpdater.autoDownload = false;
+  autoUpdater.disableWebInstaller = true;
+  autoUpdater.disableDifferentialDownload = true;
   autoUpdater.allowDowngrade = false;
   autoUpdater.autoInstallOnAppQuit = true;
   autoUpdater.forceDevUpdateConfig = true;
-  process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = "true";
 
   autoUpdater.on("checking-for-update", () => {
     console.log("Checking for update...");
@@ -17,21 +17,21 @@ export const update = (mainWindow) => {
   autoUpdater.on("update-available", (info) => {
     console.log("Update available:", info);
     mainWindow.webContents.send("autoUpdater:update-available", info);
-    startDownload(
-      (error, progressInfo) => {
-        if (error) {
-          console.log("autoUpdater:downloadError", error);
-          mainWindow.webContents.send("autoUpdater:downloadError", error);
-        } else {
-          console.log("autoUpdater:downloadProgress", progressInfo);
-          mainWindow.webContents.send("autoUpdater:downloadProgress", progressInfo);
-        }
-      },
-      () => {
-        console.log("autoUpdater:downloadCompleted");
-        mainWindow.webContents.send("autoUpdater:downloadCompleted");
-      },
-    );
+    // startDownload(
+    //   (error, progressInfo) => {
+    //     if (error) {
+    //       console.log("autoUpdater:downloadError", error);
+    //       mainWindow.webContents.send("autoUpdater:downloadError", error);
+    //     } else {
+    //       console.log("autoUpdater:downloadProgress", progressInfo);
+    //       mainWindow.webContents.send("autoUpdater:downloadProgress", progressInfo);
+    //     }
+    //   },
+    //   () => {
+    //     console.log("autoUpdater:downloadCompleted");
+    //     mainWindow.webContents.send("autoUpdater:downloadCompleted");
+    //   },
+    // );
   });
 
   autoUpdater.on("update-not-available", (info) => {
@@ -50,17 +50,17 @@ export const update = (mainWindow) => {
   autoUpdater.checkForUpdatesAndNotify();
 
   ipcMain.on("autoUpdater:download", (event, callback) => {
-    startDownload(
-      (error, progressInfo) => {
-        if (error) {
-          event.reply("autoUpdater:downloadError", error);
-        } else {
-          event.reply("autoUpdater:downloadProgress", progressInfo);
-        }
-      },
-      () => {
-        event.sender.send("autoUpdater:downloadCompleted");
-      });
+    // startDownload(
+    //   (error, progressInfo) => {
+    //     if (error) {
+    //       event.reply("autoUpdater:downloadError", error);
+    //     } else {
+    //       event.reply("autoUpdater:downloadProgress", progressInfo);
+    //     }
+    //   },
+    //   () => {
+    //     event.sender.send("autoUpdater:downloadCompleted");
+    //   });
   });
 
   ipcMain.on("autoUpdater:quitAndInstall", () => {
