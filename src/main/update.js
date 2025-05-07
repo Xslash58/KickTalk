@@ -1,26 +1,14 @@
 import { autoUpdater } from "electron-updater";
 import { ipcMain } from "electron";
 console.log("AutoUpdater initialized");
-const startDownload = (callback, completedCallback) => {
-  autoUpdater.on("download-progress", (progress) => {
-    //mainWindow.webContents.send("autoUpdater:downloadProgress", progress);
-  });
-
-  autoUpdater.on("error", (error) => {
-    console.log("autoUpdater:downloadError", error);
-  });
-
-  autoUpdater.on("update-downloaded", completedCallback);
-
-  autoUpdater.downloadUpdate();
-};
 
 export const update = (mainWindow) => {
   autoUpdater.autoDownload = true;
-  autoUpdater.disableWebInstaller = true;
+  autoUpdater.disableWebInstaller = false;
   autoUpdater.allowDowngrade = false;
   autoUpdater.autoInstallOnAppQuit = true;
   autoUpdater.forceDevUpdateConfig = true;
+  process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = "true";
 
   autoUpdater.on("checking-for-update", () => {
     console.log("Checking for update...");
@@ -78,4 +66,19 @@ export const update = (mainWindow) => {
   ipcMain.on("autoUpdater:quitAndInstall", () => {
     autoUpdater.quitAndInstall();
   });
+
+  const startDownload = (callback, completedCallback) => {
+    autoUpdater.on("download-progress", (progress) => {
+      mainWindow.webContents.send("autoUpdater:downloadProgress", progress);
+    });
+  
+    autoUpdater.on("error", (error) => {
+      console.log("autoUpdater:downloadError", error);
+    });
+  
+    autoUpdater.on("update-downloaded", completedCallback);
+  
+    autoUpdater.downloadUpdate();
+  };
+  
 };
