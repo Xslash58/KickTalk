@@ -1,6 +1,6 @@
 {
   "name": "kick-talk",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A chat client for Kick.com",
   "contributors": [
     {
@@ -10,6 +10,7 @@
     },
     {
       "name": "ftk789",
+      "email": "lolt04588@gmail.com",
       "url": "https://x.com/ftk789yt"
     }
   ],
