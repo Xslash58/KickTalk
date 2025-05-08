@@ -8,7 +8,7 @@ import { sendUserPresence } from "../../../../utils/services/seventv/stvAPI";
 
 let stvPresenceUpdates = new Map();
 let storeStvId = null;
-const PRESENCE_UPDATE_INTERVAL = 1000 * 60 * 5; // 5 minutes
+const PRESENCE_UPDATE_INTERVAL = 30000; // 5 minutes
 
 // Load initial state from local storage
 const getInitialState = () => {
@@ -141,7 +141,9 @@ const useChatStore = create((set, get) => ({
     stvSocket.addEventListener("open", () => {
       console.log("7TV WebSocket connected for chatroom:", chatroom.id);
 
-      sendUserPresence(storeStvId, chatroom.streamerData.user_id);
+      setTimeout(() => {
+        sendUserPresence(storeStvId, chatroom.streamerData.user_id);
+      }, 2000);
       stvPresenceUpdates.set(chatroom.streamerData.user_id, Date.now());
     });
 
@@ -690,7 +692,7 @@ const initializePresenceUpdates = () => {
         useChatStore.getState().sendPresenceUpdate(storeStvId, chatroom.streamerData.user_id);
       });
     },
-    1000 * 60 * 1, // 1 minute
+    30000, // 1 minute
   );
 
   return () => {
