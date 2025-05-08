@@ -8,7 +8,7 @@ import { sendUserPresence } from "../../../../utils/services/seventv/stvAPI";
 
 let stvPresenceUpdates = new Map();
 let storeStvId = null;
-const PRESENCE_UPDATE_INTERVAL = 30000; // 5 minutes
+const PRESENCE_UPDATE_INTERVAL = 30000;
 
 // Load initial state from local storage
 const getInitialState = () => {
@@ -692,7 +692,7 @@ const initializePresenceUpdates = () => {
         useChatStore.getState().sendPresenceUpdate(storeStvId, chatroom.streamerData.user_id);
       });
     },
-    30000, // 1 minute
+    30000,
   );
 
   return () => {
