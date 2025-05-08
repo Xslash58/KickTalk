@@ -3,16 +3,15 @@ import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { scrollToBottom } from "../../utils/ChatUtils";
 import ChatInput from "./Input";
 import useChatStore from "../../providers/ChatProvider";
-import PinnedMessage from "./PinnedMessage";
 import MessagesHandler from "../Messages/MessagesHandler";
 import { useSettings } from "../../providers/SettingsProvider";
 import { userKickTalkBadges } from "../../../../../utils/kickTalkBadges";
 
 import MouseScroll from "../../assets/icons/mouse-scroll-fill.svg?asset";
-import PushPin from "../../assets/icons/push-pin-fill.svg?asset";
 
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
+import StreamerInfo from "./StreamerInfo";
 dayjs.extend(relativeTime);
 
 // TODO: Separate chatroom inputs / history, each chatroom has its own input
@@ -29,9 +28,6 @@ const Chat = memo(
     //   (messageId) => updateSoundPlayedStore(chatroomId, messageId),
     //   [chatroomId, updateSoundPlayedStore],
     // );
-
-    const [pinnedMessageExpanded, setPinnedMessageExpanded] = useState(false);
-    const [showPinnedMessage, setShowPinnedMessage] = useState(false);
 
     const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
     const [showScrollToBottom, setShowScrollToBottom] = useState(false);
@@ -66,40 +62,12 @@ const Chat = memo(
 
     return (
       <div className="chatContainer">
-        <div className="chatStreamerInfo">
-          <div className="chatStreamerInfoContent">
-            <span className="streamerName">{chatroom?.streamerData?.user?.username}</span>
-            {chatroom?.isStreamerLive && <span className="liveBadgeDot" />}
-          </div>
-
-          <div className="chatStreamerLiveStatus">
-            {chatroom?.streamStatus?.session_title && (
-              <span className="chatStreamerLiveStatusTitle" title={chatroom?.streamStatus?.session_title}>
-                {chatroom?.streamStatus?.session_title}
-              </span>
-            )}
-          </div>
-          <div className="chatStreamerInfoActions">
-            {chatroom?.pinnedMessage && !showPinnedMessage && (
-              <button
-                className={clsx("pinnedMessageBtn", !showPinnedMessage && "show")}
-                disabled={!chatroom?.pinnedMessage}
-                onClick={() => setShowPinnedMessage(!showPinnedMessage)}>
-                <img src={PushPin} width={20} height={20} alt="Pin Message" />
-              </button>
-            )}
-          </div>
-        </div>
-
-        {chatroom?.pinnedMessage && (
-          <PinnedMessage
-            pinnedMessage={chatroom?.pinnedMessage}
-            showPinnedMessage={showPinnedMessage}
-            setShowPinnedMessage={setShowPinnedMessage}
-            pinnedMessageExpanded={pinnedMessageExpanded}
-            setPinnedMessageExpanded={setPinnedMessageExpanded}
-          />
-        )}
+        <StreamerInfo
+          streamerData={chatroom?.streamerData}
+          streamStatus={chatroom?.streamStatus}
+          isStreamerLive={chatroom?.isStreamerLive}
+          chatroomId={chatroomId}
+        />
 
         <div className="chatBody" ref={chatBodyRef} onScroll={handleScroll}>
           <MessagesHandler
@@ -133,7 +101,6 @@ const Chat = memo(
     return (
       prevProps.chatroomId === nextProps.chatroomId &&
       prevProps.settings === nextProps.settings &&
-      prevProps.chatroom?.pinnedMessage === nextProps.chatroom?.pinnedMessage &&
       prevProps.channel7TVEmotes === nextProps.channel7TVEmotes
     );
   },

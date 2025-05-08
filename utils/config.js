@@ -11,9 +11,13 @@ const schema = {
       alwaysOnTop: {
         type: "boolean",
       },
+      wrapChatroomsList: {
+        type: "boolean",
+      },
     },
     default: {
       alwaysOnTop: false,
+      wrapChatroomsList: false,
     },
   },
   chatrooms: {

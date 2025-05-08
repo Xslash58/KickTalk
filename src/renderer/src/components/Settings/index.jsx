@@ -119,7 +119,7 @@ const Settings = ({ settingsModalOpen, setSettingsModalOpen, appInfo }) => {
       <div className="settingsSection generalSettings">
         <h5>General Settings</h5>
 
-        <div className="settingItem notificationSetting">
+        <div className="settingItem">
           <button
             className={clsx("settingSwitchItem", settings?.general?.alwaysOnTop ? "checked" : "")}
             onClick={() => changeSetting("general", { ...settings?.general, alwaysOnTop: !settings?.general?.alwaysOnTop })}>
@@ -127,6 +127,19 @@ const Settings = ({ settingsModalOpen, setSettingsModalOpen, appInfo }) => {
               <img src={Check} width={14} height={14} alt="Check" />
             </div>
             <span>Always On Top</span>
+          </button>
+        </div>
+
+        <div className="settingItem">
+          <button
+            className={clsx("settingSwitchItem", settings?.general?.wrapChatroomsList ? "checked" : "")}
+            onClick={() =>
+              changeSetting("general", { ...settings?.general, wrapChatroomsList: !settings?.general?.wrapChatroomsList })
+            }>
+            <div className="checkBox">
+              <img src={Check} width={14} height={14} alt="Check" />
+            </div>
+            <span>Wrap Chatrooms List</span>
           </button>
         </div>
       </div>
@@ -138,15 +151,15 @@ const Settings = ({ settingsModalOpen, setSettingsModalOpen, appInfo }) => {
 
         <div className="highlightPhrases">
           {settings?.notifications?.phrases.map((phrase) => (
-            <div key={phrase} className="highlightPhrase">
+            <div key={phrase} className="highlightPhrase" title={phrase}>
               <span>{phrase}</span>
               <button
-                onClick={() =>
+                onClick={() => {
                   changeSetting("notifications", {
                     ...settings?.notifications,
                     phrases: settings?.notifications?.phrases.filter((p) => p !== phrase),
-                  })
-                }>
+                  });
+                }}>
                 &times;
               </button>
             </div>
@@ -158,10 +171,12 @@ const Settings = ({ settingsModalOpen, setSettingsModalOpen, appInfo }) => {
             type="text"
             placeholder="Add new phrase..."
             onKeyDown={(e) => {
-              if (e.key === "Enter" && e.target.value.trim().length > 0) {
+              const value = e.target.value.trim();
+              if (settings?.notifications?.phrases.includes(value)) return;
+              if (e.key === "Enter" && value.length > 0) {
                 changeSetting("notifications", {
                   ...settings?.notifications,
-                  phrases: [...settings?.notifications?.phrases, e.target.value],
+                  phrases: [...settings?.notifications?.phrases, value],
                 });
                 e.target.value = "";
               }

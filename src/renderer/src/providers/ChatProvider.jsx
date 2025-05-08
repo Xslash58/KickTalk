@@ -8,7 +8,7 @@ import { sendUserPresence } from "../../../../utils/services/seventv/stvAPI";
 
 let stvPresenceUpdates = new Map();
 let storeStvId = null;
-const PRESENCE_UPDATE_INTERVAL = 30000;
+const PRESENCE_UPDATE_INTERVAL = 30 * 1000;
 
 // Load initial state from local storage
 const getInitialState = () => {
@@ -82,15 +82,6 @@ const useChatStore = create((set, get) => ({
   //     },
   //   }));
   // },
-
-  addMessage: (chatroomId, message) => {
-    set((state) => ({
-      messages: {
-        ...state.messages,
-        [chatroomId]: [...(state.messages[chatroomId] || []), { ...message, deleted: false }].slice(-250), // Keep last 300 messages
-      },
-    }));
-  },
 
   connectToStvWebSocket: (chatroom) => {
     const stvId = chatroom?.channel7TVEmotes?.user?.id;
@@ -173,10 +164,9 @@ const useChatStore = create((set, get) => ({
     pusher.addEventListener("channel", (event) => {
       const parsedEvent = JSON.parse(event.detail.data);
       switch (event.detail.event) {
-        case "App\\Events\\LivestreamUpdated":
-          console.log(parsedEvent);
-          // get().handleStreamStatus(chatroom.id, parsedEvent, true);
-          break;
+        // case "App\\Events\\LivestreamUpdated":
+        // get().handleStreamStatus(chatroom.id, parsedEvent, true);
+        // break;
         case "App\\Events\\ChatroomUpdatedEvent":
           get().handleChatroomUpdated(chatroom.id, parsedEvent);
           break;
@@ -203,11 +193,16 @@ const useChatStore = create((set, get) => ({
 
       switch (event.detail.event) {
         case "App\\Events\\ChatMessageEvent":
+          // Add user to chatters list if they're not already in there
+          get().addChatter(chatroom.id, parsedEvent?.sender);
+
+          // Add Message to Chatroom
           get().addMessage(chatroom.id, {
             ...parsedEvent,
             timestamp: new Date().toISOString(),
           });
 
+          // Add Message to User Logs
           window.app.logs.add({
             chatroomId: chatroom.id,
             userId: parsedEvent.sender.id,
@@ -347,6 +342,48 @@ const useChatStore = create((set, get) => ({
     }));
   },
 
+  initializeConnections: () => {
+    get()?.chatrooms?.forEach((chatroom) => {
+      if (!get().connections[chatroom.id]) {
+        // Connect to chatroom
+        get().connectToChatroom(chatroom);
+
+        // Connect to 7TV WebSocket
+        get().connectToStvWebSocket(chatroom);
+      }
+    });
+  },
+
+  addMessage: (chatroomId, message) => {
+    set((state) => ({
+      messages: {
+        ...state.messages,
+        [chatroomId]: [...(state.messages[chatroomId] || []), { ...message, deleted: false }].slice(-250), // Keep last 300 messages
+      },
+    }));
+  },
+
+  addChatter: (chatroomId, chatter) => {
+    set((state) => {
+      const chatroom = state.chatrooms.find((room) => room.id === chatroomId);
+      if (!chatroom) return state;
+
+      // Check if chatter already exists
+      if (chatroom.chatters?.some((c) => c.id === chatter.id)) {
+        return state;
+      }
+
+      return {
+        chatrooms: state.chatrooms.map((room) => {
+          if (room.id === chatroomId) {
+            return { ...room, chatters: [...(room.chatters || []), chatter] };
+          }
+          return room;
+        }),
+      };
+    });
+  },
+
   addChatroom: async (username) => {
     try {
       const savedChatrooms = JSON.parse(localStorage.getItem("chatrooms")) || [];
@@ -413,18 +450,6 @@ const useChatStore = create((set, get) => ({
     localStorage.setItem("chatrooms", JSON.stringify(savedChatrooms.filter((room) => room.id !== chatroomId)));
   },
 
-  initializeConnections: () => {
-    get()?.chatrooms?.forEach((chatroom) => {
-      if (!get().connections[chatroom.id]) {
-        // Connect to chatroom
-        get().connectToChatroom(chatroom);
-
-        // Connect to 7TV WebSocket
-        get().connectToStvWebSocket(chatroom);
-      }
-    });
-  },
-
   handleUserBanned: (chatroomId, event) => {
     set((state) => {
       const messages = state.messages[chatroomId];
@@ -452,20 +477,6 @@ const useChatStore = create((set, get) => ({
     });
   },
 
-  handleUpdatePlaySound: (chatroomId, messageId) => {
-    set((state) => {
-      return {
-        ...state,
-        messages: state.messages[chatroomId].map((message) => {
-          if (message.id === messageId) {
-            return { ...message, playSound: !message.playSound };
-          }
-          return message;
-        }),
-      };
-    });
-  },
-
   handleUserUnbanned: (chatroomId, event) => {
     set((state) => {
       const messages = state.messages[chatroomId];
@@ -484,6 +495,20 @@ const useChatStore = create((set, get) => ({
           ...state.messages,
           [chatroomId]: updatedMessages,
         },
+      };
+    });
+  },
+
+  handleUpdatePlaySound: (chatroomId, messageId) => {
+    set((state) => {
+      return {
+        ...state,
+        messages: state.messages[chatroomId].map((message) => {
+          if (message.id === messageId) {
+            return { ...message, playSound: !message.playSound };
+          }
+          return message;
+        }),
       };
     });
   },
@@ -558,6 +583,10 @@ const useChatStore = create((set, get) => ({
     data.map((message) => {
       message.is_old = true;
       message.metadata = JSON.parse(message.metadata);
+    });
+
+    data?.forEach((message) => {
+      get().addChatter(chatroomId, message?.sender);
     });
 
     set((state) => ({
@@ -685,15 +714,12 @@ const initializePresenceUpdates = () => {
 
   // Send presence updates every 1 minute
   console.log("[7TV Presence]: Initializing presence update checks");
-  presenceUpdatesInterval = setInterval(
-    () => {
-      useChatStore.getState().chatrooms.forEach((chatroom) => {
-        console.log("[7TV Presence]: Sending presence update for chatroom:", chatroom.streamerData.user_id);
-        useChatStore.getState().sendPresenceUpdate(storeStvId, chatroom.streamerData.user_id);
-      });
-    },
-    30000,
-  );
+  presenceUpdatesInterval = setInterval(() => {
+    useChatStore.getState().chatrooms.forEach((chatroom) => {
+      console.log("[7TV Presence]: Sending presence update for chatroom:", chatroom.streamerData.user_id);
+      useChatStore.getState().sendPresenceUpdate(storeStvId, chatroom.streamerData.user_id);
+    });
+  }, 15 * 1000);
 
   return () => {
     if (presenceUpdatesInterval) {

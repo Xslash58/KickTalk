@@ -22,12 +22,18 @@
   src: url("../fonts/Inter/Inter-ExtraBold.ttf");
 }
 
+#root {
+  max-height: 100vh;
+}
+
 #main {
   background: linear-gradient(180deg, #020a05 0%, #06190e 100%), linear-gradient(180deg, #031209 0%, #06190e 100%);
 }
 
 #dialog {
-  background: linear-gradient(180deg, #040f08f0 0%, #0d2316 60%);
+  background: linear-gradient(180deg, rgba(4, 15, 8, 0.9) 0%, #091810 60%);
+  border: 1px solid #ffffff21;
+  height: 100vh;
 }
 
 #authDialog {
@@ -126,7 +132,6 @@ button {
   border: none;
   background: none;
   outline: none;
-  cursor: pointer;
 }
 
 * {

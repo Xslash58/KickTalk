@@ -48,7 +48,6 @@ const rules = [
     // Mention rule
     regexPattern: mentionRegex,
     component: ({ match, index }) => {
-      const { username } = match.groups;
       return (
         <span style={{ color: "#fff", fontWeight: "bold" }} key={`mention-${index}`}>
           {match[0]}
@@ -99,20 +98,27 @@ export const MessageParser = ({ message, sevenTVEmotes, sevenTVSettings, type })
 
   for (const rule of rules) {
     for (const match of message.content.matchAll(rule.regexPattern)) {
-      allMatches.push({ match, rule });
+      allMatches.push({
+        match,
+        rule,
+        start: match.index,
+        end: match.index + match[0].length,
+      });
     }
   }
 
   // Sort matches by their order of appearance
-  allMatches.sort((a, b) => a.index - b.index);
+  allMatches.sort((a, b) => a.start - b.start);
 
-  for (const { match, rule } of allMatches) {
-    if (match.index > lastIndex) {
-      parts.push(message.content.slice(lastIndex, match.index));
+  for (const { match, rule, start, end } of allMatches) {
+    // Add any text before this match
+    if (start > lastIndex) {
+      parts.push(message.content.slice(lastIndex, start));
     }
 
-    parts.push(rule.component({ match, index: match.index }));
-    lastIndex = match.index + match[0].length;
+    // Add the matched component
+    parts.push(rule.component({ match, index: start }));
+    lastIndex = end;
   }
 
   // Add remaining text

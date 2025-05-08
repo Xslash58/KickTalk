@@ -97,6 +97,17 @@ if (process.contextIsolated) {
         },
       },
 
+      chattersDialog: {
+        open: (data) => ipcRenderer.invoke("chattersDialog:open", { data }),
+        close: () => ipcRenderer.invoke("chattersDialog:close"),
+        onData: (callback) => {
+          const handler = (_, data) => callback(data);
+
+          ipcRenderer.on("chattersDialog:data", handler);
+          return () => ipcRenderer.removeListener("chattersDialog:data", handler);
+        },
+      },
+
       update: {
         onUpdate: (callback) => {
           const handler = (_, data) => callback(data);

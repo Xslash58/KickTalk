@@ -50,7 +50,11 @@ const EmoteSection = ({ emotes, title, handleEmoteClick, type }) => {
       </div>
       <div className="emoteItems">
         {emotes?.slice(0, visibleCount).map((emote, index) => (
-          <button onClick={() => handleEmoteClick(emote)} className="emoteItem" key={`${emote.id}-${index}`}>
+          <button
+            // disabled={type === "kick" && emote?.subscriber_only}
+            onClick={() => handleEmoteClick(emote)}
+            className="emoteItem"
+            key={`${emote.id}-${index}`}>
             {type === "kick" ? (
               <img src={`https://files.kick.com/emotes/${emote.id}/fullsize`} alt={emote.name} loading="lazy" decoding="async" />
             ) : (

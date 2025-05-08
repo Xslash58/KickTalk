@@ -1,8 +1,9 @@
 .navbarContainer {
-  height: 80px;
+  min-height: 80px;
+  height: auto;
   width: 100%;
   overflow-x: scroll;
-  background-color: #ffffff0a;
+  background-color: rgba(255, 255, 255, 0.0392156863);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -27,15 +28,52 @@
   &::-webkit-scrollbar-track {
     background-color: #ffffff26;
   }
-}
 
-.chatroomsList {
-  display: flex;
-  padding: 0 112px 0 12px;
-  gap: 12px;
+  > .chatroomsList {
+    display: flex;
+    padding: 0 0 0 12px;
+    gap: 12px;
+    height: auto;
+    align-items: center;
+  }
 
-  &:last-of-type {
-    margin-right: 300px;
+  &.wrapChatroomList {
+    height: auto;
+    align-items: flex-start;
+
+    .chatroomsList {
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 16px 8px;
+      align-items: flex-start;
+      width: 100%;
+
+      .navbarAddChatroomContainer {
+        position: relative;
+        background: none;
+        height: 100%;
+        padding: 0;
+        min-height: 100%;
+
+        .navbarAddChatroomButton {
+          height: 40px;
+          width: 40px;
+          padding: 0;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background-color: rgba(255, 255, 255, 0.1);
+
+          &:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+          }
+
+          span {
+            display: none;
+          }
+        }
+      }
+    }
   }
 }
 
@@ -59,6 +97,10 @@
     0.2s ease-in-out background,
     0.2s ease-in-out border-width;
   justify-content: space-between;
+
+  &:last-child {
+    margin-right: 124px;
+  }
 
   &.chatroomStreamerActive {
     background: rgba(217, 217, 217, 0.08);
@@ -272,14 +314,14 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 24px;
+  padding: 24px 16px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .navbarAddChatroomDialogHeadInfo {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 8px;
 
   > h2 {
     font-size: 20px;

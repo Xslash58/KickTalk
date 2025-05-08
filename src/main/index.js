@@ -10,33 +10,6 @@ import path from "path";
 import dotenv from "dotenv";
 dotenv.config();
 
-function serialize(arg) {
-  if (arg instanceof Error) {
-    return `${arg.name}: ${arg.message}\n${arg.stack}`;
-  }
-  try {
-    return typeof arg === "string" ? arg : JSON.stringify(arg, null, 2);
-  } catch {
-    return "[Unserializable Object]";
-  }
-}
-
-function setupLogging() {
-  const logPath = path.join(app.getPath("userData"), "log.txt");
-  const logStream = fs.createWriteStream(logPath, { flags: "a" });
-
-  const writeLog = (level, ...args) => {
-    const timestamp = new Date().toISOString();
-    const message = args.map(serialize).join(" ");
-    logStream.write(`[${level} ${timestamp}] ${message}\n`);
-  };
-
-  console.log = (...args) => writeLog("LOG", ...args);
-  console.error = (...args) => writeLog("ERROR", ...args);
-}
-
-setupLogging();
-
 const authStore = new Store({
   fileExtension: "env",
   schema: {
@@ -92,6 +65,7 @@ let dialogInfo = null;
 let mainWindow = null;
 let userDialog = null;
 let authDialog = null;
+let chattersDialog = null;
 
 ipcMain.handle("store:get", async (e, { key }) => {
   if (!key) return store.store;
@@ -284,6 +258,7 @@ const loginToKick = async (method) => {
       autoHideMenuBar: true,
       parent: authDialog,
       roundedCorners: true,
+      icon: join(__dirname, "../../resources/icons/win/KickTalk_v1.ico"),
       webPreferences: {
         autoplayPolicy: "user-gesture-required",
         nodeIntegration: false,
@@ -299,12 +274,11 @@ const loginToKick = async (method) => {
           loginDialog.webContents.executeJavaScript(
             `const interval = setInterval(() => {
               const el = document.querySelector('div.flex.items-center.gap-4 > button:last-child');
-              console.log(el);
               if (el) {
                 el.click();
                 clearInterval(interval);  
               }
-            }, 100);`
+            }, 100);`,
           );
           loginDialog.webContents.setAudioMuted(true);
         });
@@ -530,6 +504,7 @@ ipcMain.handle("authDialog:open", (e) => {
     transparent: true,
     roundedCorners: true,
     parent: mainWindow,
+    icon: join(__dirname, "../../resources/icons/win/KickTalk_v1.ico"),
     webPreferences: {
       devTools: true,
       nodeIntegration: false,
@@ -644,6 +619,73 @@ ipcMain.handle("get-app-info", () => {
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin") {
     app.quit();
+  }
+});
+
+// Chatters Dialog Handler
+ipcMain.handle("chattersDialog:open", (e, { data }) => {
+  if (chattersDialog) {
+    chattersDialog.focus();
+    return;
+  }
+
+  const mainWindowPos = mainWindow.getPosition();
+  const newX = mainWindowPos[0] + 100;
+  const newY = mainWindowPos[1] + 100;
+
+  chattersDialog = new BrowserWindow({
+    width: 350,
+    minWidth: 350,
+    height: 600,
+    minHeight: 400,
+    x: newX,
+    y: newY,
+    show: false,
+    resizable: true,
+    frame: false,
+    transparent: true,
+    roundedCorners: true,
+    parent: mainWindow,
+    icon: join(__dirname, "../../resources/icons/win/KickTalk_v1.ico"),
+    webPreferences: {
+      devTools: true,
+      nodeIntegration: false,
+      contextIsolation: true,
+      preload: join(__dirname, "../preload/index.js"),
+      sandbox: false,
+    },
+  });
+
+  if (isDev && process.env["ELECTRON_RENDERER_URL"]) {
+    chattersDialog.loadURL(`${process.env["ELECTRON_RENDERER_URL"]}/chatters.html`);
+  } else {
+    chattersDialog.loadFile(join(__dirname, "../renderer/chatters.html"));
+  }
+
+  chattersDialog.once("ready-to-show", () => {
+    chattersDialog.show();
+    if (data) {
+      chattersDialog.webContents.send("chattersDialog:data", data);
+    }
+    if (isDev) {
+      chattersDialog.webContents.openDevTools();
+    }
+  });
+
+  chattersDialog.on("closed", () => {
+    chattersDialog = null;
+  });
+});
+
+ipcMain.handle("chattersDialog:close", () => {
+  try {
+    if (chattersDialog) {
+      chattersDialog.close();
+      chattersDialog = null;
+    }
+  } catch (error) {
+    console.error("[Chatters Dialog]: Error closing dialog:", error);
+    chattersDialog = null;
   }
 });
 

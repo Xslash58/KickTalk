@@ -261,14 +261,14 @@ const KeyHandler = ({ chatroomId, onSendMessage }) => {
         });
 
         editor.update(() => {
-          const root = $getRoot();
-          root.clear();
+          $getRoot().clear();
 
-          const paragraph = $createParagraphNode();
+          const selection = $getSelection();
+          if (!$isRangeSelection(selection)) return;
+
           const text = $createTextNode(history.sentMessages[currentIndex]);
 
-          paragraph.append(text);
-          root.append(paragraph);
+          selection.insertNodes([text]);
         });
 
         return true;
@@ -300,14 +300,14 @@ const KeyHandler = ({ chatroomId, onSendMessage }) => {
         });
 
         editor.update(() => {
-          const root = $getRoot();
-          root.clear();
+          $getRoot().clear();
 
-          const paragraph = $createParagraphNode();
+          const selection = $getSelection();
+          if (!$isRangeSelection(selection)) return;
+
           const text = $createTextNode(history.sentMessages[currentIndex]);
 
-          paragraph.append(text);
-          root.append(paragraph);
+          selection.insertNodes([text]);
         });
 
         return true;

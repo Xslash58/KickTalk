@@ -26,6 +26,15 @@ export const userKickTalkBadges = [
     ],
   },
   {
+    username: "forgettrance",
+    badges: [
+      {
+        type: "BetaTester",
+        title: "Beta Tester",
+      },
+    ],
+  },
+  {
     username: "prsek",
     badges: [
       {

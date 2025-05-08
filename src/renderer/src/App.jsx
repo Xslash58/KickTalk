@@ -1,4 +1,3 @@
-import Updater from "./components/Updater";
 import ChatPage from "./pages/ChatPage";
 import SettingsProvider from "./providers/SettingsProvider";
 
