@@ -53,4 +53,5 @@ export const CHAT_ERROR_CODES = {
   ["SUBSCRIBERS_ONLY_EMOTE_ERROR"]: "Message contains subscriber only emote.",
   ["EMOTES_ONLY_ERROR"]: "Chatroom is in emote only mode. Only emotes are allowed.",
   ["SUBSCRIBERS_ONLY_ERROR"]: "Chatroom is in subscribers only mode.",
+  ["CHAT_RATE_LIMIT_ERROR"]: "Rate limit triggered. Slow down.",
 };

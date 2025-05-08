@@ -1,6 +1,7 @@
 import axios from "axios";
 const APIUrl = "https://kick.com";
 const KickTalkAPIUrl = "https://api.kicktalk.app";
+const rateLimitMap = new Map();
 
 const getLinkThumbnail = async (url) => {
   const response = await axios.get(url, {
@@ -90,7 +91,38 @@ const getInitialChatroomMessages = (channelID) => {
   return axios.get(`${APIUrl}/api/v2/channels/${channelID}/messages`);
 };
 
-const sendMessageToChannel = (channelID, message, sessionCookie, kickSession) => {
+const sendMessageToChannel = async (channelID, message, sessionCookie, kickSession) => {
+  const now = Date.now();
+
+  if (!rateLimitMap.has(channelID)) {
+    rateLimitMap.set(channelID, {
+      timestamps: [],
+      cooldownUntil: 0,
+      isActive: false,
+    });
+  }
+
+  const channelState = rateLimitMap.get(channelID);
+
+  if (now < channelState.cooldownUntil) {
+    if (!channelState.isActive) {
+      channelState.isActive = true;
+      throw { code: "CHAT_RATE_LIMIT_ERROR" };
+    }
+    return;
+  }
+
+  channelState.isActive = false;
+
+  channelState.timestamps = channelState.timestamps.filter(ts => now - ts <= 3000);
+  channelState.timestamps.push(now);
+
+  if (channelState.timestamps.length >= 9) {
+    channelState.cooldownUntil = now + 5000;
+    channelState.isActive = true;
+    throw { code: "CHAT_RATE_LIMIT_ERROR" };
+  }
+
   return axios.post(
     `${APIUrl}/api/v2/messages/send/${channelID}`,
     { content: message, type: "message" },
@@ -99,9 +131,10 @@ const sendMessageToChannel = (channelID, message, sessionCookie, kickSession) =>
         Authorization: `Bearer ${sessionCookie}`,
       },
       Cookie: `kick_session=${kickSession}, session_token=${sessionCookie}, x-xsrf-token=${sessionCookie}, XSRF-TOKEN=${kickSession}`,
-    },
+    }
   );
 };
+
 
 const getSelfInfo = (sessionCookie, kickSession) => {
   return axios.get(`${APIUrl}/api/v1/user`, {
