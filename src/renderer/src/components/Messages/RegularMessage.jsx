@@ -4,16 +4,29 @@ import { KickBadges, KickTalkBadges, StvBadges } from "../Cosmetics/Badges";
 import CopyIcon from "../../assets/icons/copy-simple-fill.svg";
 import PinIcon from "../../assets/icons/pin-filled.svg";
 import clsx from "clsx";
-import { useShallow } from "zustand/shallow";
-import useCosmeticsStore from "../../providers/CosmeticsProvider";
-
+import dayjs from "dayjs";
+import { useSettings } from "../../providers/SettingsProvider";
 const RegularMessage = memo(
-  ({ message, filteredKickTalkBadges, subscriberBadges, sevenTVEmotes, handleOpenUserDialog, sevenTVSettings, type, chatroomName }) => {
-    const userStyle = useCosmeticsStore(useShallow((state) => state.getUserStyle(message.sender.username)));
+  ({
+    message,
+    filteredKickTalkBadges,
+    subscriberBadges,
+    userStyle,
+    sevenTVEmotes,
+    handleOpenUserDialog,
+    sevenTVSettings,
+    type,
+    chatroomName,
+  }) => {
+
+    const { settings } = useSettings();
 
     return (
       <span className={`chatMessageContainer ${message.deleted ? "deleted" : ""}`}>
         <div className="chatMessageUser">
+          {settings?.general?.showTimestamps && (
+            <span className="chatMessageTimestamp">{dayjs(message.timestamp).format("HH:mm")}</span>
+          )}
           <div className="chatMessageBadges">
             {filteredKickTalkBadges && <KickTalkBadges badges={filteredKickTalkBadges} />}
             {userStyle?.badge && <StvBadges badge={userStyle?.badge} />}
@@ -36,9 +49,9 @@ const RegularMessage = memo(
           </button>
         </div>
 
-        <span className="chatMessageContent">
+        <div className="chatMessageContent">
           <MessageParser type={type} message={message} sevenTVEmotes={sevenTVEmotes} sevenTVSettings={sevenTVSettings} />
-        </span>
+        </div>
         <div className="chatMessageActions">
               <button
             onClick={() => {
@@ -70,7 +83,8 @@ const RegularMessage = memo(
     return (
       prevProps.message === nextProps.message &&
       prevProps.sevenTVSettings === nextProps.sevenTVSettings &&
-      prevProps.sevenTVEmotes === nextProps.sevenTVEmotes
+      prevProps.sevenTVEmotes === nextProps.sevenTVEmotes &&
+      prevProps.userStyle === nextProps.userStyle
     );
   },
 );

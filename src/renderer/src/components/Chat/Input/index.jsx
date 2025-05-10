@@ -8,7 +8,6 @@ import {
   KEY_ARROW_DOWN_COMMAND,
   KEY_TAB_COMMAND,
   $createTextNode,
-  $createParagraphNode,
   $getSelection,
   $isRangeSelection,
   PASTE_COMMAND,
@@ -92,6 +91,8 @@ const EmoteSuggestions = memo(
                 <div className="inputSuggestionInfo">
                   <span>{emote?.name}</span>
                   <div className="emoteTags">
+                    {emote?.subscribers_only && <span>SUB</span>}
+                    {emote?.type && <span>{emote?.type.toUpperCase()}</span>}
                     <span>{emote?.platform?.toUpperCase()}</span>
                   </div>
                 </div>
@@ -164,6 +165,10 @@ const KeyHandler = ({ chatroomId, onSendMessage }) => {
   const [emoteSuggestions, setEmoteSuggestions] = useState([]);
   const [chatterSuggestions, setChatterSuggestions] = useState([]);
   const [searchText, setSearchText] = useState("");
+  const [tabSuggestions, setTabSuggestions] = useState([]);
+  const [selectedIndex, setSelectedIndex] = useState(0);
+  const [selectedTabIndex, setSelectedTabIndex] = useState(0);
+  const [showChatters, setShowChatters] = useState(false);
   const [selectedEmoteIndex, setSelectedEmoteIndex] = useState(0);
   const [selectedChatterIndex, setSelectedChatterIndex] = useState(0);
   const [position, setPosition] = useState(null);
@@ -184,7 +189,10 @@ const KeyHandler = ({ chatroomId, onSendMessage }) => {
       const transformedText = text.toLowerCase();
 
       const sevenTvResults =
-        sevenTVEmotes?.emote_set?.emotes?.filter((emote) => emote.name.toLowerCase().includes(transformedText))?.slice(0, 10) || [];
+        sevenTVEmotes
+          ?.flatMap((emoteSet) => emoteSet.emotes)
+          ?.filter((emote) => emote.name.toLowerCase().includes(transformedText))
+          ?.slice(0, 10) || [];
 
       const kickResults =
         kickEmotes?.flatMap((emoteSet) => emoteSet.emotes || [])?.filter((emote) => emote.name.toLowerCase().includes(transformedText))?.slice(0, 10) || [];
@@ -335,6 +343,94 @@ const KeyHandler = ({ chatroomId, onSendMessage }) => {
           insertChatterMention(chatterSuggestions[selectedChatterIndex]);
           return true;
         }
+        // if (tabSuggestions?.length) {
+        //   const nextIndex = (selectedTabIndex + 1) % tabSuggestions.length;
+        //   setSelectedTabIndex(nextIndex);
+
+        //   editor.update(() => {
+        //     const selection = $getSelection();
+        //     if (!$isRangeSelection(selection)) return;
+
+        //     const node = selection.anchor.getNode();
+        //     if (!node) return;
+
+        //     const textContent = node.getTextContent();
+        //     const currentEmote = tabSuggestions[nextIndex - 1];
+        //     const startIndex = textContent.lastIndexOf(tabSuggestions[nextIndex - 1]);
+        //     const endIndex = startIndex + tabSuggestions[nextIndex].length;
+
+        //     const textBefore = textContent.slice(startIndex, endIndex);
+        //     const textAfter = textContent.slice(endIndex);
+
+        //     // Delete the current word
+        //     node.setTextContent(textBefore + textAfter);
+
+        //     // Set text after emote
+        //     if (textAfter) {
+        //       const afterNode = $createTextNode(textAfter);
+        //       selection.insertNodes([afterNode]);
+        //     }
+        //   });
+        //   return true;
+        // }
+
+        // const content = $rootTextContent();
+        // if (!content.trim()) return false;
+
+        // // Get the text before the cursor in the current node
+        // const cursorOffset = $getSelection().anchor.offset;
+        // const textBeforeCursor = content.slice(0, cursorOffset);
+
+        // // Find the last word before the cursor
+        // const words = textBeforeCursor.split(/\s+/);
+        // const currentWord = words[words.length - 1];
+
+        // const foundEmotes = [];
+
+        // // Search 7TV Emotes for matches
+        // [...sevenTVEmotes[0]?.emotes, ...sevenTVEmotes[1]?.emotes]?.filter((emote) => {
+        //   if (emote.name.toLowerCase().startsWith(currentWord.toLowerCase())) {
+        //     foundEmotes.push(emote);
+        //   }
+        // });
+
+        // if (foundEmotes.length > 0) {
+        //   setTabSuggestions(foundEmotes);
+        //   setSelectedTabIndex(0);
+
+        //   editor.update(() => {
+        //     const selection = $getSelection();
+        //     if (!$isRangeSelection(selection)) return;
+
+        //     const node = selection.anchor.getNode();
+        //     if (!node) return;
+
+        //     const textContent = node.getTextContent();
+        //     const startIndex = textContent.lastIndexOf(currentWord);
+
+        //     const endIndex = startIndex + currentWord.length;
+
+        //     const textBefore = textContent.slice(0, startIndex);
+        //     const textAfter = textContent.slice(endIndex);
+
+        //     // Delete the current word
+        //     node.setTextContent(textBefore + textAfter + foundEmotes[0]?.name);
+
+        //     // Set text after emote
+        //     if (textAfter) {
+        //       const afterNode = $createTextNode(textAfter);
+        //       selection.insertNodes([afterNode]);
+        //     }
+        //   });
+        //   return true;
+        // }
+        // const emote = getEmoteData(currentWord, sevenTVEmotes, chatroomId);
+
+        // if (emote) {
+        //   insertEmote(emote);
+        //   return true;
+        // }
+
         return true;
       }, COMMAND_PRIORITY_HIGH),
 
@@ -376,6 +472,53 @@ const KeyHandler = ({ chatroomId, onSendMessage }) => {
         });
       }),
     ];
+
+    // Add effect to handle @ mentions
+    // const removeUpdateListener = editor.registerUpdateListener(({ editorState }) => {
+    //   editorState.read(() => {
+    //     const text = $rootTextContent();
+    //     const lastAtSymbol = text.lastIndexOf("@");
+
+    //     if (lastAtSymbol !== -1) {
+    //       const textAfterAt = text.slice(lastAtSymbol + 1);
+    //       if (!textAfterAt.includes(" ")) {
+    //         // Show chatters dialog when @ is typed
+    //         window.app.chattersDialog.open();
+    //         setShowChatters(true);
+    //       } else {
+    //         setShowChatters(false);
+    //       }
+    //     } else {
+    //       setShowChatters(false);
+    //     }
+    //   });
+    // });
+
+    // Add event listener for inserting mentions
+    // const handleInsertMention = (e) => {
+    //   const { text } = e.detail;
+    //   editor.update(() => {
+    //     const selection = $getSelection();
+    //     if (!$isRangeSelection(selection)) return;
+
+    //     // Find the last @ symbol
+    //     const rootText = $rootTextContent();
+    //     const lastAtSymbol = rootText.lastIndexOf("@");
+    //     if (lastAtSymbol === -1) return;
+
+    //     // Get the text node containing the @ symbol
+    //     const textNode = selection.anchor.getNode();
+    //     const textContent = textNode.getTextContent();
+    //     const atIndex = textContent.lastIndexOf("@");
+
+    //     if (atIndex !== -1) {
+    //       // Replace the @ and any text after it with the mention
+    //       textNode.setTextContent(textContent.slice(0, atIndex) + text);
+    //     }
+    //   });
+    // };
+
+    // window.addEventListener("insertMention", handleInsertMention);
 
     return () => {
       unregisters.forEach((unregister) => unregister());

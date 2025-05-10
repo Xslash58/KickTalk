@@ -1,11 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import clsx from "clsx";
-import "../../assets/styles/components/Dialogs/UserDialog.scss";
+import "../../assets/styles/dialogs/UserDialog.scss";
 import Message from "../../utils/Message";
 import Pin from "../../assets/icons/push-pin-fill.svg?asset";
 import { userKickTalkBadges } from "../../../../../utils/kickTalkBadges";
 import ArrowUpRight from "../../assets/icons/arrow-up-right-bold.svg?asset";
 import Copy from "../../assets/icons/copy-simple-fill.svg?asset";
+import BanIcon from "../../assets/icons/gavel-fill.svg?asset";
+import UnbanIcon from "../../assets/icons/circle-slash.svg?asset";
+
 const User = () => {
   const [dialogData, setDialogData] = useState(null);
   const [userProfile, setUserProfile] = useState(null);
@@ -13,6 +16,7 @@ const User = () => {
   const [subscriberBadges, setSubscriberBadges] = useState([]);
   const [sevenTVEmotes, setSevenTVEmotes] = useState([]);
   const [isDialogPinned, setIsDialogPinned] = useState(false);
+  const [dialogUserStyle, setDialogUserStyle] = useState(null);
   const dialogLogsRef = useRef(null);
   const scilencedUsers = JSON.parse(localStorage.getItem("silencedUsers")) || [];
   const [isUserSilenced, setIsSilenced] = useState(false);
@@ -21,9 +25,11 @@ const User = () => {
     const loadData = async (data) => {
       console.log("User Dialog Data", data);
       setDialogData(data);
-
       const chatrooms = JSON.parse(localStorage.getItem("chatrooms")) || [];
       const currentChatroom = chatrooms.find((chatroom) => chatroom.id === data.chatroomId);
+      console.log(data);
+      setDialogData({ ...data, chatroom: currentChatroom });
+      setDialogUserStyle(data?.userStyle);
 
       setSevenTVEmotes(currentChatroom?.channel7TVEmotes || []);
       setSubscriberBadges(currentChatroom?.streamerData?.subscriber_badges || []);
@@ -37,7 +43,8 @@ const User = () => {
       setUserProfile(user);
 
       // Pin starts unpinned
-      await window.app.userDialog.pin(false);
+      await window.app.userDialog.pin(data?.pinned || false);
+      setIsDialogPinned(data?.pinned || false);
     };
 
     const updateData = (data) => {
@@ -82,6 +89,15 @@ const User = () => {
     setIsDialogPinned(!isDialogPinned);
   };
 
+  const canModerate =
+    dialogData?.userChatroomInfo?.is_broadcaster ||
+    dialogData?.userChatroomInfo?.is_moderator ||
+    dialogData?.userChatroomInfo?.is_super_admin;
+
+  const handleTimeoutUser = async (duration) => {
+    await window.app.modActions.getTimeoutUser(dialogData?.chatroom?.username, dialogData?.sender?.username, duration);
+  };
+
   return (
     <div className="dialogWrapper">
       <div className="dialogHeader">
@@ -118,8 +134,10 @@ const User = () => {
             </div>
           </div>
         </div>
+
         <div className="dialogHeaderOptions">
-          <button
+          <div className="dialogHeaderOptionsTop">
+            <button
             className="dialogHeaderOptionsButton"
             onClick={async () => {
               await silenceUser();
@@ -128,13 +146,57 @@ const User = () => {
             {isUserSilenced ? "Unmute User" : "Mute User"}
             </button>
             <button
-            className="dialogHeaderOptionsButton"
-            onClick={() => {
-              const transformedUsername = dialogData?.sender?.username.toLowerCase().replace("_", "-");
-              window.open(`https://kick.com/${transformedUsername}`, "_blank", "noopener,noreferrer");
-            }}>
-            Open Channel <img src={ArrowUpRight} width={18} height={18} />
-          </button>
+              className="dialogHeaderOptionsButton"
+              onClick={() => {
+                const transformedUsername = dialogData?.sender?.username.toLowerCase().replace("_", "-");
+                window.open(`https://kick.com/${transformedUsername}`, "_blank", "noopener,noreferrer");
+              }}>
+              Open Channel <img src={ArrowUpRight} width={18} height={18} />
+            </button>
+          </div>
+
+          {canModerate && (
+            <div className="dialogHeaderModActions">
+              <button
+                className="dialogHeaderModActionsBtn"
+                onClick={() => {
+                  window.app.modActions.getBanUser(dialogData?.chatroom?.username, dialogData?.sender?.username);
+                }}>
+                <img src={BanIcon} width={16} height={16} alt="Ban" />
+              </button>
+              <div className="dialogHeaderModActionsTimeout">
+                <button className="dialogHeaderModActionsTimeoutBtn" onClick={() => handleTimeoutUser(1)}>
+                  1m
+                </button>
+                <button className="dialogHeaderModActionsTimeoutBtn" onClick={() => handleTimeoutUser(5)}>
+                  5m
+                </button>
+                <button className="dialogHeaderModActionsTimeoutBtn" onClick={() => handleTimeoutUser(30)}>
+                  30m
+                </button>
+                <button className="dialogHeaderModActionsTimeoutBtn" onClick={() => handleTimeoutUser(60)}>
+                  1h
+                </button>
+                <button className="dialogHeaderModActionsTimeoutBtn" onClick={() => handleTimeoutUser(1440)}>
+                  1d
+                </button>
+                <button className="dialogHeaderModActionsTimeoutBtn" onClick={() => handleTimeoutUser(10080)}>
+                  1w
+                </button>
+
+                {/* <div className="dialogHeaderModActionsTimeoutCustom">
+                <input type="number" placeholder="Custom" />
+              </div> */}
+              </div>
+              <button
+                className="dialogHeaderModActionsBtn"
+                onClick={() => {
+                  window.app.modActions.getUnbanUser(dialogData?.chatroom?.username, dialogData?.sender?.username);
+                }}>
+                <img src={UnbanIcon} width={16} height={16} alt="Unban" />
+              </button>
+            </div>
+          )}
         </div>
 
         <div className="dialogOptions">
@@ -161,6 +223,7 @@ const User = () => {
                 key={`${message.id}-${i}`}
                 message={message}
                 chatroomId={dialogData?.chatroomId}
+                dialogUserStyle={dialogUserStyle}
                 subscriberBadges={subscriberBadges}
                 sevenTVEmotes={sevenTVEmotes}
                 kickTalkBadges={userKickTalkBadges}
