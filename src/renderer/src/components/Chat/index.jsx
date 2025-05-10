@@ -58,8 +58,6 @@ const Chat = memo(
       }
     }, [chatroomId]);
 
-    console.log("chatroom", chatroom);
-
     return (
       <div className="chatContainer">
         <StreamerInfo

@@ -20,14 +20,13 @@ const User = () => {
   const dialogLogsRef = useRef(null);
   const scilencedUsers = JSON.parse(localStorage.getItem("silencedUsers")) || [];
   const [isUserSilenced, setIsSilenced] = useState(false);
+  const kickUsername = localStorage.getItem("kickUsername");
 
   useEffect(() => {
     const loadData = async (data) => {
-      console.log("User Dialog Data", data);
       setDialogData(data);
       const chatrooms = JSON.parse(localStorage.getItem("chatrooms")) || [];
       const currentChatroom = chatrooms.find((chatroom) => chatroom.id === data.chatroomId);
-      console.log(data);
       setDialogData({ ...data, chatroom: currentChatroom });
       setDialogUserStyle(data?.userStyle);
 
@@ -62,7 +61,7 @@ const User = () => {
 
   useEffect(() => {
     dialogLogsRef.current.scrollTop = dialogLogsRef.current.scrollHeight;
-    dialogData?.isSilenced
+    dialogData?.isSilenced;
   }, [userLogs, dialogData]);
 
   const silenceUser = async () => {
@@ -97,6 +96,8 @@ const User = () => {
   const handleTimeoutUser = async (duration) => {
     await window.app.modActions.getTimeoutUser(dialogData?.chatroom?.username, dialogData?.sender?.username, duration);
   };
+
+  console.log("User Dialog Data", dialogData);
 
   return (
     <div className="dialogWrapper">
@@ -138,12 +139,13 @@ const User = () => {
         <div className="dialogHeaderOptions">
           <div className="dialogHeaderOptionsTop">
             <button
-            className="dialogHeaderOptionsButton"
-            onClick={async () => {
-              await silenceUser();
-              window.app.userDialog.close();
-            }}>
-            {isUserSilenced ? "Unmute User" : "Mute User"}
+              className="dialogHeaderOptionsButton"
+              disabled={kickUsername === dialogData?.sender?.username}
+              onClick={async () => {
+                await silenceUser();
+                setIsSilenced(!isUserSilenced);
+              }}>
+              <span>{isUserSilenced ? "Unmute User" : "Mute User"}</span>
             </button>
             <button
               className="dialogHeaderOptionsButton"
@@ -183,7 +185,6 @@ const User = () => {
                 <button className="dialogHeaderModActionsTimeoutBtn" onClick={() => handleTimeoutUser(10080)}>
                   1w
                 </button>
-
                 {/* <div className="dialogHeaderModActionsTimeoutCustom">
                 <input type="number" placeholder="Custom" />
               </div> */}

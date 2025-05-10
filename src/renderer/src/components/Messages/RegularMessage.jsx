@@ -17,9 +17,10 @@ const RegularMessage = memo(
     sevenTVSettings,
     type,
     chatroomName,
+    userChatroomInfo,
   }) => {
-
     const { settings } = useSettings();
+    const canModerate = userChatroomInfo?.is_broadcaster || userChatroomInfo?.is_moderator || userChatroomInfo?.is_super_admin;
 
     return (
       <span className={`chatMessageContainer ${message.deleted ? "deleted" : ""}`}>
@@ -36,7 +37,6 @@ const RegularMessage = memo(
               kickTalkBadges={filteredKickTalkBadges}
             />
           </div>
-
           <button
             onClick={handleOpenUserDialog}
             className={clsx("chatMessageUsername", userStyle?.paint && "chatMessageUsernamePaint")}
@@ -48,26 +48,26 @@ const RegularMessage = memo(
             <span>{message.sender.username}:&nbsp;</span>
           </button>
         </div>
-
         <div className="chatMessageContent">
           <MessageParser type={type} message={message} sevenTVEmotes={sevenTVEmotes} sevenTVSettings={sevenTVSettings} />
         </div>
         <div className="chatMessageActions">
-              <button
-            onClick={() => {
-              console.log("message", message);
-              const data ={
-                chatroom_id: message.chatroom_id,
-                content: message.content,
-                id: message.id,
-                sender: message.sender,
-                chatroomName: chatroomName,
-              }
-              window.app.kick.pinMessage(data);
-            }}
-            className="chatMessageActionButton">
-            <img src={PinIcon} alt="Pin Message" width={16} height={16} />
-          </button>
+          {canModerate && (
+            <button
+              onClick={() => {
+                const data = {
+                  chatroom_id: message.chatroom_id,
+                  content: message.content,
+                  id: message.id,
+                  sender: message.sender,
+                  chatroomName: chatroomName,
+                };
+                window.app.kick.pinMessage(data);
+              }}
+              className="chatMessageActionButton">
+              <img src={PinIcon} alt="Pin Message" width={16} height={16} />
+            </button>
+          )}
           <button
             onClick={() => {
               navigator.clipboard.writeText(message.content);

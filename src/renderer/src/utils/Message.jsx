@@ -20,7 +20,7 @@ const Message = memo(
     dialogUserStyle,
     type,
     username,
-  chatroomName,
+    chatroomName,
   }) => {
     const messageRef = useRef(null);
 
@@ -94,6 +94,7 @@ const Message = memo(
             sevenTVSettings={settings?.sevenTV}
             handleOpenUserDialog={handleOpenUserDialog}
             chatroomName={chatroomName}
+            userChatroomInfo={userChatroomInfo}
           />
         )}
         {message.type === "reply" && (
