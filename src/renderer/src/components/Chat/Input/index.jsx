@@ -272,9 +272,9 @@ const KeyHandler = ({ chatroomId, onSendMessage }) => {
         }
       });
 
-      setSuggestions2([]);
+      setChatterSuggestions([]);
       setSearchText("");
-      setSelectedIndex2(null);
+      setSelectedChatterIndex(null);
       setPosition(null);
     },
     [editor],

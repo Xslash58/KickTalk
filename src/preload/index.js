@@ -23,6 +23,7 @@ import { getUserStvId, getChannelEmotes } from "../../utils/services/seventv/stv
 
 import Store from "electron-store";
 
+
 const authStore = new Store({
   fileExtension: "env",
 });

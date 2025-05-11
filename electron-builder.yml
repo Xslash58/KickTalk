@@ -1,5 +1,5 @@
 appId: com.kicktalk.app
-productName: KickTalk
+productName: kicktalk
 directories:
   buildResources: build
 files:
@@ -11,7 +11,7 @@ files:
 asarUnpack:
   - resources/**
 win:
-  executableName: KickTalk
+  executableName: kicktalk
   icon: resources/icons/win/KickTalk_v1.ico
 nsis:
   artifactName: ${name}-${version}-setup.${ext}
