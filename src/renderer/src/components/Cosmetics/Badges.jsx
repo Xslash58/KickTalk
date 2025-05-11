@@ -7,6 +7,7 @@ const Badge = memo(({ badge, subscriberBadges }) => {
   const [mousePos, setMousePos] = useState({ x: null, y: null });
 
   const badgeInfo = badge.type === "subscriber" ? kickBadgeMap[badge.type](badge, subscriberBadges) : kickBadgeMap[badge.type];
+  if (!badgeInfo) return null;
 
   const handleMouseEnter = useCallback((e) => {
     setMousePos({ x: e.clientX, y: e.clientY });

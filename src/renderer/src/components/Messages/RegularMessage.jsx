@@ -1,8 +1,8 @@
 import { memo } from "react";
 import { MessageParser } from "../../utils/MessageParser";
 import { KickBadges, KickTalkBadges, StvBadges } from "../Cosmetics/Badges";
-import CopyIcon from "../../assets/icons/copy-simple-fill.svg";
-import PinIcon from "../../assets/icons/pin-filled.svg";
+import CopyIcon from "../../assets/icons/copy-simple-fill.svg?asset";
+import Pin from "../../assets/icons/push-pin-fill.svg?asset";
 import clsx from "clsx";
 import dayjs from "dayjs";
 import { useSettings } from "../../providers/SettingsProvider";
@@ -65,7 +65,7 @@ const RegularMessage = memo(
                 window.app.kick.pinMessage(data);
               }}
               className="chatMessageActionButton">
-              <img src={PinIcon} alt="Pin Message" width={16} height={16} />
+              <img src={Pin} alt="Pin Message" width={16} height={16} />
             </button>
           )}
           <button
