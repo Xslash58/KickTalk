@@ -460,6 +460,7 @@ ipcMain.handle("userDialog:open", (e, { data }) => {
   userDialog.on("blur", () => {
     if (userDialog && !userDialog.isAlwaysOnTop()) {
       userDialog.close();
+      mainWindow.setAlwaysOnTop(store.get("general.alwaysOnTop"));
     }
   });
 
@@ -473,7 +474,7 @@ ipcMain.handle("userDialog:pin", async (e, forcePinState) => {
   if (userDialog) {
     const newPinState = forcePinState !== undefined ? forcePinState : !userDialog.isAlwaysOnTop();
 
-    if (newPinState) {
+    if (isDev && newPinState) {
       userDialog.webContents.openDevTools();
     }
 

@@ -20,12 +20,17 @@ const schema = {
       showTimestamps: {
         type: "boolean",
       },
+      timestampFormat: {
+        type: "string",
+        enum: ["disabled", "h:mm", "hh:mm", "h:mm a", "hh:mm a", "h:mm:ss", "hh:mm:ss", "h:mm:ss a", "hh:mm:ss a"],
+      },
     },
     default: {
       alwaysOnTop: false,
       wrapChatroomsList: false,
       showTabImages: true,
       showTimestamps: true,
+      timestampFormat: "disabled",
     },
   },
   chatrooms: {

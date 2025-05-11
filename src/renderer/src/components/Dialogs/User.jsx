@@ -73,11 +73,11 @@ const User = () => {
         id: dialogData?.sender?.id,
         username: dialogData?.sender?.username,
       });
-      window.app.kick.silenceUser(dialogData?.sender?.id);
+      window.app.kick.getSilenceUser(dialogData?.sender?.id);
       setIsSilenced(true);
     } else {
       scilencedUsers.data.splice(userIndex, 1);
-      window.app.kick.unsilenceUser(dialogData?.sender?.id);
+      window.app.kick.getUnsilenceUser(dialogData?.sender?.id);
       setIsSilenced(false);
     }
 

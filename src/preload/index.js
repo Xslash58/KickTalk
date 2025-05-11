@@ -8,21 +8,25 @@ import {
   getSelfInfo,
   sendUsernameToServer,
   getUserChatroomInfo,
+  getSelfChatroomInfo,
   getSilencedUsers,
   getLinkThumbnail,
-  silenceUser,
-  unsilenceUser,
   getInitialChatroomMessages,
   getBanUser,
   getUnbanUser,
   getTimeoutUser,
-  getSelfChatroomInfo,
-  pinMessage,
+
+  // User Actions
+  getSilenceUser,
+  getUnsilenceUser,
+
+  // Pin
+  getPinMessage,
+  getUnpinMessage,
 } from "../../utils/services/kick/kickAPI";
 import { getUserStvId, getChannelEmotes } from "../../utils/services/seventv/stvAPI";
 
 import Store from "electron-store";
-
 
 const authStore = new Store({
   fileExtension: "env",
@@ -186,11 +190,12 @@ if (process.contextIsolated) {
         getEmotes: (chatroomName) => getKickEmotes(chatroomName),
         getSelfChatroomInfo: (chatroomName) => getSelfChatroomInfo(chatroomName, authSession.token, authSession.session),
         getUserChatroomInfo: (chatroomName, username) =>
-        getUserChatroomInfo(chatroomName, username, authSession.token, authSession.session),
+          getUserChatroomInfo(chatroomName, username, authSession.token, authSession.session),
         getInitialChatroomMessages: (channelID) => getInitialChatroomMessages(channelID),
-        silenceUser: (userId) => silenceUser(userId, authSession.token, authSession.session),
-        unsilenceUser: (userId) => unsilenceUser(userId, authSession.token, authSession.session),
-        pinMessage: (data) => pinMessage(data, authSession.token, authSession.session),
+        getSilenceUser: (userId) => getSilenceUser(userId, authSession.token, authSession.session),
+        getUnsilenceUser: (userId) => getUnsilenceUser(userId, authSession.token, authSession.session),
+        getPinMessage: (data) => getPinMessage(data, authSession.token, authSession.session),
+        getUnpinMessage: (chatroomName) => getUnpinMessage(chatroomName, authSession.token, authSession.session),
       },
 
       // 7TV API

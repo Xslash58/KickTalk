@@ -63,6 +63,7 @@ const Chat = memo(
         <StreamerInfo
           streamerData={chatroom?.streamerData}
           streamStatus={chatroom?.streamStatus}
+          userChatroomInfo={chatroom?.userChatroomInfo}
           isStreamerLive={chatroom?.isStreamerLive}
           chatroomId={chatroomId}
         />

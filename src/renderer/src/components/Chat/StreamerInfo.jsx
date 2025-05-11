@@ -7,18 +7,14 @@ import PushPin from "../../assets/icons/push-pin-fill.svg?asset";
 import UserIcon from "../../assets/icons/user-fill.svg?asset";
 import PollMessage from "./PollMessage";
 
-const StreamerInfo = ({ streamerData, streamStatus, isStreamerLive, chatroomId }) => {
+const StreamerInfo = ({ streamerData, streamStatus, isStreamerLive, chatroomId, userChatroomInfo }) => {
   const [showPinnedMessage, setShowPinnedMessage] = useState(true);
   const [showPollMessage, setShowPollMessage] = useState(false);
 
   const pinnedMessage = useChatStore(
     useShallow((state) => state.chatrooms.find((room) => room.id === chatroomId)?.pinnedMessage),
   );
-
-  const pollMessage = useChatStore(
-    useShallow((state) => state.chatrooms.find((room) => room.id === chatroomId)?.pollDetails),
-  );
-
+  const pollMessage = useChatStore(useShallow((state) => state.chatrooms.find((room) => room.id === chatroomId)?.pollDetails));
   const chatters = useChatStore(useShallow((state) => state.chatrooms.find((room) => room.id === chatroomId)?.chatters));
 
   const handleChattersBtn = (e) => {
@@ -38,6 +34,8 @@ const StreamerInfo = ({ streamerData, streamStatus, isStreamerLive, chatroomId }
       setShowPollMessage(true);
     }
   }, [pinnedMessage, pollMessage]);
+
+  const canModerate = userChatroomInfo?.is_broadcaster || userChatroomInfo?.is_moderator || userChatroomInfo?.is_super_admin;
 
   return (
     <div className="chatStreamerInfo">
@@ -75,13 +73,16 @@ const StreamerInfo = ({ streamerData, streamStatus, isStreamerLive, chatroomId }
 
       {pinnedMessage && (
         <PinnedMessage
+          chatroomName={streamerData?.user?.username}
           showPinnedMessage={showPinnedMessage}
           setShowPinnedMessage={setShowPinnedMessage}
           pinnedMessage={pinnedMessage}
           chatroomId={chatroomId}
+          canModerate={canModerate}
+          userChatroomInfo={userChatroomInfo}
         />
       )}
-       {/* {pollMessage && (
+      {/* {pollMessage && (
         <PollMessage
           showPollMessage={showPollMessage}
           setShowPollMessage={setShowPollMessage}

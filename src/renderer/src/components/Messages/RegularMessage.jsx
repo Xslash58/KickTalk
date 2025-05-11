@@ -6,6 +6,7 @@ import Pin from "../../assets/icons/push-pin-fill.svg?asset";
 import clsx from "clsx";
 import dayjs from "dayjs";
 import { useSettings } from "../../providers/SettingsProvider";
+
 const RegularMessage = memo(
   ({
     message,
@@ -21,13 +22,39 @@ const RegularMessage = memo(
   }) => {
     const { settings } = useSettings();
     const canModerate = userChatroomInfo?.is_broadcaster || userChatroomInfo?.is_moderator || userChatroomInfo?.is_super_admin;
+    // "h:mm", "hh:mm", "h:mm a", "hh:mm a", "h:mm:ss", "hh:mm:ss",
+    //          "h:mm:ss a", "hh:mm:ss a", "h:mm:ss.zzz", "h:mm:ss.zzz a",
+    const timestampFormat = () => {
+      if (!message?.created_at) return;
+      const timestamp = message.created_at;
+      switch (settings?.general?.timestampFormat) {
+        case "disabled":
+          return "disabled";
+        case "h:mm":
+          return dayjs(timestamp).format("h:mm");
+        case "hh:mm":
+          return dayjs(timestamp).format("HH:mm");
+        case "h:mm a":
+          return dayjs(timestamp).format("h:mm A");
+        case "hh:mm a":
+          return dayjs(timestamp).format("HH:mm A");
+        case "h:mm:ss":
+          return dayjs(timestamp).format("h:mm:ss");
+        case "hh:mm:ss":
+          return dayjs(timestamp).format("HH:mm:ss");
+        case "h:mm:ss a":
+          return dayjs(timestamp).format("h:mm:ss A");
+        case "hh:mm:ss a":
+          return dayjs(timestamp).format("HH:mm:ss A");
+        default:
+          return "disabled";
+      }
+    };
 
     return (
       <span className={`chatMessageContainer ${message.deleted ? "deleted" : ""}`}>
         <div className="chatMessageUser">
-          {settings?.general?.showTimestamps && (
-            <span className="chatMessageTimestamp">{dayjs(message.timestamp).format("HH:mm")}</span>
-          )}
+          {settings?.general?.showTimestamps && <span className="chatMessageTimestamp">{timestampFormat()}</span>}
           <div className="chatMessageBadges">
             {filteredKickTalkBadges && <KickTalkBadges badges={filteredKickTalkBadges} />}
             {userStyle?.badge && <StvBadges badge={userStyle?.badge} />}
@@ -62,7 +89,7 @@ const RegularMessage = memo(
                   sender: message.sender,
                   chatroomName: chatroomName,
                 };
-                window.app.kick.pinMessage(data);
+                window.app.kick.getPinMessage(data);
               }}
               className="chatMessageActionButton">
               <img src={Pin} alt="Pin Message" width={16} height={16} />

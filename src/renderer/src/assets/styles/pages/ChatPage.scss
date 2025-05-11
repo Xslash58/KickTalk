@@ -311,6 +311,10 @@
     white-space: nowrap;
     color: #c5ebce;
   }
+
+  > span {
+    overflow-wrap: break-word;
+  }
 }
 
 /** [End of Pinned Message] **/

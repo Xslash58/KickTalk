@@ -131,6 +131,37 @@
   background-color: grey;
 }
 
+.timestampFormat {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: 4px;
+  transition: color 0.2s ease-in-out;
+  &:hover {
+    > span {
+      color: rgba(255, 255, 255, 1);
+      transition: color 0.2s ease-in-out;
+    }
+  }
+
+  > span {
+    color: rgba(255, 255, 255, 0.5);
+  }
+
+  select {
+    padding: 4px 8px;
+    border-radius: 6px;
+    background-color: #23372a;
+    color: white;
+    border: none;
+    font-size: 14px;
+    font-weight: 500;
+    outline: none;
+    cursor: pointer;
+  }
+}
+
 .settingSwitchItem {
   display: flex;
   align-items: center;

@@ -164,6 +164,23 @@ const Settings = ({ settingsModalOpen, setSettingsModalOpen, appInfo }) => {
           </button>
         </div>
 
+        <div className="settingItem timestampFormat">
+          <span>Timestamp Format</span>
+          <select
+            value={settings?.general?.timestampFormat}
+            onChange={(e) => changeSetting("general", { ...settings?.general, timestampFormat: e.target.value })}>
+            <option value="disabled">Disabled</option>
+            <option value="h:mm">h:mm</option>
+            <option value="hh:mm">hh:mm</option>
+            <option value="h:mm a">h:mm a</option>
+            <option value="hh:mm a">hh:mm a</option>
+            <option value="h:mm:ss">h:mm:ss</option>
+            <option value="hh:mm:ss">hh:mm:ss</option>
+            <option value="h:mm:ss a">h:mm:ss a</option>
+            <option value="hh:mm:ss a">hh:mm:ss a</option>
+          </select>
+        </div>
+
         <div className="settingItem">
           <button
             className={clsx("settingSwitchItem", settings?.general?.showTabImages ? "checked" : "")}

@@ -6,12 +6,20 @@ import CaretDown from "../../assets/icons/caret-down-bold.svg?asset";
 import PushPinSlash from "../../assets/icons/push-pin-slash-fill.svg?asset";
 
 const PinnedMessage = memo(
-  ({ showChatters, showPinnedMessage, setShowPinnedMessage, pinnedMessage }) => {
+  ({ showChatters, showPinnedMessage, setShowPinnedMessage, pinnedMessage, chatroomName, canModerate }) => {
     if (!pinnedMessage) return null;
     const [isPinnedMessageOpen, setIsPinnedMessageOpen] = useState(false);
 
     const pinnedBy = pinnedMessage?.pinned_by || pinnedMessage?.pinnedBy;
     const originalSender = pinnedMessage?.message?.sender;
+
+    const getUnpinMessage = async () => {
+      const response = await window.app.kick.getUnpinMessage(chatroomName);
+
+      if (response?.code === 201) {
+        setShowPinnedMessage(false);
+      }
+    };
 
     return (
       <div className={clsx("pinnedMessage", showPinnedMessage && !showChatters && "open", isPinnedMessageOpen && "expanded")}>
@@ -27,9 +35,11 @@ const PinnedMessage = memo(
                 style={{ transform: isPinnedMessageOpen ? "rotate(180deg)" : "none" }}
               />
             </button>
-            <button onClick={() => setShowPinnedMessage(!showPinnedMessage)}>
-              <img src={PushPinSlash} width={16} height={16} alt="Hide Pinned Message" />
-            </button>
+            {canModerate && (
+              <button onClick={() => getUnpinMessage() && setShowPinnedMessage(false)}>
+                <img src={PushPinSlash} width={16} height={16} alt="Hide Pinned Message" />
+              </button>
+            )}
           </div>
         </div>
         <div className="pinnedMessageContent">
