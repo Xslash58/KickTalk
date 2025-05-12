@@ -10,6 +10,7 @@ const ReplyMessage = ({
   subscriberBadges,
   filteredKickTalkBadges,
   handleOpenUserDialog,
+  userStyle,
   settings,
   chatroomId,
   chatroomName,
@@ -51,6 +52,7 @@ const ReplyMessage = ({
         filteredKickTalkBadges={filteredKickTalkBadges}
         sevenTVEmotes={sevenTVEmotes}
         handleOpenUserDialog={handleOpenUserDialog}
+        userStyle={userStyle}
         sevenTVSettings={settings?.sevenTV}
         chatroomId={chatroomId}
         chatroomName={chatroomName}

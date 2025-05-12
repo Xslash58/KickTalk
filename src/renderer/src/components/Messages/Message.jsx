@@ -116,6 +116,7 @@ const Message = memo(
             sevenTVSettings={settings?.sevenTV}
             chatroomId={chatroomId}
             chatroomName={chatroomName}
+            userStyle={userStyle}
             userChatroomInfo={userChatroomInfo}
           />
         )}

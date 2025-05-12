@@ -27,10 +27,9 @@ import useChatStore from "../../../providers/ChatProvider";
 import EmoteDialogs from "./EmoteDialogs";
 import { useShallow } from "zustand/react/shallow";
 import { EmoteNode } from "./EmoteNode";
-import { kickEmoteInputRegex, kickEmoteRegex } from "../../../../../../utils/constants";
-import InfoIcon from "../../../assets/icons/info-fill.svg?asset";
+import { kickEmoteInputRegex } from "../../../../../../utils/constants";
 import XIcon from "../../../assets/icons/x-bold.svg?asset";
-import { convertSecondsToHumanReadable } from "../../../utils/ChatUtils";
+import InfoBar from "./InfoBar";
 
 const onError = (error) => {
   console.error(error);
@@ -93,7 +92,7 @@ const EmoteSuggestions = memo(
                   <span>{emote?.name}</span>
                   <div className="emoteTags">
                     {emote?.subscribers_only && <span>SUB</span>}
-                    {emote?.type && <span>{emote?.type.toUpperCase()}</span>}
+                    {emote?.type && <span>{emote.type?.toUpperCase()}</span>}
                     <span>{emote?.platform?.toUpperCase()}</span>
                   </div>
                 </div>
@@ -699,8 +698,8 @@ const initialConfig = {
 const ChatInput = memo(
   ({ chatroomId }) => {
     const sendMessage = useChatStore((state) => state.sendMessage);
+    const sendReply = useChatStore((state) => state.sendReply);
     const chatroom = useChatStore(useShallow((state) => state.chatrooms.find((room) => room.id === chatroomId)));
-    const [showInfoBarTooltip, setShowInfoBarTooltip] = useState(false);
     const [replyInputData, setReplyInputData] = useState(null);
 
     // Reset selected index when changing chatrooms
@@ -723,7 +722,7 @@ const ChatInput = memo(
     }, []);
 
     const handleSendMessage = useCallback(
-      async (content, type = "message") => {
+      async (content) => {
         if (content.startsWith("/")) {
           const commandParts = content.slice(1).trim().split(" ");
           const command = commandParts[0];
@@ -757,19 +756,21 @@ const ChatInput = memo(
           }
         }
 
-        const metadata = {
-          original_message: {
-            id: replyInputData?.id,
-            content: replyInputData?.content,
-          },
-          original_sender: {
-            id: replyInputData?.sender?.id,
-            username: replyInputData?.sender?.username,
-          },
-        };
+        let res;
 
+        // If we are replying to a message, add the original message to the metadata
+        if (replyInputData) {
+          const metadata = {
+            original_message: {
+              id: replyInputData?.id,
+              content: replyInputData?.content,
+            },
+          };
 
-        const res = await sendMessage(chatroomId, content, type, metadata);
+          res = await sendReply(chatroomId, content, metadata);
+        } else {
+          res = await sendMessage(chatroomId, content);
+        }
 
         if (res) {
           const history = messageHistory.get(chatroomId);
@@ -782,81 +783,10 @@ const ChatInput = memo(
       [chatroomId, chatroom, sendMessage, replyInputData],
     );
 
-    const chatroomMode = useMemo(() => {
-      if (chatroom?.chatroomInfo) {
-        switch (true) {
-          case chatroom?.chatroomInfo?.followers_mode?.enabled:
-            return `Followers Only Mode [${convertSecondsToHumanReadable(chatroom?.chatroomInfo?.followers_mode?.min_duration * 60)}]`;
-          case chatroom?.chatroomInfo?.subscribers_mode?.enabled:
-            return `Subscribers Only Mode`;
-          case chatroom?.chatroomInfo?.emotes_mode?.enabled:
-            return `Emote Only Mode`;
-          case chatroom?.chatroomInfo?.slow_mode?.enabled:
-            return `Slow Mode [${convertSecondsToHumanReadable(chatroom?.chatroomInfo?.slow_mode?.message_interval)}]`;
-          default:
-            return "";
-        }
-      } else if (chatroom?.initialChatroomInfo) {
-        const { followers_mode, subscribers_mode, emotes_mode, slow_mode, message_interval, following_min_duration } =
-          chatroom?.initialChatroomInfo?.chatroom;
-
-        switch (true) {
-          case followers_mode:
-            return `Followers Only Mode [${convertSecondsToHumanReadable(following_min_duration * 60)}]`;
-          case subscribers_mode:
-            return `Subscribers Only Mode`;
-          case emotes_mode:
-            return `Emote Only Mode`;
-          case slow_mode:
-            return `Slow Mode [${convertSecondsToHumanReadable(message_interval)}]`;
-          default:
-            return "";
-        }
-      }
-    }, [chatroom?.chatroomInfo, chatroom?.initialChatroomInfo]);
-
     return (
       <div className="chatInputWrapper">
-        {chatroomMode && (
-          <div className="chatInfoBar">
-            <span>{chatroomMode}</span>
+        <InfoBar chatroomInfo={chatroom?.chatroomInfo} initialChatroomInfo={chatroom?.initialChatroomInfo} />
 
-            <div className="chatInfoBarIcon">
-              <div className={clsx("chatInfoBarIconTooltipContent", showInfoBarTooltip && "show")}>
-                {chatroom?.chatroomInfo?.followers_mode?.enabled ||
-                  (chatroom?.initialChatroomInfo?.chatroom?.followers_mode && (
-                    <div className="chatInfoBarTooltipItem">
-                      <span>Followers Only Mode Enabled</span>
-                    </div>
-                  ))}
-                {chatroom?.chatroomInfo?.subscribersmessageHistory_mode?.enabled ||
-                  (chatroom?.initialChatroomInfo?.chatroom?.subscribers_mode && (
-                    <div className="chatInfoBarTooltipItem">
-                      <span>Subscribers Only Mode Enabled</span>
-                    </div>
-                  ))}
-                {chatroom?.chatroomInfo?.emotes_mode?.enabled ||
-                  (chatroom?.initialChatroomInfo?.chatroom?.emotes_mode && (
-                    <div className="chatInfoBarTooltipItem">
-                      <span>Emote Only Mode Enabled</span>
-                    </div>
-                  ))}
-                {chatroom?.chatroomInfo?.slow_mode?.enabled ||
-                  (chatroom?.initialChatroomInfo?.chatroom?.slow_mode && (
-                    <div className="chatInfoBarTooltipItem">
-                      <span>Slow Mode Enabled</span>
-                    </div>
-                  ))}
-              </div>
-              <div
-                className="chatInfoBarIconTooltip"
-                onMouseOver={() => setShowInfoBarTooltip(true)}
-                onMouseLeave={() => setShowInfoBarTooltip(false)}>
-                <img src={InfoIcon} alt="Info" width={16} height={16} />
-              </div>
-            </div>
-          </div>
-        )}
         {replyInputData && (
           <div className={clsx("replyInputContainer", replyInputData?.sender?.id && "show")}>
             <div className="replyInputBoxHead">
@@ -873,6 +803,7 @@ const ChatInput = memo(
             </div>
           </div>
         )}
+
         <div className="chatInputContainer">
           <LexicalComposer key={`composer-${chatroomId}`} initialConfig={initialConfig}>
             <div className="chatInputBox">

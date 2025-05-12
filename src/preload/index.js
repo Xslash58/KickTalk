@@ -2,6 +2,7 @@ import { contextBridge, ipcRenderer, shell, session } from "electron";
 import { electronAPI } from "@electron-toolkit/preload";
 import {
   sendMessageToChannel,
+  sendReplyToChannel,
   getChannelInfo,
   getChannelChatroomInfo,
   getKickEmotes,
@@ -190,8 +191,9 @@ if (process.contextIsolated) {
       kick: {
         getChannelInfo,
         getChannelChatroomInfo,
-        sendMessage: (channelId, message, type, metadata = {}) =>
-          sendMessageToChannel(channelId, message, type, metadata, authSession.token, authSession.session),
+        sendMessage: (channelId, message) => sendMessageToChannel(channelId, message, authSession.token, authSession.session),
+        sendReply: (channelId, message, metadata = {}) =>
+          sendReplyToChannel(channelId, message, metadata, authSession.token, authSession.session),
         getSilencedUsers,
         sendUsernameToServer,
         getSelfInfo: async () => {

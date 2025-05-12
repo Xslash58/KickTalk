@@ -40,12 +40,41 @@ const useChatStore = create((set, get) => ({
     sendUserPresence(stvId, userId);
   },
 
-  sendMessage: async (chatroomId, content, type, metadata = {}) => {
+  sendMessage: async (chatroomId, content) => {
     try {
       const message = content.trim();
-      console.info("Sending message to chatroom:", chatroomId, "type:", type);
+      console.info("Sending message to chatroom:", chatroomId);
 
-      await window.app.kick.sendMessage(chatroomId, message, type, metadata);
+      await window.app.kick.sendMessage(chatroomId, message);
+      return true;
+    } catch (error) {
+      const errMsg = chatroomErrorHandler(error);
+
+      set((state) => ({
+        messages: {
+          ...state.messages,
+          [chatroomId]: [
+            ...(state.messages[chatroomId] || []),
+            {
+              id: crypto.randomUUID(),
+              type: "system",
+              content: errMsg,
+              timestamp: new Date().toISOString(),
+            },
+          ],
+        },
+      }));
+
+      return false;
+    }
+  },
+
+  sendReply: async (chatroomId, content, metadata = {}) => {
+    try {
+      const message = content.trim();
+      console.info("Sending reply to chatroom:", chatroomId);
+
+      await window.app.kick.sendReply(chatroomId, message, metadata);
       return true;
     } catch (error) {
       const errMsg = chatroomErrorHandler(error);
