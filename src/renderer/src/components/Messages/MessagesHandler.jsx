@@ -1,6 +1,6 @@
 import { memo } from "react";
 import useChatStore from "../../providers/ChatProvider";
-import Message from "../../utils/Message";
+import Message from "./Message";
 
 const MessagesHandler = memo(
   ({ chatroomId, slug, channel7TVEmotes, userChatroomInfo, subscriberBadges, kickTalkBadges, settings, username }) => {
@@ -12,12 +12,11 @@ const MessagesHandler = memo(
           message.isSilenced = true;
         }
       });
-    }
-  );
+    });
     return (
       <div>
         {messages?.map((message) => {
-          if(message.isSilenced) {
+          if (message.isSilenced) {
             return null;
           }
           return (

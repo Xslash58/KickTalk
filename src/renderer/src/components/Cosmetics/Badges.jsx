@@ -48,48 +48,53 @@ const KickBadges = memo(({ badges, subscriberBadges = null }) => {
   return badges.map((badge) => <Badge key={badge.type} badge={badge} subscriberBadges={subscriberBadges} />);
 });
 
-const KickTalkBadges = memo(({ badges }) => {
-  const [showBadgeInfo, setShowBadgeInfo] = useState(false);
-  const [mousePos, setMousePos] = useState({ x: null, y: null });
+const KickTalkBadges = memo(
+  ({ badges }) => {
+    const [showBadgeInfo, setShowBadgeInfo] = useState(false);
+    const [mousePos, setMousePos] = useState({ x: null, y: null });
 
-  const handleMouseEnter = useCallback((e) => {
-    setMousePos({ x: e.clientX, y: e.clientY });
-    setShowBadgeInfo(true);
-  }, []);
+    const handleMouseEnter = useCallback((e) => {
+      setMousePos({ x: e.clientX, y: e.clientY });
+      setShowBadgeInfo(true);
+    }, []);
 
-  const handleMouseLeave = useCallback(() => {
-    setShowBadgeInfo(false);
-  }, []);
+    const handleMouseLeave = useCallback(() => {
+      setShowBadgeInfo(false);
+    }, []);
 
-  const handleMouseMove = useCallback(
-    (e) => {
-      if (showBadgeInfo) {
-        setMousePos({ x: e.clientX, y: e.clientY });
-      }
-    },
-    [showBadgeInfo],
-  );
-
-  return badges.map((badge) => {
-    const badgeUrl = `https://cdn.kicktalk.app/${badge.type}.webp`;
-    return (
-      <div className="chatroomBadge" key={badge.type} onMouseMove={handleMouseMove}>
-        <BadgeTooltip
-          showBadgeInfo={showBadgeInfo}
-          mousePos={mousePos}
-          badgeInfo={{ ...badge, src: badgeUrl, owner: { username: "d9" } }}
-        />
-        <img
-          className="chatroomBadgeIcon"
-          src={badgeUrl}
-          alt={badge.title}
-          onMouseEnter={handleMouseEnter}
-          onMouseLeave={handleMouseLeave}
-        />
-      </div>
+    const handleMouseMove = useCallback(
+      (e) => {
+        if (showBadgeInfo) {
+          setMousePos({ x: e.clientX, y: e.clientY });
+        }
+      },
+      [showBadgeInfo],
     );
-  });
-});
+
+    return badges.map((badge) => {
+      const badgeUrl = `https://cdn.kicktalk.app/${badge.type}.webp`;
+      return (
+        <div className="chatroomBadge" key={badge.type} onMouseMove={handleMouseMove}>
+          <BadgeTooltip
+            showBadgeInfo={showBadgeInfo}
+            mousePos={mousePos}
+            badgeInfo={{ ...badge, src: badgeUrl, owner: { username: "d9" } }}
+          />
+          <img
+            className="chatroomBadgeIcon"
+            src={badgeUrl}
+            alt={badge.title}
+            onMouseEnter={handleMouseEnter}
+            onMouseLeave={handleMouseLeave}
+          />
+        </div>
+      );
+    });
+  },
+  (prevProps, nextProps) => {
+    return prevProps.badges === nextProps.badges;
+  },
+);
 
 const StvBadges = memo(({ badge }) => {
   const [showBadgeInfo, setShowBadgeInfo] = useState(false);

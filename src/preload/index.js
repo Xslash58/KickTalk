@@ -94,13 +94,18 @@ saveSilencedUsers(authSession.token, authSession.session);
 if (process.contextIsolated) {
   try {
     contextBridge.exposeInMainWorld("app", {
+      openContextMenu: (data) => ipcRenderer.invoke("contextMenu:open", { data }),
       minimize: () => ipcRenderer.send("minimize"),
       maximize: () => ipcRenderer.send("maximize"),
       close: () => ipcRenderer.send("close"),
-      bringToFront: () => ipcRenderer.invoke("bring-to-front"),
       logout: () => ipcRenderer.invoke("logout"),
       getAppInfo: () => ipcRenderer.invoke("get-app-info"),
       alwaysOnTop: () => ipcRenderer.invoke("alwaysOnTop"),
+
+      contextMenu: {
+        messages: (data) => ipcRenderer.invoke("contextMenu:messages", { data }),
+        streamerInfo: (data) => ipcRenderer.invoke("contextMenu:streamerInfo", { data }),
+      },
 
       authDialog: {
         open: (data) => ipcRenderer.invoke("authDialog:open", { data }),
@@ -119,13 +124,6 @@ if (process.contextIsolated) {
           ipcRenderer.on("userDialog:data", handler);
           return () => ipcRenderer.removeListener("userDialog:data", handler);
         },
-      },
-
-      modActions: {
-        getBanUser: (channelName, username) => getBanUser(channelName, username, authSession.token, authSession.session),
-        getUnbanUser: (channelName, username) => getUnbanUser(channelName, username, authSession.token, authSession.session),
-        getTimeoutUser: (channelName, username, banDuration) =>
-          getTimeoutUser(channelName, username, banDuration, authSession.token, authSession.session),
       },
 
       chattersDialog: {
@@ -147,6 +145,23 @@ if (process.contextIsolated) {
 
           ipcRenderer.on("settingsDialog:data", handler);
           return () => ipcRenderer.removeListener("settingsDialog:data", handler);
+        },
+      },
+
+      modActions: {
+        getBanUser: (channelName, username) => getBanUser(channelName, username, authSession.token, authSession.session),
+        getUnbanUser: (channelName, username) => getUnbanUser(channelName, username, authSession.token, authSession.session),
+        getTimeoutUser: (channelName, username, banDuration) =>
+          getTimeoutUser(channelName, username, banDuration, authSession.token, authSession.session),
+      },
+
+      reply: {
+        open: (data) => ipcRenderer.invoke("reply:open", { data }),
+        onData: (callback) => {
+          const handler = (_, data) => callback(data);
+
+          ipcRenderer.on("reply:data", handler);
+          return () => ipcRenderer.removeListener("reply:data", handler);
         },
       },
 
@@ -175,7 +190,8 @@ if (process.contextIsolated) {
       kick: {
         getChannelInfo,
         getChannelChatroomInfo,
-        sendMessage: (channelId, message) => sendMessageToChannel(channelId, message, authSession.token, authSession.session),
+        sendMessage: (channelId, message, type, metadata = {}) =>
+          sendMessageToChannel(channelId, message, type, metadata, authSession.token, authSession.session),
         getSilencedUsers,
         sendUsernameToServer,
         getSelfInfo: async () => {

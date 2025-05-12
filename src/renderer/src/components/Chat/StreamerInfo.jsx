@@ -35,10 +35,14 @@ const StreamerInfo = ({ streamerData, streamStatus, isStreamerLive, chatroomId, 
     }
   }, [pinnedMessage, pollMessage]);
 
+  const handleContextMenu = () => {
+    window.app.contextMenu.streamerInfo(streamerData);
+  };
+
   const canModerate = userChatroomInfo?.is_broadcaster || userChatroomInfo?.is_moderator || userChatroomInfo?.is_super_admin;
 
   return (
-    <div className="chatStreamerInfo">
+    <div className="chatStreamerInfo" onContextMenu={handleContextMenu}>
       <div className="chatStreamerInfoContent">
         <span className="streamerName">{streamerData?.user?.username}</span>
         {isStreamerLive && <span className="liveBadgeDot" />}

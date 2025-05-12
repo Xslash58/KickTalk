@@ -42,7 +42,6 @@ const EmoteSection = ({ emotes, title, handleEmoteClick, type, section }) => {
     };
   }, [loadMoreEmotes]);
 
-
   return (
     <div className={clsx("dialogBodySection", isSectionOpen && "opened")}>
       <div className="dialogRowHead">
@@ -249,7 +248,6 @@ const EmoteDialogs = memo(
       setCurrentHoverEmote(randomEmotes[Math.floor(Math.random() * randomEmotes.length)]);
     }, [randomEmotes]);
 
-
     return (
       <>
         <div className="chatEmoteBtns">
@@ -258,6 +256,7 @@ const EmoteDialogs = memo(
             onClick={() => setActiveDialog(activeDialog === "7tv" ? null : "7tv")}>
             <img src={STVLogo} height="24px" width="24px" alt="7TV Emotes" />
           </button>
+          <span className="emoteBtnSeparator" />
           <button
             className={clsx("emoteBtn", "kickEmoteButton", activeDialog === "kick" && "activeDialog")}
             onMouseEnter={getRandomKickEmote}

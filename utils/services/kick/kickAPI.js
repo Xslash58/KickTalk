@@ -246,7 +246,7 @@ const getInitialChatroomMessages = (channelID) => {
   return axios.get(`${APIUrl}/api/v2/channels/${channelID}/messages`);
 };
 
-const sendMessageToChannel = async (channelID, message, sessionCookie, kickSession) => {
+const sendMessageToChannel = async (channelID, message, type, metadata = {}, sessionCookie, kickSession) => {
   const now = Date.now();
 
   if (!rateLimitMap.has(channelID)) {
@@ -280,7 +280,7 @@ const sendMessageToChannel = async (channelID, message, sessionCookie, kickSessi
 
   return axios.post(
     `${APIUrl}/api/v2/messages/send/${channelID}`,
-    { content: message, type: "message" },
+    { content: message, type, metadata },
     {
       headers: {
         Authorization: `Bearer ${sessionCookie}`,
@@ -336,8 +336,10 @@ const getUserChatroomInfo = (chatroomName, username, sessionCookie, kickSession)
 
 const getPinMessage = (data, sessionCookie, kickSession) => {
   const currentTime = new Date().toISOString();
+  const transformedChannelName = data?.chatroomName?.replace("_", "-");
+
   return axios.post(
-    `${APIUrl}/api/v2/channels/${data.chatroomName}/pinned-message`,
+    `${APIUrl}/api/v2/channels/${transformedChannelName}/pinned-message`,
     {
       duration: 1200,
       message: {
@@ -359,7 +361,8 @@ const getPinMessage = (data, sessionCookie, kickSession) => {
 };
 
 const getUnpinMessage = (chatroomName, sessionCookie, kickSession) => {
-  const response = axios.delete(`${APIUrl}/api/v2/channels/${chatroomName}/pinned-message`, {
+  const transformedChannelName = chatroomName.replace("_", "-");
+  const response = axios.delete(`${APIUrl}/api/v2/channels/${transformedChannelName}/pinned-message`, {
     headers: {
       Authorization: `Bearer ${sessionCookie}`,
     },

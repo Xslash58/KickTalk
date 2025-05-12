@@ -43,7 +43,7 @@ const PinnedMessage = memo(
           </div>
         </div>
         <div className="pinnedMessageContent">
-          <MessageParser message={pinnedMessage?.message} />
+          <MessageParser message={pinnedMessage?.message} type="pinned" />
         </div>
         <div className={clsx("pinnedMessageFooter", isPinnedMessageOpen && "open")}>
           <div className="pinnedMessageFooterContent">

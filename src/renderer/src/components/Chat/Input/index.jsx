@@ -29,6 +29,7 @@ import { useShallow } from "zustand/react/shallow";
 import { EmoteNode } from "./EmoteNode";
 import { kickEmoteInputRegex, kickEmoteRegex } from "../../../../../../utils/constants";
 import InfoIcon from "../../../assets/icons/info-fill.svg?asset";
+import XIcon from "../../../assets/icons/x-bold.svg?asset";
 import { convertSecondsToHumanReadable } from "../../../utils/ChatUtils";
 
 const onError = (error) => {
@@ -283,7 +284,7 @@ const KeyHandler = ({ chatroomId, onSendMessage }) => {
   useEffect(() => {
     if (!editor) return;
 
-    const unregisters = [
+    const registeredCommands = [
       editor.registerCommand(
         KEY_ARROW_UP_COMMAND,
         (e) => {
@@ -291,33 +292,35 @@ const KeyHandler = ({ chatroomId, onSendMessage }) => {
           if (emoteSuggestions?.length) {
             setSelectedEmoteIndex((prev) => (prev <= 0 ? emoteSuggestions.length - 1 : prev - 1));
             return true;
-          } else if (chatterSuggestions?.length) {
+          }
+
+          if (chatterSuggestions?.length) {
             setSelectedChatterIndex((prev) => (prev <= 0 ? chatterSuggestions.length - 1 : prev - 1));
             return true;
-          } else {
-            const history = messageHistory.get(chatroomId);
-            if (!history?.sentMessages?.length) return false;
-
-            const currentIndex =
-              history.selectedIndex !== undefined ? history.selectedIndex - 1 : history.sentMessages.length - 1;
-            if (currentIndex < 0) return false;
-
-            messageHistory.set(chatroomId, {
-              ...history,
-              selectedIndex: currentIndex,
-            });
-
-            editor.update(() => {
-              $getRoot().clear();
-
-              const selection = $getSelection();
-              if (!$isRangeSelection(selection)) return;
-
-              const text = $createTextNode(history.sentMessages[currentIndex]);
-
-              selection.insertNodes([text]);
-            });
           }
+
+          const history = messageHistory.get(chatroomId);
+          if (!history?.sentMessages?.length) return false;
+
+          const currentIndex = history.selectedIndex !== undefined ? history.selectedIndex - 1 : history.sentMessages.length - 1;
+          if (currentIndex < 0) return false;
+
+          messageHistory.set(chatroomId, {
+            ...history,
+            selectedIndex: currentIndex,
+          });
+
+          editor.update(() => {
+            $getRoot().clear();
+
+            const selection = $getSelection();
+            if (!$isRangeSelection(selection)) return;
+
+            const text = $createTextNode(history.sentMessages[currentIndex]);
+
+            selection.insertNodes([text]);
+          });
+
           return false;
         },
         COMMAND_PRIORITY_HIGH,
@@ -330,33 +333,36 @@ const KeyHandler = ({ chatroomId, onSendMessage }) => {
           if (emoteSuggestions?.length) {
             setSelectedEmoteIndex((prev) => (prev === null || prev >= emoteSuggestions.length - 1 ? 0 : prev + 1));
             return true;
-          } else if (chatterSuggestions?.length) {
+          }
+
+          if (chatterSuggestions?.length) {
             setSelectedChatterIndex((prev) => (prev === null || prev >= chatterSuggestions.length - 1 ? 0 : prev + 1));
             return true;
-          } else {
-            const history = messageHistory.get(chatroomId);
-            if (!history?.sentMessages?.length) return false;
-
-            const currentIndex = history.selectedIndex >= 0 ? history.selectedIndex + 1 : 0;
-            if (currentIndex > history.sentMessages.length) return false;
-
-            messageHistory.set(chatroomId, {
-              ...history,
-              selectedIndex: currentIndex,
-            });
-
-            editor.update(() => {
-              $getRoot().clear();
-
-              const selection = $getSelection();
-              if (!$isRangeSelection(selection)) return;
-
-              const text = $createTextNode(history.sentMessages[currentIndex]);
-
-              selection.insertNodes([text]);
-            });
           }
-          return false;
+
+          const history = messageHistory.get(chatroomId);
+          if (!history?.sentMessages?.length) return false;
+
+          const currentIndex = history.selectedIndex >= 0 ? history.selectedIndex + 1 : 0;
+          if (currentIndex > history.sentMessages.length) return false;
+
+          messageHistory.set(chatroomId, {
+            ...history,
+            selectedIndex: currentIndex,
+          });
+
+          editor.update(() => {
+            $getRoot().clear();
+
+            const selection = $getSelection();
+            if (!$isRangeSelection(selection)) return;
+
+            const text = $createTextNode(history.sentMessages[currentIndex]);
+
+            selection.insertNodes([text]);
+          });
+
+          return true;
         },
         COMMAND_PRIORITY_HIGH,
       ),
@@ -516,7 +522,7 @@ const KeyHandler = ({ chatroomId, onSendMessage }) => {
             const query = currentWord.slice(1);
             const results = searchChatters(query);
             setSearchText(query);
-            setChatterSuggestions(results);
+            setChatterSuggestions(results?.length ? results : chatters);
             setSelectedChatterIndex(0);
             setPosition([cursorOffset - query.length, cursorOffset]);
           } else {
@@ -579,9 +585,20 @@ const KeyHandler = ({ chatroomId, onSendMessage }) => {
     // window.addEventListener("insertMention", handleInsertMention);
 
     return () => {
-      unregisters.forEach((unregister) => unregister());
+      registeredCommands.forEach((unregister) => unregister());
     };
-  }, [editor, searchEmotes, searchChatters, emoteSuggestions, chatterSuggestions, insertEmote, insertChatterMention]);
+  }, [
+    editor,
+    searchEmotes,
+    searchChatters,
+    emoteSuggestions,
+    chatterSuggestions,
+    chatters,
+    selectedEmoteIndex,
+    selectedChatterIndex,
+    insertEmote,
+    insertChatterMention,
+  ]);
 
   return (
     <>
@@ -591,6 +608,7 @@ const KeyHandler = ({ chatroomId, onSendMessage }) => {
         selectedIndex={selectedEmoteIndex}
         onSelect={insertEmote}
       />
+
       <ChatterSuggestions suggestions={chatterSuggestions} selectedIndex={selectedChatterIndex} onSelect={insertChatterMention} />
     </>
   );
@@ -683,6 +701,8 @@ const ChatInput = memo(
     const sendMessage = useChatStore((state) => state.sendMessage);
     const chatroom = useChatStore(useShallow((state) => state.chatrooms.find((room) => room.id === chatroomId)));
     const [showInfoBarTooltip, setShowInfoBarTooltip] = useState(false);
+    const [replyInputData, setReplyInputData] = useState(null);
+
     // Reset selected index when changing chatrooms
     useEffect(() => {
       const history = messageHistory.get(chatroomId);
@@ -693,45 +713,74 @@ const ChatInput = memo(
         });
       }
     }, [chatroomId]);
-    const handleSendMessage = async (content) => {
-      if (content.startsWith("/")) {
-        const commandParts = content.slice(1).trim().split(" ");
-        const command = commandParts[0];
-        let usernameInput = commandParts[1];
-        if (!usernameInput) return;
-        // Strip out the '@' from the username if it exists
-        if (usernameInput.startsWith("@")) {
-          usernameInput = usernameInput.slice(1);
+
+    useEffect(() => {
+      const cleanup = window.app.reply.onData((data) => {
+        setReplyInputData(data);
+      });
+
+      return () => cleanup();
+    }, []);
+
+    const handleSendMessage = useCallback(
+      async (content, type = "message") => {
+        if (content.startsWith("/")) {
+          const commandParts = content.slice(1).trim().split(" ");
+          const command = commandParts[0];
+          let usernameInput = commandParts[1];
+          if (!usernameInput) return;
+
+          // Strip out the '@' from the username if it exists
+          if (usernameInput.startsWith("@")) {
+            usernameInput = usernameInput.slice(1);
+          }
+
+          if (command) {
+            const user = await window.app.kick.getUserChatroomInfo(chatroom.username, usernameInput);
+            if (!user?.data?.id) return;
+
+            const sender = {
+              id: user.data.id,
+              username: user.data.username,
+              slug: user.data.slug,
+            };
+
+            window.app.userDialog.open({
+              sender,
+              fetchedUser: user?.data,
+              chatroomId,
+              userChatroomInfo: chatroom?.userChatroomInfo,
+              cords: [0, 300],
+            });
+
+            return;
+          }
         }
 
-        if (command) {
-          const username = await window.app.kick.getUserChatroomInfo(chatroom.username, usernameInput);
-          if (!username) return;
-          const sender = {
-            id: username.data.id,
-            username: username.data.username,
-            slug: username.data.slug,
-          };
-          window.app.userDialog.open({
-            sender: sender,
-            chatroomId,
-            userChatroomInfo: chatroom?.userChatroomInfo,
-            cords: [0, 300],
+        const metadata = {
+          original_message: {
+            id: replyInputData?.id,
+            content: replyInputData?.content,
+          },
+          original_sender: {
+            id: replyInputData?.sender?.id,
+            username: replyInputData?.sender?.username,
+          },
+        };
+
+
+        const res = await sendMessage(chatroomId, content, type, metadata);
+
+        if (res) {
+          const history = messageHistory.get(chatroomId);
+          messageHistory.set(chatroomId, {
+            sentMessages: [...(history?.sentMessages || []), content],
+            selectedIndex: undefined,
           });
-          console.log(`Command detected: ${command}, Sender: ${sender}`);
-          return;
         }
-      }
-      const res = await sendMessage(chatroomId, content);
-
-      if (res) {
-        const history = messageHistory.get(chatroomId);
-        messageHistory.set(chatroomId, {
-          sentMessages: [...(history?.sentMessages || []), content],
-          selectedIndex: undefined,
-        });
-      }
-    };
+      },
+      [chatroomId, chatroom, sendMessage, replyInputData],
+    );
 
     const chatroomMode = useMemo(() => {
       if (chatroom?.chatroomInfo) {
@@ -808,6 +857,22 @@ const ChatInput = memo(
             </div>
           </div>
         )}
+        {replyInputData && (
+          <div className={clsx("replyInputContainer", replyInputData?.sender?.id && "show")}>
+            <div className="replyInputBoxHead">
+              <span>
+                Replying to <b>@{replyInputData?.sender?.username}</b>
+              </span>
+
+              <button className="replyInputCloseButton" onClick={() => setReplyInputData(null)}>
+                <img src={XIcon} alt="Close" width={16} height={16} />
+              </button>
+            </div>
+            <div className="replyInputBoxContent">
+              <span>{replyInputData?.content}</span>
+            </div>
+          </div>
+        )}
         <div className="chatInputContainer">
           <LexicalComposer key={`composer-${chatroomId}`} initialConfig={initialConfig}>
             <div className="chatInputBox">
@@ -828,7 +893,12 @@ const ChatInput = memo(
             <div className="chatInputActions">
               <EmoteHandler chatroomId={chatroomId} />
             </div>
-            <KeyHandler chatroomId={chatroomId} onSendMessage={handleSendMessage} />
+            <KeyHandler
+              chatroomId={chatroomId}
+              onSendMessage={(content) => {
+                handleSendMessage(content, replyInputData ? "reply" : "message");
+              }}
+            />
             <EmoteTransformer chatroomId={chatroomId} />
             <HistoryPlugin />
             <AutoFocusPlugin />

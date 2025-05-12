@@ -1,7 +1,7 @@
 export const urlRegex = /(https:\/\/[www.]?[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b[-a-zA-Z0-9()@:%_+.~#?&/=]*)/gi;
 export const kickEmoteRegex = /\[emote:(?<id>\d+)[:]?(?<name>[a-zA-Z0-9-_!]*)[:]?\]/g;
 export const kickEmoteInputRegex = /(?:^|\s)(:(?<emoteCase1>\w{3,}):)|(?:^|\s)(?<emoteCase2>\w{2,})\b/g;
-export const mentionRegex = /(?:^|\s)(@(?<username>[a-zA-Z0-9_]{3,}))(?=\s|$)/g;
+export const mentionRegex = /(?:^|\s)(@(?<username>[a-zA-Z0-9_]{3,})[,.]?)(?=\s|$)/g;
 export const kickClipRegex = /^https?:\/\/(www\.)?kick\.com\/.*\/clips\/.*/i;
 
 const kickTalkCDN = "https://cdn.kicktalk.app/Badges";
@@ -56,5 +56,6 @@ export const CHAT_ERROR_CODES = {
   ["SUBSCRIBERS_ONLY_EMOTE_ERROR"]: "Message contains subscriber only emote.",
   ["EMOTES_ONLY_ERROR"]: "Chatroom is in emote only mode. Only emotes are allowed.",
   ["SUBSCRIBERS_ONLY_ERROR"]: "Chatroom is in subscribers only mode.",
+  ["ORIGINAL_MESSAGE_NOT_FOUND_ERROR"]: "Message replying to is no longer available for reply.",
   ["CHAT_RATE_LIMIT_ERROR"]: "Rate limit triggered. Slow down.",
 };

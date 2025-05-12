@@ -27,7 +27,12 @@ const Chatters = () => {
     <div className="chattersContainer">
       <div className="chattersHead">
         <h2>
-          Chatters: <span>{chattersData?.streamerData?.user?.username || ""}</span>
+          <p>
+            Chatters: <span>{chattersData?.streamerData?.user?.username || ""}</span>
+          </p>
+          <p>
+            Total: <span>{chattersData?.chatters?.length || 0}</span>
+          </p>
         </h2>
 
         <button className="chattersCloseBtn" onClick={() => window.app.chattersDialog.close()}>

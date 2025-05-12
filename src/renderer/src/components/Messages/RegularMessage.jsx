@@ -2,6 +2,7 @@ import { memo } from "react";
 import { MessageParser } from "../../utils/MessageParser";
 import { KickBadges, KickTalkBadges, StvBadges } from "../Cosmetics/Badges";
 import CopyIcon from "../../assets/icons/copy-simple-fill.svg?asset";
+import ReplyIcon from "../../assets/icons/reply-fill.svg?asset";
 import Pin from "../../assets/icons/push-pin-fill.svg?asset";
 import clsx from "clsx";
 import dayjs from "dayjs";
@@ -18,18 +19,18 @@ const RegularMessage = memo(
     sevenTVSettings,
     type,
     chatroomName,
+    chatroomId,
     userChatroomInfo,
   }) => {
     const { settings } = useSettings();
     const canModerate = userChatroomInfo?.is_broadcaster || userChatroomInfo?.is_moderator || userChatroomInfo?.is_super_admin;
-    // "h:mm", "hh:mm", "h:mm a", "hh:mm a", "h:mm:ss", "hh:mm:ss",
-    //          "h:mm:ss a", "hh:mm:ss a", "h:mm:ss.zzz", "h:mm:ss.zzz a",
+
     const timestampFormat = () => {
       if (!message?.created_at) return;
       const timestamp = message.created_at;
       switch (settings?.general?.timestampFormat) {
         case "disabled":
-          return "disabled";
+          return "";
         case "h:mm":
           return dayjs(timestamp).format("h:mm");
         case "hh:mm":
@@ -47,14 +48,20 @@ const RegularMessage = memo(
         case "hh:mm:ss a":
           return dayjs(timestamp).format("HH:mm:ss A");
         default:
-          return "disabled";
+          return "";
       }
+    };
+
+    const handleReply = () => {
+      window.app.reply.open(message);
     };
 
     return (
       <span className={`chatMessageContainer ${message.deleted ? "deleted" : ""}`}>
         <div className="chatMessageUser">
-          {settings?.general?.showTimestamps && <span className="chatMessageTimestamp">{timestampFormat()}</span>}
+          {settings?.general?.showTimestamps && settings?.general?.timestampFormat !== "disabled" && (
+            <span className="chatMessageTimestamp">{timestampFormat()}</span>
+          )}
           <div className="chatMessageBadges">
             {filteredKickTalkBadges && <KickTalkBadges badges={filteredKickTalkBadges} />}
             {userStyle?.badge && <StvBadges badge={userStyle?.badge} />}
@@ -76,7 +83,15 @@ const RegularMessage = memo(
           </button>
         </div>
         <div className="chatMessageContent">
-          <MessageParser type={type} message={message} sevenTVEmotes={sevenTVEmotes} sevenTVSettings={sevenTVSettings} />
+          <MessageParser
+            type={type}
+            message={message}
+            chatroomId={chatroomId}
+            chatroomName={chatroomName}
+            sevenTVEmotes={sevenTVEmotes}
+            sevenTVSettings={sevenTVSettings}
+            userChatroomInfo={userChatroomInfo}
+          />
         </div>
         <div className="chatMessageActions">
           {canModerate && (
@@ -95,6 +110,9 @@ const RegularMessage = memo(
               <img src={Pin} alt="Pin Message" width={16} height={16} />
             </button>
           )}
+          <button onClick={handleReply} className="chatMessageActionButton">
+            <img src={ReplyIcon} alt={`Reply to ${message?.sender?.username}`} width={16} height={16} />
+          </button>
           <button
             onClick={() => {
               navigator.clipboard.writeText(message.content);

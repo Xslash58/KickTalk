@@ -1,12 +1,13 @@
-import "../assets/styles/components/Chat/Message.scss";
-import { memo, useCallback, useRef } from "react";
-import ModActionMessage from "../components/Messages/ModActionMessage";
-import RegularMessage from "../components/Messages/RegularMessage";
-import ArrowReplyLineIcon from "../assets/app/arrow_reply_line.svg?asset";
+import "../../assets/styles/components/Chat/Message.scss";
+import { memo, useCallback, useEffect, useRef } from "react";
+import ModActionMessage from "./ModActionMessage";
+import RegularMessage from "./RegularMessage";
+import ArrowReplyLineIcon from "../../assets/app/arrow_reply_line.svg?asset";
 import clsx from "clsx";
 import { useShallow } from "zustand/shallow";
-import useCosmeticsStore from "../providers/CosmeticsProvider";
-import { MessageParser } from "./MessageParser";
+import useCosmeticsStore from "../../providers/CosmeticsProvider";
+import { MessageParser } from "../../utils/MessageParser";
+import ReplyMessage from "./ReplyMessage";
 
 const Message = memo(
   ({
@@ -71,6 +72,10 @@ const Message = memo(
     //   updateSoundPlayed(chatroomId, message.id);
     // }
 
+    const handleContextMenu = () => {
+      window.app.contextMenu.messages(message);
+    };
+
     return (
       <div
         className={clsx(
@@ -78,7 +83,9 @@ const Message = memo(
           message.is_old && "old",
           message.deleted && "deleted",
           type === "dialog" && "dialogChatMessageItem",
+          shouldHighlight && "highlighted",
         )}
+        onContextMenu={handleContextMenu}
         style={{
           backgroundColor: shouldHighlight ? settings?.notifications?.backgroundColour : "transparent",
         }}
@@ -93,30 +100,26 @@ const Message = memo(
             userStyle={userStyle}
             sevenTVSettings={settings?.sevenTV}
             handleOpenUserDialog={handleOpenUserDialog}
+            userChatroomInfo={userChatroomInfo}
+            chatroomName={chatroomName}
+            chatroomId={chatroomId}
+          />
+        )}
+
+        {message.type === "reply" && (
+          <ReplyMessage
+            message={message}
+            sevenTVEmotes={sevenTVEmotes}
+            subscriberBadges={subscriberBadges}
+            filteredKickTalkBadges={filteredKickTalkBadges}
+            handleOpenUserDialog={handleOpenUserDialog}
+            sevenTVSettings={settings?.sevenTV}
+            chatroomId={chatroomId}
             chatroomName={chatroomName}
             userChatroomInfo={userChatroomInfo}
           />
         )}
-        {message.type === "reply" && (
-          <div className="chatMessageReply">
-            <span className="chatMessageReplyText">
-              <img className="chatMessageReplySymbol" src={ArrowReplyLineIcon} />
-              <span className="chatMessageReplyTextSender">{message?.metadata?.original_sender?.username}:</span>
-              <span className="chatMessageReplyTextContent" title={message?.metadata?.original_message?.content}>
-                <MessageParser message={message?.metadata?.original_message} type="reply" sevenTVEmotes={sevenTVEmotes} />
-              </span>
-            </span>
 
-            <RegularMessage
-              message={message}
-              subscriberBadges={subscriberBadges}
-              filteredKickTalkBadges={filteredKickTalkBadges}
-              sevenTVEmotes={sevenTVEmotes}
-              handleOpenUserDialog={handleOpenUserDialog}
-              sevenTVSettings={settings?.sevenTV}
-            />
-          </div>
-        )}
         {message.type === "system" && (
           <span className="systemMessage">
             {message.content === "connection-pending"
@@ -126,6 +129,7 @@ const Message = memo(
                 : message.content}
           </span>
         )}
+
         {message.type === "mod_action" && <ModActionMessage message={message} />}
       </div>
     );

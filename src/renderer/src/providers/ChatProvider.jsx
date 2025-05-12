@@ -40,12 +40,12 @@ const useChatStore = create((set, get) => ({
     sendUserPresence(stvId, userId);
   },
 
-  sendMessage: async (chatroomId, content) => {
+  sendMessage: async (chatroomId, content, type, metadata = {}) => {
     try {
       const message = content.trim();
-      console.info("Sending message to chatroom:", chatroomId);
+      console.info("Sending message to chatroom:", chatroomId, "type:", type);
 
-      await window.app.kick.sendMessage(chatroomId, message);
+      await window.app.kick.sendMessage(chatroomId, message, type, metadata);
       return true;
     } catch (error) {
       const errMsg = chatroomErrorHandler(error);

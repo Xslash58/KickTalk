@@ -1,4 +1,4 @@
-import { app, shell, BrowserWindow, ipcMain, screen, globalShortcut, session, Menu, Tray } from "electron";
+import { app, shell, BrowserWindow, ipcMain, screen, globalShortcut, session, Menu, clipboard, Tray } from "electron";
 import { join } from "path";
 import { electronApp, optimizer } from "@electron-toolkit/utils";
 import { update } from "./update";
@@ -26,6 +26,42 @@ const isDev = process.env.NODE_ENV === "development";
 
 const chatLogsStore = new Map();
 let tray = null;
+
+ipcMain.handle("contextMenu:messages", (e, { data }) => {
+  console.log("Received context menu data:", data);
+  const template = [
+    {
+      label: "Reply",
+      click: () => {
+        mainWindow.webContents.send("reply:data", data);
+      },
+    },
+    {
+      label: "Copy Message",
+      click: () => {
+        clipboard.writeText(data.content.trim());
+      },
+    },
+  ];
+
+  const menu = Menu.buildFromTemplate(template);
+  menu.popup({ window: mainWindow });
+});
+
+ipcMain.handle("contextMenu:streamerInfo", (e, { data }) => {
+  console.log("Received context menu data:", data);
+  const template = [
+    {
+      label: "Open stream in browser",
+      click: () => {
+        shell.openExternal(`https://kick.com/${data.slug}`);
+      },
+    },
+  ];
+
+  const menu = Menu.buildFromTemplate(template);
+  menu.popup({ window: mainWindow });
+});
 
 const storeToken = async (token_name, token) => {
   if (!token || !token_name) return;
@@ -136,12 +172,14 @@ ipcMain.handle("chatLogs:add", async (e, { data }) => {
   return updatedLogs;
 });
 
-// Handle window focus
-ipcMain.handle("bring-to-front", () => {
-  if (mainWindow) {
-    if (mainWindow.isMinimized()) mainWindow.restore();
-    mainWindow.focus();
-  }
+// Reply Input Handler
+ipcMain.handle("reply:open", (e, { data }) => {
+  console.log("Received reply data:", data);
+  mainWindow.webContents.send("reply:data", data);
+});
+
+ipcMain.handle("reply:close", () => {
+  console.log("Closing reply input");
 });
 
 const setAlwaysOnTop = (window) => {

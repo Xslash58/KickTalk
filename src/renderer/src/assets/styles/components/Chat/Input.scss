@@ -67,6 +67,7 @@
     position: relative;
     min-height: 64px;
     padding-left: 16px;
+    z-index: 9;
     align-items: center;
     background: #182f21;
     border: 1px solid rgba(80, 123, 97, 0.5);
@@ -76,6 +77,57 @@
 
     input:focus-visible {
       outline: none;
+    }
+  }
+
+  > .replyInputContainer {
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 8px 8px;
+    width: calc(100% - 40px);
+    border: 1px solid rgba(80, 123, 97, 0.5);
+    border-bottom: none;
+    background: #14291d;
+    gap: 8px;
+    opacity: 1;
+    z-index: -9;
+    position: relative;
+    min-height: min-content;
+    border-radius: 6px 6px 0 0;
+
+    > .replyInputBoxHead {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+
+      > span {
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 14px;
+        letter-spacing: 0.15px;
+      }
+    }
+
+    > .replyInputBoxContent {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+
+      > span {
+        text-overflow: ellipsis;
+        overflow: hidden;
+        white-space: nowrap;
+        width: 100%;
+      }
+    }
+
+    &.show {
+      display: flex;
+      z-index: 1;
+      animation: replySlideAndFadeIn 0.15s ease-in-out forwards;
     }
   }
 }
@@ -140,7 +192,7 @@
   padding: 0 12px;
   min-width: 112px;
   justify-content: center;
-  border-left: 1px solid rgba(80, 123, 97, 0.3);
+  // border-left: 1px solid rgba(80, 123, 97, 0.3);
 }
 
 .editor-paragraph {
@@ -169,8 +221,17 @@
 .chatEmoteBtns {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 0;
+  background-color: rgba(255, 255, 255, 0.05);
+  gap: 0px;
+  height: 38px;
+  overflow: hidden;
+  border-radius: 4px;
+
+  > .emoteBtnSeparator {
+    height: 100%;
+    width: 1px;
+    background-color: rgba(255, 255, 255, 0.05);
+  }
 }
 
 .emoteBtn {
@@ -180,22 +241,19 @@
   align-items: center;
   justify-content: center;
   display: flex;
-  height: 32px;
-  width: 32px;
-  padding: 4px;
-  border-radius: 4px;
+  height: 100%;
+  width: 56px;
   transition: background-color 0.2s ease;
 
   &:hover {
-    background-color: rgba(80, 123, 97, 0.2);
+    background-color: rgba(255, 255, 255, 0.15);
     img {
       opacity: 1;
     }
   }
 
   &.activeDialog {
-    background-color: rgba(80, 123, 97, 0.8);
-
+    background-color: rgba(255, 255, 255, 0.2);
     img {
       opacity: 1;
     }
@@ -203,23 +261,10 @@
 
   img {
     vertical-align: middle;
+    height: 24px;
+    width: 24px;
     opacity: 0.5;
     transition: opacity 0.2s ease;
-  }
-}
-
-.kickEmoteButton {
-  height: 32px;
-  width: 32px;
-  background-color: rgba(80, 123, 97, 0.2);
-  border-radius: 4px;
-  overflow: hidden;
-
-  img {
-    width: inherit;
-    height: auto;
-    padding: 4px;
-    margin: 0;
   }
 }
 
@@ -586,6 +631,16 @@
   }
   100% {
     transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes replySlideAndFadeIn {
+  0% {
+    transform: translateY(10px);
+    opacity: 0;
+  }
+  100% {
     opacity: 1;
   }
 }

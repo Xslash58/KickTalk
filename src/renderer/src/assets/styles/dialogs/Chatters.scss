@@ -17,6 +17,9 @@
     font-size: 15px;
     font-weight: 500;
     color: #ffffff80;
+    display: flex;
+    align-items: center;
+    gap: 8px;
     app-region: no-drag;
 
     span {

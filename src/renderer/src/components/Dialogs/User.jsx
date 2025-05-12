@@ -1,7 +1,7 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import clsx from "clsx";
 import "../../assets/styles/dialogs/UserDialog.scss";
-import Message from "../../utils/Message";
+import Message from "../Messages/Message";
 import Pin from "../../assets/icons/push-pin-fill.svg?asset";
 import { userKickTalkBadges } from "../../../../../utils/kickTalkBadges";
 import ArrowUpRight from "../../assets/icons/arrow-up-right-bold.svg?asset";
@@ -23,27 +23,31 @@ const User = () => {
   const kickUsername = localStorage.getItem("kickUsername");
 
   useEffect(() => {
-    const loadData = async (data) => {
-      setDialogData(data);
+    const loadData = async ({ sender, chatroomId, pinned, userStyle, cords, fetchedUser = null }) => {
       const chatrooms = JSON.parse(localStorage.getItem("chatrooms")) || [];
-      const currentChatroom = chatrooms.find((chatroom) => chatroom.id === data.chatroomId);
-      setDialogData({ ...data, chatroom: currentChatroom });
-      setDialogUserStyle(data?.userStyle);
+      const currentChatroom = chatrooms.find((chatroom) => chatroom.id === chatroomId);
+
+      setDialogData({ sender, chatroomId, pinned, userStyle, cords, fetchedUser, chatroom: currentChatroom });
+      setDialogUserStyle(userStyle);
 
       setSevenTVEmotes(currentChatroom?.channel7TVEmotes || []);
       setSubscriberBadges(currentChatroom?.streamerData?.subscriber_badges || []);
 
-      const { messages } = await window.app.logs.get({ chatroomId: data.chatroomId, userId: data.sender.id });
+      const { messages } = await window.app.logs.get({ chatroomId: chatroomId, userId: sender.id });
 
       setUserLogs(messages || []);
 
       // Fetch User Profile in Channel
-      const { data: user } = await window.app.kick.getUserChatroomInfo(currentChatroom?.slug, data?.sender?.username);
-      setUserProfile(user);
+      if (!fetchedUser) {
+        const { data: user } = await window.app.kick.getUserChatroomInfo(currentChatroom?.slug, sender?.username);
+        setUserProfile(user);
+      } else {
+        setUserProfile(fetchedUser);
+      }
 
       // Pin starts unpinned
-      await window.app.userDialog.pin(data?.pinned || false);
-      setIsDialogPinned(data?.pinned || false);
+      await window.app.userDialog.pin(pinned || false);
+      setIsDialogPinned(pinned || false);
     };
 
     const updateData = (data) => {
@@ -64,7 +68,7 @@ const User = () => {
     dialogData?.isSilenced;
   }, [userLogs, dialogData]);
 
-  const silenceUser = async () => {
+  const silenceUser = useCallback(async () => {
     console.log("Silencing user", dialogData?.sender?.username);
     const userIndex = scilencedUsers.data.findIndex((user) => user.id === dialogData?.sender?.id);
 
@@ -73,6 +77,7 @@ const User = () => {
         id: dialogData?.sender?.id,
         username: dialogData?.sender?.username,
       });
+
       window.app.kick.getSilenceUser(dialogData?.sender?.id);
       setIsSilenced(true);
     } else {
@@ -82,7 +87,8 @@ const User = () => {
     }
 
     localStorage.setItem("silencedUsers", JSON.stringify(scilencedUsers));
-  };
+  }, [dialogData?.sender?.id]);
+
   const handlePinToggle = async () => {
     await window.app.userDialog.pin(!isDialogPinned);
     setIsDialogPinned(!isDialogPinned);

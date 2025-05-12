@@ -51,9 +51,39 @@ const rules = [
   {
     // Mention rule
     regexPattern: mentionRegex,
-    component: ({ match, index }) => {
+    component: ({ match, index, chatroomId, chatroomName, userChatroomInfo, type }) => {
+      const { username } = match.groups;
+
+      if (type === "pinned") {
+        return (
+          <span style={{ color: "#fff", fontWeight: "bold" }} key={`mention-${index}-${username}`}>
+            {match[0]}
+          </span>
+        );
+      }
+
       return (
-        <span style={{ color: "#fff", fontWeight: "bold" }} key={`mention-${index}`}>
+        <span
+          onClick={async () => {
+            const user = await window.app.kick.getUserChatroomInfo(chatroomName, username);
+            if (!user?.data?.id) return;
+
+            const sender = {
+              id: user.data.id,
+              username: user.data.username,
+              slug: user.data.slug,
+            };
+
+            await window.app.userDialog.open({
+              sender,
+              fetchedUser: user?.data,
+              chatroomId,
+              userChatroomInfo,
+              cords: [0, 300],
+            });
+          }}
+          style={{ color: "#fff", fontWeight: "bold", cursor: "pointer" }}
+          key={`mention-${index}-${username}`}>
           {match[0]}
         </span>
       );
@@ -96,7 +126,7 @@ const getEmoteData = (emoteName, sevenTVEmotes, chatroomId) => {
   return null;
 };
 
-export const MessageParser = ({ message, sevenTVEmotes, sevenTVSettings, type }) => {
+export const MessageParser = ({ message, sevenTVEmotes, sevenTVSettings, type, chatroomId, chatroomName, userChatroomInfo }) => {
   if (!message?.content) return [];
   const parts = [];
   let lastIndex = 0;
@@ -124,7 +154,26 @@ export const MessageParser = ({ message, sevenTVEmotes, sevenTVSettings, type })
     }
 
     // Add the matched component
-    parts.push(rule.component({ match, index: start, type }));
+    if (rule.regexPattern === mentionRegex && type !== "pinned") {
+      parts.push(
+        rule.component({
+          match,
+          index: start,
+          type,
+          chatroomId,
+          chatroomName,
+          userChatroomInfo,
+        }),
+      );
+    } else {
+      parts.push(
+        rule.component({
+          match,
+          index: start,
+          type,
+        }),
+      );
+    }
 
     lastIndex = end;
   }
