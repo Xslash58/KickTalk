@@ -1,12 +1,12 @@
-import { app, shell, BrowserWindow, ipcMain, screen, globalShortcut, session, Menu, clipboard, Tray } from "electron";
+import { app, shell, BrowserWindow, ipcMain, screen, globalShortcut, session, Menu, Tray } from "electron";
 import { join } from "path";
 import { electronApp, optimizer } from "@electron-toolkit/utils";
 import { update } from "./update";
 import Store from "electron-store";
 import store from "../../utils/config";
-
 import dotenv from "dotenv";
 dotenv.config();
+
 
 const authStore = new Store({
   fileExtension: "env",
@@ -26,42 +26,6 @@ const isDev = process.env.NODE_ENV === "development";
 
 const chatLogsStore = new Map();
 let tray = null;
-
-ipcMain.handle("contextMenu:messages", (e, { data }) => {
-  console.log("Received context menu data:", data);
-  const template = [
-    {
-      label: "Reply",
-      click: () => {
-        mainWindow.webContents.send("reply:data", data);
-      },
-    },
-    {
-      label: "Copy Message",
-      click: () => {
-        clipboard.writeText(data.content.trim());
-      },
-    },
-  ];
-
-  const menu = Menu.buildFromTemplate(template);
-  menu.popup({ window: mainWindow });
-});
-
-ipcMain.handle("contextMenu:streamerInfo", (e, { data }) => {
-  console.log("Received context menu data:", data);
-  const template = [
-    {
-      label: "Open stream in browser",
-      click: () => {
-        shell.openExternal(`https://kick.com/${data.slug}`);
-      },
-    },
-  ];
-
-  const menu = Menu.buildFromTemplate(template);
-  menu.popup({ window: mainWindow });
-});
 
 const storeToken = async (token_name, token) => {
   if (!token || !token_name) return;
@@ -101,6 +65,8 @@ let userDialog = null;
 let authDialog = null;
 let chattersDialog = null;
 let settingsDialog = null;
+let contextMenuWindow = null;
+
 
 ipcMain.handle("store:get", async (e, { key }) => {
   if (!key) return store.store;
@@ -172,14 +138,12 @@ ipcMain.handle("chatLogs:add", async (e, { data }) => {
   return updatedLogs;
 });
 
-// Reply Input Handler
-ipcMain.handle("reply:open", (e, { data }) => {
-  console.log("Received reply data:", data);
-  mainWindow.webContents.send("reply:data", data);
-});
-
-ipcMain.handle("reply:close", () => {
-  console.log("Closing reply input");
+// Handle window focus
+ipcMain.handle("bring-to-front", () => {
+  if (mainWindow) {
+    if (mainWindow.isMinimized()) mainWindow.restore();
+    mainWindow.focus();
+  }
 });
 
 const setAlwaysOnTop = (window) => {
@@ -268,6 +232,63 @@ const createWindow = () => {
     mainWindow.loadFile(join(__dirname, "../renderer/index.html"));
   }
 };
+// Create the context menu window
+const createContextMenuWindow = () => {
+  if (contextMenuWindow) {
+    contextMenuWindow.focus();
+    return;
+  }
+
+  contextMenuWindow = new BrowserWindow({
+    width: 200,
+    height: 300,
+    x: 0,
+    y: 0,
+    show: true,
+    frame: false,
+    transparent: false,
+    alwaysOnTop: true,
+    parent: mainWindow,
+    skipTaskbar: true,
+    webPreferences: {
+      nodeIntegration: false,
+      contextIsolation: true,
+      preload: join(__dirname, "../preload/index.js"),
+      sandbox: false,
+    },
+  });
+
+  contextMenuWindow.on("blur", () => {
+    if (contextMenuWindow) {
+      contextMenuWindow.hide();
+    }
+  });
+
+    if (isDev && process.env["ELECTRON_RENDERER_URL"]) {
+    contextMenuWindow.loadURL(`${process.env["ELECTRON_RENDERER_URL"]}/contextMenu.html`);
+  } else {
+    contextMenuWindow.loadFile(join(__dirname, "../renderer/contextMenu.html"));
+  }
+};
+
+
+ipcMain.handle("contextMenu:hide", () => {
+  if (contextMenuWindow) {
+    contextMenuWindow.hide();
+  }
+});
+
+
+ipcMain.handle("contextMenu:show", (e, {data}) => {
+  if (!contextMenuWindow) {
+    createContextMenuWindow();
+  }
+
+  contextMenuWindow.setBounds({ x: 200, y: 300, width: 200, height: 300 });
+  //contextMenuWindow.webContents.send("contextMenu:data", data);
+  contextMenuWindow.show();
+  contextMenuWindow.focus();
+});
 
 const loginToKick = async (method) => {
   const authSession = {

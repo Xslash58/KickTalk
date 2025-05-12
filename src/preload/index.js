@@ -102,11 +102,14 @@ if (process.contextIsolated) {
       logout: () => ipcRenderer.invoke("logout"),
       getAppInfo: () => ipcRenderer.invoke("get-app-info"),
       alwaysOnTop: () => ipcRenderer.invoke("alwaysOnTop"),
+      showContextMenu: (message) => ipcRenderer.invoke("contextMenu:show", {
+        data: message,
+      }),
 
-      contextMenu: {
-        messages: (data) => ipcRenderer.invoke("contextMenu:messages", { data }),
-        streamerInfo: (data) => ipcRenderer.invoke("contextMenu:streamerInfo", { data }),
-      },
+      // contextMenu: {
+      //   messages: (data) => ipcRenderer.invoke("contextMenu:messages", { data }),
+      //   streamerInfo: (data) => ipcRenderer.invoke("contextMenu:streamerInfo", { data }),
+      // },
 
       authDialog: {
         open: (data) => ipcRenderer.invoke("authDialog:open", { data }),

@@ -73,7 +73,7 @@ const Message = memo(
     // }
 
     const handleContextMenu = () => {
-      window.app.contextMenu.messages(message);
+      window.app.showContextMenu(message);
     };
 
     return (
