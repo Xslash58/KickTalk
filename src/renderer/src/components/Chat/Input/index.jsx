@@ -697,8 +697,13 @@ const ChatInput = memo(
       if (content.startsWith("/")) {
         const commandParts = content.slice(1).trim().split(" ");
         const command = commandParts[0];
-        const usernameInput = commandParts[1];
+        let usernameInput = commandParts[1];
         if (!usernameInput) return;
+        // Strip out the '@' from the username if it exists
+        if (usernameInput.startsWith("@")) {
+          usernameInput = usernameInput.slice(1);
+        }
+
         if (command) {
           const username = await window.app.kick.getUserChatroomInfo(chatroom.username, usernameInput);
           if (!username) return;
