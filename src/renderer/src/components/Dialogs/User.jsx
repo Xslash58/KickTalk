@@ -2,8 +2,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import clsx from "clsx";
 import "../../assets/styles/dialogs/UserDialog.scss";
 import Message from "../Messages/Message";
-import Pin from "../../assets/icons/push-pin-fill.svg?asset";
 import { userKickTalkBadges } from "../../../../../utils/kickTalkBadges";
+import Pin from "../../assets/icons/push-pin-fill.svg?asset";
 import ArrowUpRight from "../../assets/icons/arrow-up-right-bold.svg?asset";
 import Copy from "../../assets/icons/copy-simple-fill.svg?asset";
 import BanIcon from "../../assets/icons/gavel-fill.svg?asset";
@@ -18,42 +18,55 @@ const User = () => {
   const [isDialogPinned, setIsDialogPinned] = useState(false);
   const [dialogUserStyle, setDialogUserStyle] = useState(null);
   const dialogLogsRef = useRef(null);
-  const scilencedUsers = JSON.parse(localStorage.getItem("silencedUsers")) || [];
-  const [isUserSilenced, setIsSilenced] = useState(false);
+  const [silencedUsers, setSilencedUsers] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem("silencedUsers")) || { data: [] };
+    } catch (e) {
+      console.error("Error parsing silenced users:", e);
+      return { data: [] };
+    }
+  });
+  const [isUserSilenced, setIsUserSilenced] = useState(false);
   const kickUsername = localStorage.getItem("kickUsername");
 
+  const loadData = async ({ sender, chatroomId, pinned, userStyle, cords, userChatroomInfo, fetchedUser = null }) => {
+    const chatrooms = JSON.parse(localStorage.getItem("chatrooms")) || [];
+    const currentChatroom = chatrooms.find((chatroom) => chatroom.id === chatroomId);
+
+    setDialogData({ sender, chatroomId, pinned, userStyle, cords, fetchedUser, userChatroomInfo, chatroom: currentChatroom });
+    setDialogUserStyle(userStyle);
+
+    setSevenTVEmotes(currentChatroom?.channel7TVEmotes || []);
+    setSubscriberBadges(currentChatroom?.streamerData?.subscriber_badges || []);
+
+    const messages = await window.app.logs.get({ chatroomId: chatroomId, userId: sender.id });
+    setUserLogs(messages);
+
+    // Fetch User Profile in Channel
+    if (!fetchedUser) {
+      const { data: user } = await window.app.kick.getUserChatroomInfo(currentChatroom?.slug, sender?.username);
+      setUserProfile(user);
+    } else {
+      setUserProfile(fetchedUser);
+    }
+
+    // Silenced User Data
+    const silencedUsersData = JSON.parse(localStorage.getItem("silencedUsers")) || { data: [] };
+    setSilencedUsers(silencedUsersData);
+
+    const isSilenced = silencedUsersData.data?.some((user) => user.id === sender.id);
+    setIsUserSilenced(isSilenced);
+
+    // Pin starts unpinned
+    await window.app.userDialog.pin(pinned || false);
+    setIsDialogPinned(pinned || false);
+  };
+
+  const updateData = (data) => {
+    setUserLogs(data?.logs || []);
+  };
+
   useEffect(() => {
-    const loadData = async ({ sender, chatroomId, pinned, userStyle, cords, fetchedUser = null }) => {
-      const chatrooms = JSON.parse(localStorage.getItem("chatrooms")) || [];
-      const currentChatroom = chatrooms.find((chatroom) => chatroom.id === chatroomId);
-
-      setDialogData({ sender, chatroomId, pinned, userStyle, cords, fetchedUser, chatroom: currentChatroom });
-      setDialogUserStyle(userStyle);
-
-      setSevenTVEmotes(currentChatroom?.channel7TVEmotes || []);
-      setSubscriberBadges(currentChatroom?.streamerData?.subscriber_badges || []);
-
-      const { messages } = await window.app.logs.get({ chatroomId: chatroomId, userId: sender.id });
-
-      setUserLogs(messages || []);
-
-      // Fetch User Profile in Channel
-      if (!fetchedUser) {
-        const { data: user } = await window.app.kick.getUserChatroomInfo(currentChatroom?.slug, sender?.username);
-        setUserProfile(user);
-      } else {
-        setUserProfile(fetchedUser);
-      }
-
-      // Pin starts unpinned
-      await window.app.userDialog.pin(pinned || false);
-      setIsDialogPinned(pinned || false);
-    };
-
-    const updateData = (data) => {
-      setUserLogs(data.logs?.messages || []);
-    };
-
     const dataCleanup = window.app.userDialog.onData(loadData);
     const updateCleanup = window.app.logs.onUpdate(updateData);
 
@@ -64,29 +77,34 @@ const User = () => {
   }, []);
 
   useEffect(() => {
-    dialogLogsRef.current.scrollTop = dialogLogsRef.current.scrollHeight;
-    dialogData?.isSilenced;
+    if (dialogLogsRef.current) {
+      dialogLogsRef.current.scrollTop = dialogLogsRef.current.scrollHeight;
+    }
   }, [userLogs, dialogData]);
 
   const silenceUser = useCallback(async () => {
+    if (!dialogData?.sender?.id) return;
+
     console.log("Silencing user", dialogData?.sender?.username);
-    const userIndex = scilencedUsers.data.findIndex((user) => user.id === dialogData?.sender?.id);
+    const currentSilencedUsers = JSON.parse(localStorage.getItem("silencedUsers")) || { data: [] };
+    const userIndex = currentSilencedUsers.data.findIndex((user) => user.id === dialogData?.sender?.id);
 
     if (userIndex === -1) {
-      scilencedUsers.data.push({
+      currentSilencedUsers.data.push({
         id: dialogData?.sender?.id,
         username: dialogData?.sender?.username,
       });
 
       window.app.kick.getSilenceUser(dialogData?.sender?.id);
-      setIsSilenced(true);
+      setIsUserSilenced(true);
     } else {
-      scilencedUsers.data.splice(userIndex, 1);
+      currentSilencedUsers.data.splice(userIndex, 1);
       window.app.kick.getUnsilenceUser(dialogData?.sender?.id);
-      setIsSilenced(false);
+      setIsUserSilenced(false);
     }
 
-    localStorage.setItem("silencedUsers", JSON.stringify(scilencedUsers));
+    localStorage.setItem("silencedUsers", JSON.stringify(currentSilencedUsers));
+    setSilencedUsers(currentSilencedUsers);
   }, [dialogData?.sender?.id]);
 
   const handlePinToggle = async () => {
@@ -102,8 +120,6 @@ const User = () => {
   const handleTimeoutUser = async (duration) => {
     await window.app.modActions.getTimeoutUser(dialogData?.chatroom?.username, dialogData?.sender?.username, duration);
   };
-
-  console.log("User Dialog Data", dialogData);
 
   return (
     <div className="dialogWrapper">
@@ -146,17 +162,15 @@ const User = () => {
           <div className="dialogHeaderOptionsTop">
             <button
               className="dialogHeaderOptionsButton"
-              disabled={kickUsername === dialogData?.sender?.username}
-              onClick={async () => {
-                await silenceUser();
-                setIsSilenced(!isUserSilenced);
-              }}>
+              disabled={kickUsername?.replaceAll("-", "_").toLowerCase() === dialogData?.sender?.username?.toLowerCase()}
+              onClick={silenceUser}>
               <span>{isUserSilenced ? "Unmute User" : "Mute User"}</span>
             </button>
             <button
               className="dialogHeaderOptionsButton"
               onClick={() => {
-                const transformedUsername = dialogData?.sender?.username.toLowerCase().replace("_", "-");
+                // TODO: Fix different underscores effects
+                const transformedUsername = dialogData?.sender?.username.toLowerCase();
                 window.open(`https://kick.com/${transformedUsername}`, "_blank", "noopener,noreferrer");
               }}>
               Open Channel <img src={ArrowUpRight} width={18} height={18} />

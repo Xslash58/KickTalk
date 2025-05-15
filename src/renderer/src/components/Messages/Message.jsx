@@ -1,12 +1,10 @@
 import "../../assets/styles/components/Chat/Message.scss";
-import { memo, useCallback, useEffect, useRef } from "react";
+import { memo, useCallback, useRef } from "react";
 import ModActionMessage from "./ModActionMessage";
 import RegularMessage from "./RegularMessage";
-import ArrowReplyLineIcon from "../../assets/app/arrow_reply_line.svg?asset";
 import clsx from "clsx";
 import { useShallow } from "zustand/shallow";
 import useCosmeticsStore from "../../providers/CosmeticsProvider";
-import { MessageParser } from "../../utils/MessageParser";
 import ReplyMessage from "./ReplyMessage";
 
 const Message = memo(
@@ -26,7 +24,8 @@ const Message = memo(
     const messageRef = useRef(null);
 
     let userStyle;
-    if (message?.sender) {
+
+    if (message?.sender && type !== "replyThread") {
       if (type === "dialog") {
         userStyle = dialogUserStyle;
       } else {
@@ -46,7 +45,7 @@ const Message = memo(
           userStyle,
         });
       },
-      [message?.sender, chatroomId, userChatroomInfo],
+      [message?.sender, userChatroomInfo, chatroomId, userStyle],
     );
 
     const filteredKickTalkBadges = kickTalkBadges?.find(
@@ -73,14 +72,14 @@ const Message = memo(
     // }
 
     const handleContextMenu = () => {
-      window.app.showContextMenu(message);
+      window.app.contextMenu.messages(message);
     };
 
     return (
       <div
         className={clsx(
           "chatMessageItem",
-          message.is_old && "old",
+          message.is_old && type !== "replyThread" && "old",
           message.deleted && "deleted",
           type === "dialog" && "dialogChatMessageItem",
           shouldHighlight && "highlighted",
@@ -90,7 +89,7 @@ const Message = memo(
           backgroundColor: shouldHighlight ? settings?.notifications?.backgroundColour : "transparent",
         }}
         ref={messageRef}>
-        {message.type === "message" && (
+        {(message.type === "message" || type === "replyThread") && (
           <RegularMessage
             type={type}
             message={message}
@@ -106,18 +105,19 @@ const Message = memo(
           />
         )}
 
-        {message.type === "reply" && (
+        {message.type === "reply" && type !== "replyThread" && (
           <ReplyMessage
+            type={type}
             message={message}
-            sevenTVEmotes={sevenTVEmotes}
-            subscriberBadges={subscriberBadges}
             filteredKickTalkBadges={filteredKickTalkBadges}
-            handleOpenUserDialog={handleOpenUserDialog}
-            sevenTVSettings={settings?.sevenTV}
-            chatroomId={chatroomId}
-            chatroomName={chatroomName}
+            subscriberBadges={subscriberBadges}
+            sevenTVEmotes={sevenTVEmotes}
             userStyle={userStyle}
+            sevenTVSettings={settings?.sevenTV}
+            handleOpenUserDialog={handleOpenUserDialog}
             userChatroomInfo={userChatroomInfo}
+            chatroomName={chatroomName}
+            chatroomId={chatroomId}
           />
         )}
 

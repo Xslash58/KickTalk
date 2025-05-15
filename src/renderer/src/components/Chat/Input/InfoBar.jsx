@@ -41,7 +41,7 @@ const InfoBar = memo(
     }, [chatroomInfo, initialChatroomInfo]);
 
     return (
-      <div className="chatInfoBarWrapper">
+      <>
         {chatroomMode && (
           <div className="chatInfoBar">
             <span>{chatroomMode}</span>
@@ -78,7 +78,7 @@ const InfoBar = memo(
             </div>
           </div>
         )}
-      </div>
+      </>
     );
   },
   (prev, next) => prev.chatroomInfo === next.chatroomInfo && prev.initialChatroomInfo === next.initialChatroomInfo,

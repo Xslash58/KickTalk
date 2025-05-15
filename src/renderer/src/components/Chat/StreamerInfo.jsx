@@ -43,7 +43,13 @@ const StreamerInfo = ({ streamerData, streamStatus, isStreamerLive, chatroomId, 
 
   return (
     <div className="chatStreamerInfo" onContextMenu={handleContextMenu}>
-      <div className="chatStreamerInfoContent">
+      <div
+        className="chatStreamerInfoContent"
+        onMouseDown={async (e) => {
+          if (e.button === 1 && streamerData?.slug) {
+            window.open(`https://kick.com/${streamerData?.slug}`, "_blank");
+          }
+        }}>
         <span className="streamerName">{streamerData?.user?.username}</span>
         {isStreamerLive && <span className="liveBadgeDot" />}
       </div>

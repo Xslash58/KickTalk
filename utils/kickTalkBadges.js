@@ -35,6 +35,15 @@ export const userKickTalkBadges = [
     ],
   },
   {
+    username: "physikz",
+    badges: [
+      {
+        type: "BetaTester",
+        title: "Beta Tester",
+      },
+    ],
+  },
+  {
     username: "prsek",
     badges: [
       {

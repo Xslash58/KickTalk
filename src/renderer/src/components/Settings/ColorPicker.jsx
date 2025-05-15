@@ -6,6 +6,7 @@ import { useDebounceCallback } from "../../utils/hooks";
 
 const ColorPicker = ({ initialColor, handleColorChange, isColorPickerOpen, setIsColorPickerOpen }) => {
   const [color, setColor] = useState(initialColor);
+  const colorPickerRef = useRef(null);
 
   // Create a debounced version of handleColorChange
   const debouncedHandleColorChange = useDebounceCallback(handleColorChange, 300);
@@ -24,8 +25,13 @@ const ColorPicker = ({ initialColor, handleColorChange, isColorPickerOpen, setIs
     [debouncedHandleColorChange],
   );
 
-  const colorPickerRef = useRef(null);
   useClickOutside(colorPickerRef, () => setIsColorPickerOpen(false));
+
+  useEffect(() => {
+    return () => {
+      colorPickerRef.current = null;
+    };
+  }, []);
 
   return (
     <div className="colorPicker">

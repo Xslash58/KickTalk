@@ -1,12 +1,24 @@
-import { app, shell, BrowserWindow, ipcMain, screen, globalShortcut, session, Menu, Tray } from "electron";
+import {
+  app,
+  shell,
+  BrowserWindow,
+  ipcMain,
+  screen,
+  globalShortcut,
+  session,
+  Menu,
+  Tray,
+  clipboard,
+  ipcRenderer,
+} from "electron";
 import { join } from "path";
 import { electronApp, optimizer } from "@electron-toolkit/utils";
-import { update } from "./update";
+import { update } from "./utils/update";
 import Store from "electron-store";
 import store from "../../utils/config";
+
 import dotenv from "dotenv";
 dotenv.config();
-
 
 const authStore = new Store({
   fileExtension: "env",
@@ -24,7 +36,15 @@ ipcMain.setMaxListeners(100);
 
 const isDev = process.env.NODE_ENV === "development";
 
-const chatLogsStore = new Map();
+const userLogsStore = new Map(); // User logs by chatroom
+const replyLogsStore = new Map(); // Reply threads by chatroom
+
+const logLimits = {
+  user: 80,
+  reply: 50,
+  replyThreads: 50,
+};
+
 let tray = null;
 
 const storeToken = async (token_name, token) => {
@@ -59,14 +79,16 @@ const clearAuthTokens = async () => {
 };
 
 let dialogInfo = null;
+let replyThreadInfo = null;
 
 let mainWindow = null;
 let userDialog = null;
 let authDialog = null;
 let chattersDialog = null;
 let settingsDialog = null;
+let searchDialog = null;
+let replyThreadDialog = null;
 let contextMenuWindow = null;
-
 
 ipcMain.handle("store:get", async (e, { key }) => {
   if (!key) return store.store;
@@ -99,44 +121,109 @@ ipcMain.handle("store:delete", (e, { key }) => {
   return result;
 });
 
-ipcMain.handle("chatLogs:get", async (e, { data }) => {
-  const { chatroomId, userId } = data;
-
-  const roomLogs = chatLogsStore.get(chatroomId);
-  if (!roomLogs) {
-    return { messages: [] };
+const addUserLog = (chatroomId, userId, message) => {
+  if (!chatroomId || !userId || !message) {
+    console.error("[Chat Logs]: Invalid data received:", data);
+    return null;
   }
 
-  return roomLogs.get(userId) || { messages: [] };
-});
+  const key = `${chatroomId}-${userId}`;
 
-ipcMain.handle("chatLogs:add", async (e, { data }) => {
-  const { chatroomId, userId, message } = data;
-  let roomLogs = chatLogsStore.get(chatroomId);
+  // Get or Create User Logs for room
+  let userLogs = userLogsStore.get(key) || [];
+  userLogs = [...userLogs.filter((m) => m.id !== message.id), message].slice(-logLimits.user);
 
-  if (!roomLogs) {
-    roomLogs = new Map();
-    chatLogsStore.set(chatroomId, roomLogs);
-  }
-
-  const userLogs = roomLogs.get(userId) || { messages: [] };
-  const updatedLogs = {
-    messages: [...userLogs.messages.filter((m) => m.id !== message.id), { ...message, timestamp: Date.now() }].slice(-80),
-    lastUpdate: Date.now(),
-  };
-
-  roomLogs.set(userId, updatedLogs);
+  // Store User Logs
+  userLogsStore.set(key, userLogs);
 
   if (userDialog && dialogInfo?.chatroomId === chatroomId && dialogInfo?.userId === userId) {
     userDialog.webContents.send("chatLogs:updated", {
       chatroomId,
       userId,
-      logs: updatedLogs,
+      logs: userLogs,
     });
   }
 
-  return updatedLogs;
+  return { messages: userLogs };
+};
+
+const addReplyLog = (chatroomId, message) => {
+  if (!message || !chatroomId || !message.metadata?.original_message?.id) {
+    console.error("[Reply Logs]: Invalid data received:", data);
+    return null;
+  }
+
+  const key = message.metadata.original_message.id;
+
+  // Get Chatroom Reply Threads
+  let chatroomReplyThreads = replyLogsStore.get(chatroomId);
+  if (!chatroomReplyThreads) {
+    chatroomReplyThreads = new Map();
+    replyLogsStore.set(chatroomId, chatroomReplyThreads);
+  }
+
+  // Get or Create Reply Logs for original message
+  let replyThreadLogs = chatroomReplyThreads.get(key) || [];
+  replyThreadLogs = [...replyThreadLogs.filter((m) => m.id !== message.id), message].slice(-logLimits.reply);
+
+  // Store Reply Logs
+  chatroomReplyThreads.set(key, replyThreadLogs);
+
+  if (chatroomReplyThreads.size > logLimits.replyThreads) {
+    const oldestKey = chatroomReplyThreads.keys().next().value;
+    chatroomReplyThreads.delete(oldestKey);
+  }
+
+  if (replyThreadDialog && replyThreadInfo?.originalMessageId === key) {
+    replyThreadDialog.webContents.send("replyLogs:updated", {
+      originalMessageId: key,
+      messages: replyThreadLogs,
+    });
+  }
+
+  return replyThreadLogs;
+};
+
+ipcMain.handle("chatLogs:get", async (e, { data }) => {
+  const { chatroomId, userId } = data;
+  if (!chatroomId || !userId) return [];
+
+  const key = `${chatroomId}-${userId}`;
+  return userLogsStore.get(key) || [];
 });
+
+ipcMain.handle("chatLogs:add", async (e, { data }) => {
+  const { chatroomId, userId, message } = data;
+  return addUserLog(chatroomId, userId, message);
+});
+
+ipcMain.handle("replyLogs:get", async (e, { data }) => {
+  const { originalMessageId, chatroomId } = data;
+  if (!originalMessageId || !chatroomId) return [];
+
+  const chatroomReplyThreads = replyLogsStore.get(chatroomId);
+  if (!chatroomReplyThreads) return [];
+
+  const replyThreadLogs = chatroomReplyThreads.get(originalMessageId);
+  return replyThreadLogs || [];
+});
+
+ipcMain.handle("replyLogs:add", async (e, data) => {
+  const { message, chatroomId } = data;
+  return addReplyLog(chatroomId, message);
+});
+
+// setInterval(() => {
+
+// const now = Date.now();
+// const maxAge = now - 1000 * 3 * 60 * 60; // 3 hours
+
+// userLogsStore.forEach((logs, key) => {
+//   if (logs.timestamp < maxAge) {
+//     userLogsStore.delete(key);
+//   }
+// });
+// }, 3000);
 
 // Handle window focus
 ipcMain.handle("bring-to-front", () => {
@@ -204,7 +291,6 @@ const createWindow = () => {
     update(mainWindow);
 
     if (isDev) {
-      console.log("Opening DevTools");
       mainWindow.webContents.openDevTools();
     }
   });
@@ -232,59 +318,91 @@ const createWindow = () => {
     mainWindow.loadFile(join(__dirname, "../renderer/index.html"));
   }
 };
+
 // Create the context menu window
-const createContextMenuWindow = () => {
-  if (contextMenuWindow) {
-    contextMenuWindow.focus();
-    return;
-  }
+// const createContextMenuWindow = (data) => {
+//   if (contextMenuWindow) {
+//     contextMenuWindow.focus();
+//     return;
+//   }
 
-  contextMenuWindow = new BrowserWindow({
-    width: 200,
-    height: 300,
-    x: 0,
-    y: 0,
-    show: true,
-    frame: false,
-    transparent: false,
-    alwaysOnTop: true,
-    parent: mainWindow,
-    skipTaskbar: true,
-    webPreferences: {
-      nodeIntegration: false,
-      contextIsolation: true,
-      preload: join(__dirname, "../preload/index.js"),
-      sandbox: false,
+//   contextMenuWindow = new BrowserWindow({
+//     width: data.width,
+//     height: data.height,
+//     x: data.x,
+//     y: data.y,
+//     show: true,
+//     frame: false,
+//     transparent: false,
+//     alwaysOnTop: true,
+//     parent: mainWindow,
+//     skipTaskbar: true,
+//     webPreferences: {
+//       nodeIntegration: false,
+//       contextIsolation: true,
+//       preload: join(__dirname, "../preload/index.js"),
+//       sandbox: false,
+//     },
+//   });
+
+//   contextMenuWindow.on("blur", () => {
+//     if (contextMenuWindow) {
+//       contextMenuWindow.hide();
+//     }
+//   });
+
+//   if (isDev && process.env["ELECTRON_RENDERER_URL"]) {
+//     contextMenuWindow.loadURL(`${process.env["ELECTRON_RENDERER_URL"]}/contextMenu.html`);
+//   } else {
+//     contextMenuWindow.loadFile(join(__dirname, "../renderer/contextMenu.html"));
+//   }
+// };
+
+// ipcMain.handle("contextMenu:hide", () => {
+//   if (contextMenuWindow) {
+//     contextMenuWindow.hide();
+//   }
+// });
+
+ipcMain.handle("contextMenu:messages", (e, { data }) => {
+  const template = [
+    {
+      label: "Reply",
+      click: () => {
+        mainWindow.webContents.send("reply:data", data);
+      },
     },
-  });
+    {
+      label: "Copy Message",
+      click: () => {
+        clipboard.writeText(data.content.trim());
+      },
+    },
+  ];
 
-  contextMenuWindow.on("blur", () => {
-    if (contextMenuWindow) {
-      contextMenuWindow.hide();
-    }
-  });
-
-    if (isDev && process.env["ELECTRON_RENDERER_URL"]) {
-    contextMenuWindow.loadURL(`${process.env["ELECTRON_RENDERER_URL"]}/contextMenu.html`);
-  } else {
-    contextMenuWindow.loadFile(join(__dirname, "../renderer/contextMenu.html"));
-  }
-};
-
-
-ipcMain.handle("contextMenu:hide", () => {
-  if (contextMenuWindow) {
-    contextMenuWindow.hide();
-  }
+  const menu = Menu.buildFromTemplate(template);
+  menu.popup({ window: mainWindow });
 });
 
+ipcMain.handle("contextMenu:streamerInfo", (e, { data }) => {
+  const template = [
+    {
+      label: "Open stream in browser",
+      click: () => {
+        shell.openExternal(`https://kick.com/${data.slug}`);
+      },
+    },
+  ];
 
-ipcMain.handle("contextMenu:show", (e, {data}) => {
+  const menu = Menu.buildFromTemplate(template);
+  menu.popup({ window: mainWindow });
+});
+
+ipcMain.handle("contextMenu:show", (e, { data }) => {
   if (!contextMenuWindow) {
-    createContextMenuWindow();
+    createContextMenuWindow(data);
   }
 
-  contextMenuWindow.setBounds({ x: 200, y: 300, width: 200, height: 300 });
   //contextMenuWindow.webContents.send("contextMenu:data", data);
   contextMenuWindow.show();
   contextMenuWindow.focus();
@@ -393,6 +511,90 @@ const loginToKick = async (method) => {
   });
 };
 
+const createSearchDialog = () => {
+  if (searchDialog) {
+    searchDialog.show();
+    searchDialog.focus();
+  } else {
+    searchDialog = new BrowserWindow({
+      width: 400,
+      height: 300,
+      x: mainWindow.getPosition()[0] + 100,
+      y: mainWindow.getPosition()[1] + 100,
+      show: true,
+      resizable: false,
+      frame: false,
+      transparent: true,
+      parent: mainWindow,
+      webPreferences: {
+        devtools: true,
+        nodeIntegration: false,
+        contextIsolation: true,
+        preload: join(__dirname, "../preload/index.js"),
+        sandbox: false,
+      },
+    });
+
+    if (isDev && process.env["ELECTRON_RENDERER_URL"]) {
+      searchDialog.loadURL(`${process.env["ELECTRON_RENDERER_URL"]}/search.html`);
+    } else {
+      searchDialog.loadFile(join(__dirname, "../renderer/search.html"));
+    }
+
+    searchDialog.once("ready-to-show", () => {
+      searchDialog.show();
+      if (isDev) {
+        searchDialog.webContents.openDevTools();
+      }
+    });
+
+    searchDialog.on("closed", () => {
+      searchDialog = null;
+    });
+  }
+};
+
+const setupLocalShortcuts = () => {
+  mainWindow.webContents.on("before-input-event", (event, input) => {
+    if (!mainWindow.isFocused()) return;
+
+    if (input.control || input.meta) {
+      if (input.key === "=" || input.key === "+") {
+        event.preventDefault();
+        if (mainWindow.webContents.getZoomFactor() < 1.5) {
+          const newZoomFactor = mainWindow.webContents.getZoomFactor() + 0.1;
+          mainWindow.webContents.setZoomFactor(newZoomFactor);
+          store.set("zoomFactor", newZoomFactor);
+        }
+      }
+
+      // Zoom out with Ctrl/Cmd + Minus
+      else if (input.key === "-") {
+        event.preventDefault();
+        if (mainWindow.webContents.getZoomFactor() > 0.8) {
+          const newZoomFactor = mainWindow.webContents.getZoomFactor() - 0.1;
+          mainWindow.webContents.setZoomFactor(newZoomFactor);
+          store.set("zoomFactor", newZoomFactor);
+        }
+      }
+
+      // Reset zoom with Ctrl/Cmd + 0
+      else if (input.key === "0") {
+        event.preventDefault();
+        const newZoomFactor = 1;
+        mainWindow.webContents.setZoomFactor(newZoomFactor);
+        store.set("zoomFactor", newZoomFactor);
+      }
+    }
+
+    // Open search dialog
+    if (input.control && input.key === "f") {
+      event.preventDefault();
+      createSearchDialog();
+    }
+  });
+};
+
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
@@ -426,34 +628,47 @@ app.whenReady().then(() => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
 
+  // Set up local shortcuts instead of global ones
+  setupLocalShortcuts();
+
   // Set Zoom Levels
-  globalShortcut.register("Ctrl+Plus", () => {
-    if (mainWindow && mainWindow.isFocused()) {
-      if (mainWindow.webContents.getZoomFactor() < 1.5) {
-        const newZoomFactor = mainWindow.webContents.getZoomFactor() + 0.1;
-        mainWindow.webContents.setZoomFactor(newZoomFactor);
-        store.set("zoomFactor", newZoomFactor);
-      }
-    }
-  });
+  // globalShortcut.register("CommandOrControl+Plus", () => {
+  //   if (mainWindow && mainWindow.isFocused()) {
+  //     if (mainWindow.webContents.getZoomFactor() < 1.5) {
+  //       const newZoomFactor = mainWindow.webContents.getZoomFactor() + 0.1;
+  //       mainWindow.webContents.setZoomFactor(newZoomFactor);
+  //       store.set("zoomFactor", newZoomFactor);
+  //     }
+  //   }
+  // });
 
-  globalShortcut.register("Ctrl+-", () => {
-    if (mainWindow && mainWindow.isFocused()) {
-      if (mainWindow.webContents.getZoomFactor() > 0.8) {
-        const newZoomFactor = mainWindow.webContents.getZoomFactor() - 0.1;
-        mainWindow.webContents.setZoomFactor(newZoomFactor);
-        store.set("zoomFactor", newZoomFactor);
-      }
-    }
-  });
+  // globalShortcut.register("CommandOrControl+-", () => {
+  //   if (mainWindow && mainWindow.isFocused()) {
+  //     if (mainWindow.webContents.getZoomFactor() > 0.8) {
+  //       const newZoomFactor = mainWindow.webContents.getZoomFactor() - 0.1;
+  //       mainWindow.webContents.setZoomFactor(newZoomFactor);
+  //       store.set("zoomFactor", newZoomFactor);
+  //     }
+  //   }
+  // });
 
-  globalShortcut.register("CommandOrControl+0", () => {
-    if (mainWindow && mainWindow.isFocused()) {
-      const newZoomFactor = 1;
-      mainWindow.webContents.setZoomFactor(newZoomFactor);
-      store.set("zoomFactor", newZoomFactor);
-    }
-  });
+  // globalShortcut.register("CommandOrControl+0", () => {
+  //   if (mainWindow && mainWindow.isFocused()) {
+  //     const newZoomFactor = 1;
+  //     mainWindow.webContents.setZoomFactor(newZoomFactor);
+  //     store.set("zoomFactor", newZoomFactor);
+  //   }
+  // });
+
+  // // Open Search Dialog
+  // globalShortcut.register("Ctrl+F", () => {
+  //   if (mainWindow && mainWindow.isFocused()) {
+  //     console.log("Opening Search Dialog");
+  //     if (window?.app && window?.app?.searchDialog) {
+  //       window.app.searchDialog.open();
+  //     }
+  //   }
+  // });
 });
 
 // Logout Handler
@@ -476,6 +691,7 @@ ipcMain.handle("userDialog:open", (e, { data }) => {
   if (userDialog) {
     userDialog.setPosition(newX, newY);
     userDialog.webContents.send("userDialog:data", { ...data, pinned: userDialog.isAlwaysOnTop() });
+
     return;
   }
 
@@ -509,7 +725,8 @@ ipcMain.handle("userDialog:open", (e, { data }) => {
     userDialog.show();
     userDialog.setAlwaysOnTop(false);
     userDialog.focus();
-    userDialog.webContents.send("userDialog:data", data);
+
+    userDialog.webContents.send("userDialog:data", { ...data, pinned: userDialog.isAlwaysOnTop() });
     userDialog.webContents.setWindowOpenHandler((details) => {
       shell.openExternal(details.url);
       return { action: "deny" };
@@ -737,6 +954,73 @@ ipcMain.handle("chattersDialog:close", () => {
   }
 });
 
+// Search Dialog Handler
+// ipcMain.handle("searchDialog:open", (e, { data }) => {
+// if (searchDialog) {
+//   searchDialog.focus();
+//   return;
+// }
+
+// const mainWindowPos = mainWindow.getPosition();
+// const newX = mainWindowPos[0] + 100;
+// const newY = mainWindowPos[1] + 100;
+
+// searchDialog = new BrowserWindow({
+//   width: 350,
+//   minWidth: 350,
+//   height: 600,
+//   minHeight: 400,
+//   x: newX,
+//   y: newY,
+//   show: false,
+//   resizable: true,
+//   frame: false,
+//   transparent: true,
+//   roundedCorners: true,
+//   parent: mainWindow,
+//   icon: join(__dirname, "../../resources/icons/win/KickTalk_v1.ico"),
+//   webPreferences: {
+//     devtools: true,
+//     nodeIntegration: false,
+//     contextIsolation: true,
+//     preload: join(__dirname, "../preload/index.js"),
+//     sandbox: false,
+//   },
+// });
+
+// if (isDev && process.env["ELECTRON_RENDERER_URL"]) {
+//   searchDialog.loadURL(`${process.env["ELECTRON_RENDERER_URL"]}/search.html`);
+// } else {
+//   searchDialog.loadFile(join(__dirname, "../renderer/search.html"));
+// }
+
+// searchDialog.once("ready-to-show", () => {
+//   searchDialog.show();
+//   if (data) {
+//     searchDialog.webContents.send("searchDialog:data", data);
+//   }
+//   if (isDev) {
+//     searchDialog.webContents.openDevTools();
+//   }
+// });
+
+// searchDialog.on("closed", () => {
+//   searchDialog = null;
+// });
+// });
+
+ipcMain.handle("searchDialog:close", () => {
+  try {
+    if (searchDialog) {
+      searchDialog.close();
+      searchDialog = null;
+    }
+  } catch (error) {
+    console.error("[Search Dialog]: Error closing dialog:", error);
+    searchDialog = null;
+  }
+});
+
 // Settings Dialog Handler
 ipcMain.handle("settingsDialog:open", (e, { data }) => {
   if (settingsDialog) {
@@ -804,5 +1088,78 @@ ipcMain.handle("settingsDialog:close", () => {
   }
 });
 
-// In this file you can include the rest of your app's specific main process
-// code. You can also put them in separate files and require them here.
+// Reply Input Handler
+ipcMain.handle("reply:open", (e, { data }) => {
+  mainWindow.webContents.send("reply:data", data);
+});
+
+// Reply Thread Dialog Handler
+ipcMain.handle("replyThreadDialog:open", (e, { data }) => {
+  replyThreadInfo = {
+    chatroomId: data.chatroomId,
+    originalMessageId: data.originalMessageId,
+  };
+
+  if (replyThreadDialog) {
+    replyThreadDialog.focus();
+    replyThreadDialog.webContents.send("replyThreadDialog:data", data);
+    return;
+  }
+
+  const mainWindowPos = mainWindow.getPosition();
+  const newX = mainWindowPos[0] + 100;
+  const newY = mainWindowPos[1] + 100;
+
+  replyThreadDialog = new BrowserWindow({
+    width: 550,
+    height: 600,
+    x: newX,
+    y: newY,
+    show: false,
+    resizable: false,
+    frame: false,
+    transparent: true,
+    parent: mainWindow,
+    webPreferences: {
+      devtools: true,
+      nodeIntegration: false,
+      contextIsolation: true,
+      preload: join(__dirname, "../preload/index.js"),
+      sandbox: false,
+    },
+  });
+
+  if (isDev && process.env["ELECTRON_RENDERER_URL"]) {
+    replyThreadDialog.loadURL(`${process.env["ELECTRON_RENDERER_URL"]}/replyThread.html`);
+  } else {
+    replyThreadDialog.loadFile(join(__dirname, "../renderer/replyThread.html"));
+  }
+
+  replyThreadDialog.once("ready-to-show", () => {
+    replyThreadDialog.show();
+
+    if (data) {
+      replyThreadDialog.webContents.send("replyThreadDialog:data", data);
+    }
+
+    if (isDev) {
+      replyThreadDialog.webContents.openDevTools();
+    }
+  });
+
+  replyThreadDialog.on("closed", () => {
+    replyThreadDialog = null;
+  });
+});
+
+ipcMain.handle("replyThreadDialog:close", () => {
+  try {
+    if (replyThreadDialog) {
+      replyThreadDialog.close();
+      replyThreadDialog = null;
+    }
+  } catch (error) {
+    console.error("[Reply Thread Dialog]: Error closing dialog:", error);
+    replyThreadDialog = null;
+  }
+});

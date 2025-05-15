@@ -22,6 +22,7 @@ const Navbar = ({ currentChatroomId, onSelectChatroom }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     const username = inputRef.current?.value.toLowerCase();
     if (!username) return;
 

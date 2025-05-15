@@ -43,7 +43,7 @@ const PinnedMessage = memo(
           </div>
         </div>
         <div className="pinnedMessageContent">
-          <MessageParser message={pinnedMessage?.message} type="pinned" />
+          <MessageParser message={pinnedMessage?.message} type="minified" />
         </div>
         <div className={clsx("pinnedMessageFooter", isPinnedMessageOpen && "open")}>
           <div className="pinnedMessageFooterContent">
@@ -60,7 +60,12 @@ const PinnedMessage = memo(
     );
   },
   (prevProps, nextProps) => {
-    return prevProps.pinnedMessage === nextProps.pinnedMessage && prevProps.showPinnedMessage === nextProps.showPinnedMessage;
+    return (
+      prevProps.pinnedMessage === nextProps.pinnedMessage &&
+      prevProps.showPinnedMessage === nextProps.showPinnedMessage &&
+      prevProps.chatroomName === nextProps.chatroomName &&
+      prevProps.canModerate === nextProps.canModerate
+    );
   },
 );
 

@@ -49,9 +49,9 @@ const EmoteTooltip = ({ showEmoteInfo, mousePos, emoteInfo, type, emoteSrc }) =>
       style={{
         top: position.top,
         left: position.left,
-        opacity: showEmoteInfo ? 1 : 0,
+        opacity: showEmoteInfo && emoteTooltipRef.current ? 1 : 0,
       }}
-      className={clsx("tooltipItem", showEmoteInfo ? "emoteTooltip" : "")}>
+      className={clsx("tooltipItem", showEmoteInfo && emoteTooltipRef.current ? "emoteTooltip" : "")}>
       <img
         src={emoteSrc}
         className={type === "stv" ? "stvEmote emote " : "kickEmote emote "}

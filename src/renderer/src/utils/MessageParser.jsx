@@ -54,7 +54,7 @@ const rules = [
     component: ({ match, index, chatroomId, chatroomName, userChatroomInfo, type }) => {
       const { username } = match.groups;
 
-      if (type === "pinned") {
+      if (type === "minified") {
         return (
           <span style={{ color: "#fff", fontWeight: "bold" }} key={`mention-${index}-${username}`}>
             {match[0]}
@@ -154,7 +154,7 @@ export const MessageParser = ({ message, sevenTVEmotes, sevenTVSettings, type, c
     }
 
     // Add the matched component
-    if (rule.regexPattern === mentionRegex && type !== "pinned") {
+    if (rule.regexPattern === mentionRegex && type !== "minified") {
       parts.push(
         rule.component({
           match,
@@ -203,7 +203,7 @@ export const MessageParser = ({ message, sevenTVEmotes, sevenTVSettings, type, c
     const textParts = part.split(WHITESPACE_REGEX);
     textParts.forEach((textPart, j) => {
       if (sevenTVSettings?.emotes) {
-        const emoteData = getEmoteData(textPart, sevenTVEmotes, message?.chatroom_id);
+        const emoteData = getEmoteData(textPart, sevenTVEmotes, chatroomId || message?.chatroom_id);
 
         if (emoteData) {
           // if there's a text string combine and add it before the emote part
@@ -229,6 +229,11 @@ export const MessageParser = ({ message, sevenTVEmotes, sevenTVSettings, type, c
   // Add any remaining text
   if (pendingTextParts.length > 0) {
     finalParts.push(<span key="final-text">{pendingTextParts.join(" ")}</span>);
+  }
+
+  // Cleanup
+  if (chatroomEmotes.size > 500) {
+    chatroomEmotes.clear();
   }
 
   return finalParts;

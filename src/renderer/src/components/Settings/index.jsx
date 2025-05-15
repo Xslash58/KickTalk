@@ -11,16 +11,16 @@ const Settings = ({ settingsModalOpen, setSettingsModalOpen, appInfo }) => {
   const { settings, updateSettings } = useSettings();
   const [openColorPicker, setOpenColorPicker] = useState(false);
 
+  const handleLogout = () => {
+    window.app.logout();
+  };
+
   const changeSetting = async (key, value) => {
     try {
       await updateSettings(key, value);
     } catch (error) {
-      console.error("Failed to save setting:", error);
+      console.error("[Settings]: Failed to save setting:", error);
     }
-  };
-
-  const handleLogout = () => {
-    window.app.logout();
   };
 
   const handleColorChange = useCallback(
@@ -31,6 +31,21 @@ const Settings = ({ settingsModalOpen, setSettingsModalOpen, appInfo }) => {
       });
     },
     [settings, changeSetting],
+  );
+
+  const handleAddPhrase = useCallback(
+    (e) => {
+      const value = e.target.value.trim();
+      if (settings?.notifications?.phrases.includes(value)) return;
+      if (e.key === "Enter" && value.length > 0) {
+        changeSetting("notifications", {
+          ...settings?.notifications,
+          phrases: [...settings?.notifications?.phrases, value],
+        });
+        e.target.value = "";
+      }
+    },
+    [settings?.notifications?.phrases, changeSetting],
   );
 
   const settingsModalRef = useRef(null);
@@ -216,21 +231,7 @@ const Settings = ({ settingsModalOpen, setSettingsModalOpen, appInfo }) => {
         </div>
 
         <div className="highlightAddPhrase">
-          <input
-            type="text"
-            placeholder="Add new phrase..."
-            onKeyDown={(e) => {
-              const value = e.target.value.trim();
-              if (settings?.notifications?.phrases.includes(value)) return;
-              if (e.key === "Enter" && value.length > 0) {
-                changeSetting("notifications", {
-                  ...settings?.notifications,
-                  phrases: [...settings?.notifications?.phrases, value],
-                });
-                e.target.value = "";
-              }
-            }}
-          />
+          <input type="text" placeholder="Add new phrase..." onKeyDown={handleAddPhrase} />
         </div>
       </div>
 

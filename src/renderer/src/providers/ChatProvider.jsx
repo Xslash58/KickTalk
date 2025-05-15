@@ -146,7 +146,9 @@ const useChatStore = create((set, get) => ({
           break;
         case "entitlement.create":
           const username = body?.object?.user?.connections?.find((c) => c.platform === "KICK")?.username;
-          const transformedUsername = username?.replace("-", "_");
+
+          const transformedUsername = username?.replaceAll("-", "_");
+
           console.log("Entitlement create event:", body, transformedUsername);
           useCosmeticsStore?.getState()?.addUserStyle(transformedUsername, body);
           break;
@@ -235,11 +237,19 @@ const useChatStore = create((set, get) => ({
           });
 
           // Add Message to User Logs
-          window.app.logs.add({
-            chatroomId: chatroom.id,
-            userId: parsedEvent.sender.id,
-            message: parsedEvent,
-          });
+          console.log("parsedEvent", parsedEvent);
+          if (parsedEvent?.type === "reply") {
+            window.app.replyLogs.add({
+              chatroomId: chatroom.id,
+              message: parsedEvent,
+            });
+          } else {
+            window.app.logs.add({
+              chatroomId: chatroom.id,
+              userId: parsedEvent.sender.id,
+              message: parsedEvent,
+            });
+          }
 
           break;
         case "App\\Events\\MessageDeletedEvent":
@@ -420,7 +430,11 @@ const useChatStore = create((set, get) => ({
       const savedChatrooms = JSON.parse(localStorage.getItem("chatrooms")) || [];
 
       if (
-        savedChatrooms.some((chatroom) => chatroom.username.toLowerCase() === username.toLowerCase()) ||
+        savedChatrooms.some(
+          (chatroom) =>
+            chatroom.username.toLowerCase() === username.toLowerCase() ||
+            chatroom.username.toLowerCase() === username.replaceAll("-", "_"),
+        ) ||
         savedChatrooms.length >= 5
       ) {
         return;
@@ -730,54 +744,56 @@ const useChatStore = create((set, get) => ({
   // },
 }));
 
-// Initialize connections when the store is created
-useChatStore.getState().initializeConnections();
+if (window.location.pathname === "/" || window.location.pathname.endsWith("index.html")) {
+  // Initialize connections when the store is created
+  useChatStore.getState().initializeConnections();
 
-// Initialize presence updates when the store is created
-let presenceUpdatesInterval = null;
+  // Initialize presence updates when the store is created
+  let presenceUpdatesInterval = null;
 
-const initializePresenceUpdates = () => {
-  if (presenceUpdatesInterval) {
-    clearInterval(presenceUpdatesInterval);
-  }
-
-  if (!storeStvId) {
-    console.log("[7TV Presence]: No 7TV ID found, skipping presence update checks");
-    setTimeout(() => {
-      storeStvId = localStorage.getItem("stvId");
-      if (storeStvId) {
-        initializePresenceUpdates();
-      } else {
-        console.log("[7TV Presence]: No STV ID found after delay");
-      }
-    }, 10 * 10000); // 10 seconds delay
-
-    return;
-  }
-
-  // Send presence updates every 1 minute
-  console.log("[7TV Presence]: Initializing presence update checks");
-  presenceUpdatesInterval = setInterval(
-    () => {
-      const chatrooms = useChatStore.getState()?.chatrooms;
-      if (chatrooms?.length === 0) return;
-
-      chatrooms.forEach((chatroom) => {
-        console.log("[7TV Presence]: Sending presence check for chatroom:", chatroom.streamerData.user_id);
-        useChatStore.getState().sendPresenceUpdate(storeStvId, chatroom.streamerData.user_id);
-      });
-    },
-    2 * 60 * 1000,
-  );
-
-  return () => {
+  const initializePresenceUpdates = () => {
     if (presenceUpdatesInterval) {
-      console.log("[7TV Presence]: Clearing presence update checks");
       clearInterval(presenceUpdatesInterval);
     }
-  };
-};
 
-initializePresenceUpdates();
+    if (!storeStvId) {
+      console.log("[7TV Presence]: No 7TV ID found, skipping presence update checks");
+      setTimeout(() => {
+        storeStvId = localStorage.getItem("stvId");
+        if (storeStvId) {
+          initializePresenceUpdates();
+        } else {
+          console.log("[7TV Presence]: No STV ID found after delay");
+        }
+      }, 10 * 10000); // 10 seconds delay
+
+      return;
+    }
+
+    // Send presence updates every 1 minute
+    console.log("[7TV Presence]: Initializing presence update checks");
+    presenceUpdatesInterval = setInterval(
+      () => {
+        const chatrooms = useChatStore.getState()?.chatrooms;
+        if (chatrooms?.length === 0) return;
+
+        chatrooms.forEach((chatroom) => {
+          console.log("[7TV Presence]: Sending presence check for chatroom:", chatroom.streamerData.user_id);
+          useChatStore.getState().sendPresenceUpdate(storeStvId, chatroom.streamerData.user_id);
+        });
+      },
+      2 * 60 * 1000,
+    );
+
+    return () => {
+      if (presenceUpdatesInterval) {
+        console.log("[7TV Presence]: Clearing presence update checks");
+        clearInterval(presenceUpdatesInterval);
+      }
+    };
+  };
+
+  initializePresenceUpdates();
+}
 
 export default useChatStore;

@@ -101,59 +101,95 @@ const getUnfollowChannel = async (channelName) => {
 
 // Ban User
 const getBanUser = async (channelName, username, sessionCookie, kickSession) => {
-  const transformedChannelName = channelName.replace("_", "-");
-  const response = await axios.post(
-    `${APIUrl}/api/v2/channels/${transformedChannelName}/bans`,
-    {
-      banned_username: username,
-      permanent: true,
-    },
-    {
-      headers: {
-        Accept: "*/*",
-        Authorization: `Bearer ${sessionCookie}`,
-        "X-XSRF-TOKEN": kickSession,
+  try {
+    // First try with the original channel name
+    const response = await axios.post(
+      `${APIUrl}/api/v2/channels/${channelName}/bans`,
+      {
+        banned_username: username,
+        permanent: true,
       },
-      Cookie: `kick_session=${kickSession}, session_token=${sessionCookie}, x-xsrf-token=${sessionCookie}, XSRF-TOKEN=${kickSession}`,
-    },
-  );
-  return response.data;
+      {
+        headers: {
+          Accept: "*/*",
+          Authorization: `Bearer ${sessionCookie}`,
+          "X-XSRF-TOKEN": kickSession,
+        },
+        Cookie: `kick_session=${kickSession}, session_token=${sessionCookie}, x-xsrf-token=${sessionCookie}, XSRF-TOKEN=${kickSession}`,
+      },
+    );
+
+    return response.data;
+  } catch (error) {
+    if (channelName.includes("_")) {
+      const transformedChannelName = channelName.replaceAll("_", "-");
+
+      if (transformedChannelName !== channelName) {
+        return await getBanUser(transformedChannelName, username, sessionCookie, kickSession);
+      }
+    }
+
+    throw error;
+  }
 };
 
 // Unban User
 const getUnbanUser = async (channelName, username, sessionCookie, kickSession) => {
-  const transformedChannelName = channelName.replace("_", "-");
-  const response = await axios.delete(`${APIUrl}/api/v2/channels/${transformedChannelName}/bans/${username}`, {
-    headers: {
-      Accept: "*/*",
-      Authorization: `Bearer ${sessionCookie}`,
-      "X-XSRF-TOKEN": kickSession,
-    },
-    Cookie: `kick_session=${kickSession}, session_token=${sessionCookie}, x-xsrf-token=${sessionCookie}, XSRF-TOKEN=${kickSession}`,
-  });
-  return response.status;
-};
-
-// Get Timeout User
-const getTimeoutUser = async (channelName, username, banDuration, sessionCookie, kickSession) => {
-  const transformedChannelName = channelName.replace("_", "-");
-  const response = await axios.post(
-    `${APIUrl}/api/v2/channels/${transformedChannelName}/bans`,
-    {
-      banned_username: username,
-      duration: banDuration,
-      permanent: false,
-    },
-    {
+  try {
+    const response = await axios.delete(`${APIUrl}/api/v2/channels/${channelName}/bans/${username}`, {
       headers: {
         Accept: "*/*",
         Authorization: `Bearer ${sessionCookie}`,
         "X-XSRF-TOKEN": kickSession,
       },
       Cookie: `kick_session=${kickSession}, session_token=${sessionCookie}, x-xsrf-token=${sessionCookie}, XSRF-TOKEN=${kickSession}`,
-    },
-  );
-  return response.data;
+    });
+
+    return response.status;
+  } catch (error) {
+    if (channelName.includes("_")) {
+      const transformedChannelName = channelName.replaceAll("_", "-");
+
+      if (transformedChannelName !== channelName) {
+        return await getUnbanUser(transformedChannelName, username, sessionCookie, kickSession);
+      }
+    }
+
+    throw error;
+  }
+};
+
+// Get Timeout User
+const getTimeoutUser = async (channelName, username, banDuration, sessionCookie, kickSession) => {
+  try {
+    const response = await axios.post(
+      `${APIUrl}/api/v2/channels/${channelName}/bans`,
+      {
+        banned_username: username,
+        duration: banDuration,
+        permanent: false,
+      },
+      {
+        headers: {
+          Accept: "*/*",
+          Authorization: `Bearer ${sessionCookie}`,
+          "X-XSRF-TOKEN": kickSession,
+        },
+        Cookie: `kick_session=${kickSession}, session_token=${sessionCookie}, x-xsrf-token=${sessionCookie}, XSRF-TOKEN=${kickSession}`,
+      },
+    );
+    return response.data;
+  } catch (error) {
+    if (channelName.includes("_")) {
+      const transformedChannelName = channelName.replaceAll("_", "-");
+
+      if (transformedChannelName !== channelName) {
+        return await getTimeoutUser(transformedChannelName, username, banDuration, sessionCookie, kickSession);
+      }
+    }
+
+    throw error;
+  }
 };
 
 /** [END MOD ACTIONS] */
@@ -184,24 +220,45 @@ const getLinkThumbnail = async (url) => {
   return null;
 };
 
-const getChannelInfo = async (channelID) => {
-  // TODO: Update Regex replace for url
-  const transformedChannelID = channelID.replace("_", "-");
+const getChannelInfo = async (channelName) => {
+  try {
+    const response = await axios.get(`${APIUrl}/api/v2/channels/${channelName}`);
+    return response.data;
+  } catch (error) {
+    if (channelName.includes("_")) {
+      const transformedChannelName = channelName.replaceAll("_", "-");
 
-  const response = await axios.get(`${APIUrl}/api/v2/channels/${transformedChannelID}`);
-  return response.data;
+      if (transformedChannelName !== channelName) {
+        return await getChannelInfo(transformedChannelName);
+      }
+    }
+
+    throw error;
+  }
 };
 
-const getChannelChatroomInfo = (channelName) => {
-  const transformedChannelName = channelName.replace("_", "-");
+const getChannelChatroomInfo = async (channelName) => {
+  try {
+    const response = await axios.get(`${APIUrl}/api/v2/channels/${channelName}`, {
+      referrer: `https://kick.com/`,
+      referrerPolicy: "strict-origin-when-cross-origin",
+      method: "GET",
+      mode: "cors",
+      credentials: "include",
+    });
 
-  return axios.get(`${APIUrl}/api/v2/channels/${transformedChannelName}`, {
-    referrer: `https://kick.com/`,
-    referrerPolicy: "strict-origin-when-cross-origin",
-    method: "GET",
-    mode: "cors",
-    credentials: "include",
-  });
+    return response;
+  } catch (error) {
+    if (channelName.includes("_")) {
+      const transformedChannelName = channelName.replaceAll("_", "-");
+
+      if (transformedChannelName !== channelName) {
+        return await getChannelChatroomInfo(transformedChannelName);
+      }
+    }
+
+    throw error;
+  }
 };
 
 const getUserKickId = async (sessionCookie, kickSession) => {
@@ -350,77 +407,125 @@ const getSelfInfo = (sessionCookie, kickSession) => {
   });
 };
 
-const getSelfChatroomInfo = (chatroomName, sessionCookie, kickSession) => {
-  const transformedChannelName = chatroomName.replace("_", "-");
-  return axios.get(`${APIUrl}/api/v2/channels/${transformedChannelName}/me`, {
-    headers: {
-      accept: "*/*",
-      authorization: `Bearer ${sessionCookie}`,
-      priority: "u=1, i",
-      "x-xsrf-token": kickSession,
-    },
-    referrer: "https://kick.com/",
-    referrerPolicy: "strict-origin-when-cross-origin",
-    method: "GET",
-    mode: "cors",
-    credentials: "include",
-  });
-};
-
-const getUserChatroomInfo = (chatroomName, username, sessionCookie, kickSession) => {
-  const transformedChannelName = chatroomName.replace("_", "-");
-  return axios.get(`${APIUrl}/api/v2/channels/${transformedChannelName}/users/${username}`, {
-    referrer: `https://kick.com/${transformedChannelName}`,
-    referrerPolicy: "strict-origin-when-cross-origin",
-    method: "GET",
-    mode: "cors",
-    credentials: "include",
-  });
-};
-
-const getPinMessage = (data, sessionCookie, kickSession) => {
-  const currentTime = new Date().toISOString();
-  const transformedChannelName = data?.chatroomName?.replace("_", "-");
-
-  return axios.post(
-    `${APIUrl}/api/v2/channels/${transformedChannelName}/pinned-message`,
-    {
-      duration: 1200,
-      message: {
-        chatroom_id: data.chatroom_id,
-        content: data.content,
-        created_at: currentTime,
-        id: data.id,
-        sender: data.sender,
-        type: "message",
+const getSelfChatroomInfo = async (chatroomName, sessionCookie, kickSession) => {
+  try {
+    const response = await axios.get(`${APIUrl}/api/v2/channels/${chatroomName}/me`, {
+      headers: {
+        accept: "*/*",
+        authorization: `Bearer ${sessionCookie}`,
+        priority: "u=1, i",
+        "x-xsrf-token": kickSession,
       },
-    },
-    {
+      referrer: "https://kick.com/",
+      referrerPolicy: "strict-origin-when-cross-origin",
+      method: "GET",
+      mode: "cors",
+      credentials: "include",
+    });
+
+    return response;
+  } catch (error) {
+    if (chatroomName.includes("_")) {
+      const transformedChatroomName = chatroomName.replaceAll("_", "-");
+
+      if (transformedChatroomName !== chatroomName) {
+        return await getSelfChatroomInfo(transformedChatroomName, sessionCookie, kickSession);
+      }
+    }
+
+    throw error;
+  }
+};
+
+const getUserChatroomInfo = async (chatroomName, username, sessionCookie, kickSession) => {
+  try {
+    const response = await axios.get(`${APIUrl}/api/v2/channels/${chatroomName}/users/${username}`, {
+      referrer: `https://kick.com/${chatroomName}`,
+      referrerPolicy: "strict-origin-when-cross-origin",
+      method: "GET",
+      mode: "cors",
+      credentials: "include",
+    });
+
+    return response;
+  } catch (error) {
+    if (chatroomName.includes("_")) {
+      const transformedChannelName = chatroomName.replaceAll("_", "-");
+
+      if (transformedChannelName !== chatroomName) {
+        return await getUserChatroomInfo(transformedChannelName, username, sessionCookie, kickSession);
+      }
+    }
+
+    throw error;
+  }
+};
+
+const getPinMessage = async (data, sessionCookie, kickSession) => {
+  try {
+    const currentTime = new Date().toISOString();
+
+    const response = await axios.post(
+      `${APIUrl}/api/v2/channels/${data?.chatroomName}/pinned-message`,
+      {
+        duration: 1200,
+        message: {
+          chatroom_id: data.chatroom_id,
+          content: data.content,
+          created_at: currentTime,
+          id: data.id,
+          sender: data.sender,
+          type: "message",
+        },
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${sessionCookie}`,
+        },
+        Cookie: `kick_session=${kickSession}, session_token=${sessionCookie}, x-xsrf-token=${sessionCookie}, XSRF-TOKEN=${kickSession}`,
+      },
+    );
+
+    return response;
+  } catch (error) {
+    if (data?.chatroomName?.includes("_")) {
+      const transformedChannelName = data?.chatroomName?.replaceAll("_", "-");
+
+      if (transformedChannelName !== data?.chatroomName) {
+        return await getPinMessage(transformedChannelName, sessionCookie, kickSession);
+      }
+    }
+
+    throw error;
+  }
+};
+
+const getUnpinMessage = async (chatroomName, sessionCookie, kickSession) => {
+  try {
+    const response = await axios.delete(`${APIUrl}/api/v2/channels/${chatroomName}/pinned-message`, {
       headers: {
         Authorization: `Bearer ${sessionCookie}`,
       },
       Cookie: `kick_session=${kickSession}, session_token=${sessionCookie}, x-xsrf-token=${sessionCookie}, XSRF-TOKEN=${kickSession}`,
-    },
-  );
+    });
+
+    return response?.status;
+  } catch (error) {
+    if (chatroomName.includes("_")) {
+      const transformedChannelName = chatroomName.replaceAll("_", "-");
+
+      if (transformedChannelName !== chatroomName) {
+        return await getUnpinMessage(transformedChannelName, sessionCookie, kickSession);
+      }
+    }
+
+    throw error;
+  }
 };
 
-const getUnpinMessage = (chatroomName, sessionCookie, kickSession) => {
-  const transformedChannelName = chatroomName.replace("_", "-");
-  const response = axios.delete(`${APIUrl}/api/v2/channels/${transformedChannelName}/pinned-message`, {
-    headers: {
-      Authorization: `Bearer ${sessionCookie}`,
-    },
-    Cookie: `kick_session=${kickSession}, session_token=${sessionCookie}, x-xsrf-token=${sessionCookie}, XSRF-TOKEN=${kickSession}`,
-  });
-
-  return response?.status;
-};
-
-const getKickEmotes = async (chatroomName) => {
-  const transformedChannelName = chatroomName.replace("_", "-");
-  const response = await axios.get(`${APIUrl}/emotes/${transformedChannelName}`);
-  const processedEmotes =
-    response?.data?.map((set) => {
+const processKickEmotes = (emotes) => {
+  return (
+    emotes?.map((set) => {
       return {
         ...set,
         name: set.name ? set.name : `channel_set`,
@@ -430,9 +535,27 @@ const getKickEmotes = async (chatroomName) => {
             platform: "kick",
           })) || [],
       };
-    }) || [];
+    }) || []
+  );
+};
 
-  return processedEmotes;
+const getKickEmotes = async (chatroomName) => {
+  try {
+    const response = await axios.get(`${APIUrl}/emotes/${chatroomName}`);
+    const processedEmotes = processKickEmotes(response.data);
+
+    return processedEmotes;
+  } catch (error) {
+    if (chatroomName.includes("_")) {
+      const transformedChannelName = chatroomName.replaceAll("_", "-");
+
+      if (transformedChannelName !== chatroomName) {
+        return await getKickEmotes(transformedChannelName);
+      }
+    }
+
+    throw error;
+  }
 };
 
 const getKickTalkBadges = async () => {
@@ -497,10 +620,6 @@ const getUnsilenceUser = (user_id, sessionCookie, kickSession) => {
   });
 };
 
-const sendUsernameToServer = (username) => {
-  return axios.post(`${KickTalkAPIUrl}/t/internal/username`, { username });
-};
-
 export {
   getChannelInfo,
   getChannelChatroomInfo,
@@ -514,7 +633,6 @@ export {
   getSilencedUsers,
   getInitialChatroomMessages,
   getUserChatroomStatus,
-  sendUsernameToServer,
   getUserKickId,
   getLinkThumbnail,
   getSilenceUser,

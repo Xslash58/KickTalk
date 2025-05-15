@@ -1,0 +1,122 @@
+.replyThreadWrapper {
+  display: flex;
+  height: 100vh;
+  width: 100%;
+  flex-direction: column;
+}
+
+.replyThreadHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  min-height: 48px;
+  app-region: drag;
+  border-bottom: 1px solid #ffffff21;
+
+  .replyThreadCloseBtn {
+    app-region: no-drag;
+    border: 1px solid #ffffff21;
+    background-color: transparent;
+    cursor: pointer;
+    border-radius: 4px;
+    padding: 4px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition:
+      background-color 0.2s ease-in-out,
+      border-color 0.2s ease-in-out;
+
+    &:hover {
+      background-color: #ffffff21;
+      border-color: #ffffff37;
+    }
+
+    img {
+      opacity: 0.5;
+      transition: opacity 0.2s ease-in-out;
+
+      &:hover {
+        opacity: 1;
+      }
+    }
+  }
+}
+
+.replyThreadContent {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+
+  .replyThreadOriginalMessage {
+    display: flex;
+    flex-direction: column;
+    flex: 0 0 48px;
+    justify-content: space-between;
+    background: #091810;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1294117647);
+    padding: 12px;
+    gap: 8px;
+    font-size: 16px;
+    flex-shrink: 0;
+
+    > p {
+      text-transform: uppercase;
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.4);
+    }
+
+    > span {
+      display: inline;
+      align-items: center;
+      gap: 4px;
+      color: rgba(255, 255, 255, 0.7);
+
+      > p {
+        font-weight: 600;
+        display: inline;
+        color: rgba(255, 255, 255, 0.9);
+      }
+    }
+  }
+
+  .replyThreadMessages {
+    display: flex;
+    flex-direction: column;
+    flex: 1 0;
+    min-height: 0;
+    width: 100%;
+    padding: 12px;
+    overflow-y: auto;
+
+    &::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+
+    &::-webkit-scrollbar-corner {
+      background: rgba(255, 255, 255, 0.429);
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background-color: #b6d2c277;
+      border-radius: 2px;
+      background-clip: content-box;
+      min-width: 32px;
+      min-height: 32px;
+    }
+
+    &::-webkit-scrollbar-track {
+      background-color: #ffffff26;
+    }
+    .chatMessageItem {
+      padding: 4px 0;
+    }
+  }
+}
+
+.replyThreadInput {
+  flex-shrink: 0;
+}

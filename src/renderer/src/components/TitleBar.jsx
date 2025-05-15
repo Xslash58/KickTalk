@@ -65,7 +65,9 @@ const TitleBar = () => {
           </button>
         )}
 
-        <Settings settingsModalOpen={settingsModalOpen} setSettingsModalOpen={setSettingsModalOpen} appInfo={appInfo} />
+        {settingsModalOpen && (
+          <Settings settingsModalOpen={settingsModalOpen} setSettingsModalOpen={setSettingsModalOpen} appInfo={appInfo} />
+        )}
       </div>
 
       <Updater />

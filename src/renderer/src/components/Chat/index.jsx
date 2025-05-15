@@ -19,15 +19,9 @@ const Chat = memo(
   ({ chatroomId, kickUsername }) => {
     const chatBodyRef = useRef();
     const { settings } = useSettings();
+
     const chatroom = useChatStore((state) => state.chatrooms.filter((chatroom) => chatroom.id === chatroomId)[0]);
     const messages = useChatStore((state) => state.messages[chatroomId]);
-
-    // const updateSoundPlayedStore = useChatStore((state) => state.updateSoundPlayed);
-
-    // const updateSoundPlayed = useCallback(
-    //   (messageId) => updateSoundPlayedStore(chatroomId, messageId),
-    //   [chatroomId, updateSoundPlayedStore],
-    // );
 
     const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
     const [showScrollToBottom, setShowScrollToBottom] = useState(false);

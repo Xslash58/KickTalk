@@ -1,6 +1,8 @@
 .dialogWrapper {
   height: 100vh;
+  display: flex;
   border: 1px solid #192c1f;
+  flex-direction: column;
 }
 
 .dialogHeader {
@@ -11,12 +13,14 @@
   app-region: drag;
   flex-direction: column;
   gap: 16px;
+  flex: 0 1 30%;
   padding: 16px 0;
 }
 
 .dialogLogs {
-  height: calc(100vh - 182px);
   overflow: hidden;
+  min-height: 0;
+  flex: 1;
   display: flex;
   flex-direction: column;
   background-color: #122017;
@@ -25,7 +29,7 @@
 .dialogLogsHead {
   padding: 16px 12px;
   font-weight: 600;
-  height: 48px;
+  flex: 0 1 48px;
   font-size: 12px;
   display: flex;
   align-items: center;
@@ -136,6 +140,10 @@
       &:disabled {
         opacity: 0.5;
         cursor: not-allowed;
+
+        &:hover {
+          background-color: #192c1f;
+        }
       }
 
       &:hover:not(:disabled) {
@@ -263,11 +271,13 @@
 }
 
 .dialogLogsContent {
-  padding: 16px;
   overflow-y: auto;
   overflow-x: hidden;
   gap: 12px;
+  padding: 16px;
+  flex: 1 1 100%;
   display: flex;
+  min-height: 0;
   flex-direction: column;
   margin-right: 8px;
 

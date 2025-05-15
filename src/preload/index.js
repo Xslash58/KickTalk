@@ -7,7 +7,6 @@ import {
   getChannelChatroomInfo,
   getKickEmotes,
   getSelfInfo,
-  sendUsernameToServer,
   getUserChatroomInfo,
   getSelfChatroomInfo,
   getSilencedUsers,
@@ -70,7 +69,7 @@ const validateSessionToken = async () => {
         localStorage.setItem("kickId", data.streamer_channel.user_id);
       }
 
-      if (!kickUsername || kickUsername !== data?.streamer_channel?.slug) {
+      if (!kickUsername || kickUsername?.toLowerCase() !== data?.streamer_channel?.slug?.toLowerCase()) {
         localStorage.setItem("kickUsername", data.streamer_channel.slug);
       }
     }
@@ -102,14 +101,14 @@ if (process.contextIsolated) {
       logout: () => ipcRenderer.invoke("logout"),
       getAppInfo: () => ipcRenderer.invoke("get-app-info"),
       alwaysOnTop: () => ipcRenderer.invoke("alwaysOnTop"),
-      showContextMenu: (message) => ipcRenderer.invoke("contextMenu:show", {
-        data: message,
-      }),
+      // showContextMenu: (message) => ipcRenderer.invoke("contextMenu:show", {
+      //   data: message,
+      // }),
 
-      // contextMenu: {
-      //   messages: (data) => ipcRenderer.invoke("contextMenu:messages", { data }),
-      //   streamerInfo: (data) => ipcRenderer.invoke("contextMenu:streamerInfo", { data }),
-      // },
+      contextMenu: {
+        messages: (data) => ipcRenderer.invoke("contextMenu:messages", { data }),
+        streamerInfo: (data) => ipcRenderer.invoke("contextMenu:streamerInfo", { data }),
+      },
 
       authDialog: {
         open: (data) => ipcRenderer.invoke("authDialog:open", { data }),
@@ -190,6 +189,29 @@ if (process.contextIsolated) {
         },
       },
 
+      replyLogs: {
+        get: (data) => ipcRenderer.invoke("replyLogs:get", { data }),
+        add: (data) => ipcRenderer.invoke("replyLogs:add", data),
+        clear: (data) => ipcRenderer.invoke("replyLogs:clear", { data }),
+        onUpdate: (callback) => {
+          const handler = (_, data) => callback(data);
+
+          ipcRenderer.on("replyLogs:updated", handler);
+          return () => ipcRenderer.removeListener("replyLogs:updated", handler);
+        },
+      },
+
+      replyThreadDialog: {
+        open: (data) => ipcRenderer.invoke("replyThreadDialog:open", { data }),
+        close: () => ipcRenderer.invoke("replyThreadDialog:close"),
+        onData: (callback) => {
+          const handler = (_, data) => callback(data);
+
+          ipcRenderer.on("replyThreadDialog:data", handler);
+          return () => ipcRenderer.removeListener("replyThreadDialog:data", handler);
+        },
+      },
+
       // Kick API
       kick: {
         getChannelInfo,
@@ -198,7 +220,6 @@ if (process.contextIsolated) {
         sendReply: (channelId, message, metadata = {}) =>
           sendReplyToChannel(channelId, message, metadata, authSession.token, authSession.session),
         getSilencedUsers,
-        sendUsernameToServer,
         getSelfInfo: async () => {
           try {
             const response = await getSelfInfo(authSession.token, authSession.session);

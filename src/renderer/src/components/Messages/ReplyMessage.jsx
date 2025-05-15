@@ -7,6 +7,7 @@ import { useShallow } from "zustand/shallow";
 const ReplyMessage = ({
   message,
   sevenTVEmotes,
+  sevenTVSettings,
   subscriberBadges,
   filteredKickTalkBadges,
   handleOpenUserDialog,
@@ -16,14 +17,27 @@ const ReplyMessage = ({
   chatroomName,
   userChatroomInfo,
 }) => {
-  const messageThread = useChatStore(
+  const chatStoreMessageThread = useChatStore(
     useShallow((state) =>
       state.messages[chatroomId]?.filter((m) => m?.metadata?.original_message?.id === message?.metadata?.original_message?.id),
     ),
   );
 
-  const handleReplyDialog = () => {
-    window.app.replyThreadDialog.open(messageThread);
+  const handleReplyDialog = async () => {
+    const messageThread = await window.app.replyLogs.get({
+      originalMessageId: message?.metadata?.original_message?.id,
+      chatroomId,
+    });
+
+    const sortedMessages = [...new Set([...chatStoreMessageThread, ...messageThread].map((m) => m.id))]
+      .map((id) => [...chatStoreMessageThread, ...messageThread].find((m) => m.id === id))
+      .sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+
+    await window.app.replyThreadDialog.open({
+      chatroomId,
+      messages: sortedMessages,
+      originalMessageId: message?.metadata?.original_message?.id,
+    });
   };
 
   return (
@@ -36,8 +50,8 @@ const ReplyMessage = ({
           onClick={handleReplyDialog}
           title={message?.metadata?.original_message?.content}>
           <MessageParser
-            message={message?.metadata?.original_message}
             type="reply"
+            message={message?.metadata?.original_message}
             sevenTVEmotes={sevenTVEmotes}
             userChatroomInfo={userChatroomInfo}
             chatroomId={chatroomId}
@@ -47,15 +61,17 @@ const ReplyMessage = ({
       </span>
 
       <RegularMessage
+        type="reply"
         message={message}
         subscriberBadges={subscriberBadges}
         filteredKickTalkBadges={filteredKickTalkBadges}
         sevenTVEmotes={sevenTVEmotes}
         handleOpenUserDialog={handleOpenUserDialog}
         userStyle={userStyle}
-        sevenTVSettings={settings?.sevenTV}
+        sevenTVSettings={sevenTVSettings}
         chatroomId={chatroomId}
         chatroomName={chatroomName}
+        userChatroomInfo={userChatroomInfo}
       />
     </div>
   );

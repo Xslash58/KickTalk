@@ -55,8 +55,8 @@ const EmoteSection = ({ emotes, title, handleEmoteClick, type, section }) => {
           <button
             // disabled={type === "kick" && emote?.subscriber_only}
             onClick={() => handleEmoteClick(emote)}
-            className="emoteItem"
-            key={`${emote.id}-${index}`}>
+            className={clsx("emoteItem", emote?.subscriber_only && "emoteItemSubscriberOnly")}
+            key={`${emote.id}-${emote.name}`}>
             {type === "kick" ? (
               <img src={`https://files.kick.com/emotes/${emote.id}/fullsize`} alt={emote.name} loading="lazy" decoding="async" />
             ) : (

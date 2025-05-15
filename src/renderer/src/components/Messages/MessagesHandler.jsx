@@ -1,24 +1,31 @@
-import { memo } from "react";
+import { memo, useMemo } from "react";
 import useChatStore from "../../providers/ChatProvider";
 import Message from "./Message";
 
 const MessagesHandler = memo(
   ({ chatroomId, slug, channel7TVEmotes, userChatroomInfo, subscriberBadges, kickTalkBadges, settings, username }) => {
     const messages = useChatStore((state) => state.messages[chatroomId]);
-    const scilencedUsers = JSON.parse(localStorage.getItem("silencedUsers")) || [];
-    scilencedUsers?.data?.forEach((user) => {
-      messages?.forEach((message) => {
-        if (message.sender?.id === user.id) {
-          message.isSilenced = true;
-        }
-      });
-    });
+
+    const silencedUserIds = useMemo(() => {
+      const users = JSON.parse(localStorage.getItem("silencedUsers")) || [];
+      return new Set(users?.data?.map((user) => user.id) || []);
+    }, []);
+
+    const filteredMessages = useMemo(() => {
+      return (
+        messages?.filter((message) => {
+          if (message?.type !== "reply" && message?.type !== "message") {
+            return true;
+          }
+
+          return message?.sender?.id && !silencedUserIds.has(message?.sender?.id);
+        }) || []
+      );
+    }, [messages, silencedUserIds]);
+
     return (
       <div>
-        {messages?.map((message) => {
-          if (message.isSilenced) {
-            return null;
-          }
+        {filteredMessages?.map((message) => {
           return (
             <Message
               key={message.id}

@@ -65,7 +65,7 @@ const EmoteSuggestions = memo(
           {suggestions?.map((emote, i) => {
             return (
               <div
-                key={emote?.id}
+                key={`${emote.id}-${emote.alias}`}
                 ref={selectedIndex === i ? selectedSuggestionRef : null}
                 className={clsx("inputSuggestion", selectedIndex === i && "selected")}
                 onClick={() => {
@@ -76,8 +76,8 @@ const EmoteSuggestions = memo(
                     className="emote"
                     src={
                       emote?.platform === "7tv"
-                        ? `https://cdn.7tv.app/emote/${emote?.id}/1x.webp`
-                        : `https://files.kick.com/emotes/${emote?.id}/fullsize`
+                        ? `https://cdn.7tv.app/emote/${emote.id}/1x.webp`
+                        : `https://files.kick.com/emotes/${emote.id}/fullsize`
                     }
                     alt={emote?.name}
                     title={emote?.name}
@@ -156,7 +156,7 @@ const ChatterSuggestions = memo(
   },
 );
 
-const KeyHandler = ({ chatroomId, onSendMessage }) => {
+const KeyHandler = ({ chatroomId, onSendMessage, replyInputData, setReplyInputData }) => {
   const [editor] = useLexicalComposerContext();
   const [emoteSuggestions, setEmoteSuggestions] = useState([]);
   const [chatterSuggestions, setChatterSuggestions] = useState([]);
@@ -371,21 +371,31 @@ const KeyHandler = ({ chatroomId, onSendMessage }) => {
         (e) => {
           if (e.shiftKey) return false;
           e.preventDefault();
+
           if (emoteSuggestions?.length > 0) {
             insertEmote(emoteSuggestions[selectedEmoteIndex]);
             return true;
           }
+
           if (chatterSuggestions?.length > 0) {
             insertChatterMention(chatterSuggestions[selectedChatterIndex]);
             return true;
           }
+
           const content = $rootTextContent();
           if (!content.trim()) return true;
 
           onSendMessage(content);
+
           editor.update(() => {
             if (!e.ctrlKey) $getRoot().clear();
           });
+
+          // Close reply input if open after entering message
+          if (replyInputData) {
+            setReplyInputData(null);
+          }
+
           return true;
         },
         COMMAND_PRIORITY_HIGH,
@@ -695,8 +705,31 @@ const initialConfig = {
   nodes: [EmoteNode],
 };
 
+const ReplyHandler = ({ chatroomId, replyInputData, setReplyInputData }) => {
+  return (
+    <>
+      {replyInputData && (
+        <div className={clsx("replyInputContainer", replyInputData?.sender?.id && "show")}>
+          <div className="replyInputBoxHead">
+            <span>
+              Replying to <b>@{replyInputData?.sender?.username}</b>
+            </span>
+
+            <button className="replyInputCloseButton" onClick={() => setReplyInputData(null)}>
+              <img src={XIcon} alt="Close" width={16} height={16} />
+            </button>
+          </div>
+          <div className="replyInputBoxContent">
+            <span>{replyInputData?.content}</span>
+          </div>
+        </div>
+      )}
+    </>
+  );
+};
+
 const ChatInput = memo(
-  ({ chatroomId }) => {
+  ({ chatroomId, isReplyThread = false, replyMessage = {} }) => {
     const sendMessage = useChatStore((state) => state.sendMessage);
     const sendReply = useChatStore((state) => state.sendReply);
     const chatroom = useChatStore(useShallow((state) => state.chatrooms.find((room) => room.id === chatroomId)));
@@ -705,6 +738,7 @@ const ChatInput = memo(
     // Reset selected index when changing chatrooms
     useEffect(() => {
       const history = messageHistory.get(chatroomId);
+      setReplyInputData(null);
       if (history) {
         messageHistory.set(chatroomId, {
           ...history,
@@ -716,6 +750,13 @@ const ChatInput = memo(
     useEffect(() => {
       const cleanup = window.app.reply.onData((data) => {
         setReplyInputData(data);
+
+        setTimeout(() => {
+          const editor = document.querySelector(".chatInput");
+          if (editor) {
+            editor.focus();
+          }
+        }, 50);
       });
 
       return () => cleanup();
@@ -759,11 +800,11 @@ const ChatInput = memo(
         let res;
 
         // If we are replying to a message, add the original message to the metadata
-        if (replyInputData) {
+        if (replyInputData || isReplyThread) {
           const metadata = {
             original_message: {
-              id: replyInputData?.id,
-              content: replyInputData?.content,
+              id: replyInputData?.id || replyMessage?.original_message?.id,
+              content: replyInputData?.content || replyMessage?.original_message?.content,
             },
           };
 
@@ -780,30 +821,15 @@ const ChatInput = memo(
           });
         }
       },
-      [chatroomId, chatroom, sendMessage, replyInputData],
+      [chatroomId, chatroom, sendMessage, replyInputData, setReplyInputData],
     );
 
     return (
       <div className="chatInputWrapper">
-        <InfoBar chatroomInfo={chatroom?.chatroomInfo} initialChatroomInfo={chatroom?.initialChatroomInfo} />
-
-        {replyInputData && (
-          <div className={clsx("replyInputContainer", replyInputData?.sender?.id && "show")}>
-            <div className="replyInputBoxHead">
-              <span>
-                Replying to <b>@{replyInputData?.sender?.username}</b>
-              </span>
-
-              <button className="replyInputCloseButton" onClick={() => setReplyInputData(null)}>
-                <img src={XIcon} alt="Close" width={16} height={16} />
-              </button>
-            </div>
-            <div className="replyInputBoxContent">
-              <span>{replyInputData?.content}</span>
-            </div>
-          </div>
-        )}
-
+        <div className="chatInputInfoBar">
+          <InfoBar chatroomInfo={chatroom?.chatroomInfo} initialChatroomInfo={chatroom?.initialChatroomInfo} />
+          <ReplyHandler chatroomId={chatroomId} replyInputData={replyInputData} setReplyInputData={setReplyInputData} />
+        </div>
         <div className="chatInputContainer">
           <LexicalComposer key={`composer-${chatroomId}`} initialConfig={initialConfig}>
             <div className="chatInputBox">
@@ -821,6 +847,7 @@ const ChatInput = memo(
                 ErrorBoundary={LexicalErrorBoundary}
               />
             </div>
+
             <div className="chatInputActions">
               <EmoteHandler chatroomId={chatroomId} />
             </div>
@@ -829,6 +856,8 @@ const ChatInput = memo(
               onSendMessage={(content) => {
                 handleSendMessage(content, replyInputData ? "reply" : "message");
               }}
+              replyInputData={replyInputData}
+              setReplyInputData={setReplyInputData}
             />
             <EmoteTransformer chatroomId={chatroomId} />
             <HistoryPlugin />

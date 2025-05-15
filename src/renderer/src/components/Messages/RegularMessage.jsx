@@ -1,4 +1,4 @@
-import { memo } from "react";
+import { memo, useCallback } from "react";
 import { MessageParser } from "../../utils/MessageParser";
 import { KickBadges, KickTalkBadges, StvBadges } from "../Cosmetics/Badges";
 import CopyIcon from "../../assets/icons/copy-simple-fill.svg?asset";
@@ -52,9 +52,13 @@ const RegularMessage = memo(
       }
     };
 
-    const handleReply = () => {
+    const handleReply = useCallback(() => {
       window.app.reply.open(message);
-    };
+    }, [message]);
+
+    const handleCopyMessage = useCallback(() => {
+      navigator.clipboard.writeText(message?.content);
+    }, [message?.content]);
 
     return (
       <span className={`chatMessageContainer ${message.deleted ? "deleted" : ""}`}>
@@ -62,11 +66,12 @@ const RegularMessage = memo(
           {settings?.general?.showTimestamps && settings?.general?.timestampFormat !== "disabled" && (
             <span className="chatMessageTimestamp">{timestampFormat()}</span>
           )}
+
           <div className="chatMessageBadges">
             {filteredKickTalkBadges && <KickTalkBadges badges={filteredKickTalkBadges} />}
             {userStyle?.badge && <StvBadges badge={userStyle?.badge} />}
             <KickBadges
-              badges={message.sender.identity?.badges}
+              badges={message?.sender.identity?.badges}
               subscriberBadges={subscriberBadges}
               kickTalkBadges={filteredKickTalkBadges}
             />
@@ -94,7 +99,7 @@ const RegularMessage = memo(
           />
         </div>
         <div className="chatMessageActions">
-          {canModerate && (
+          {canModerate && !message?.deleted && (
             <button
               onClick={() => {
                 const data = {
@@ -107,18 +112,18 @@ const RegularMessage = memo(
                 window.app.kick.getPinMessage(data);
               }}
               className="chatMessageActionButton">
-              <img src={Pin} alt="Pin Message" width={16} height={16} />
+              <img src={Pin} alt="Pin Message" width={16} height={16} loading="lazy" />
             </button>
           )}
-          <button onClick={handleReply} className="chatMessageActionButton">
-            <img src={ReplyIcon} alt={`Reply to ${message?.sender?.username}`} width={16} height={16} />
-          </button>
-          <button
-            onClick={() => {
-              navigator.clipboard.writeText(message.content);
-            }}
-            className="chatMessageActionButton">
-            <img src={CopyIcon} alt="Copy Message" width={16} height={16} />
+
+          {!message?.deleted && (
+            <button onClick={handleReply} className="chatMessageActionButton">
+              <img src={ReplyIcon} alt={`Reply to ${message?.sender?.username}`} width={16} height={16} loading="lazy" />
+            </button>
+          )}
+
+          <button onClick={handleCopyMessage} className="chatMessageActionButton">
+            <img src={CopyIcon} alt="Copy Message" width={16} height={16} loading="lazy" />
           </button>
         </div>
       </span>
@@ -129,7 +134,8 @@ const RegularMessage = memo(
       prevProps.message === nextProps.message &&
       prevProps.sevenTVSettings === nextProps.sevenTVSettings &&
       prevProps.sevenTVEmotes === nextProps.sevenTVEmotes &&
-      prevProps.userStyle === nextProps.userStyle
+      prevProps.userChatroomInfo === nextProps.userChatroomInfo &&
+      prevProps.handleOpenUserDialog === nextProps.handleOpenUserDialog
     );
   },
 );
