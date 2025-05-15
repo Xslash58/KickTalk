@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Message from "../Messages/Message";
 import { userKickTalkBadges } from "../../../../../utils/kickTalkBadges";
 import CloseIcon from "../../assets/icons/x-bold.svg?asset";
@@ -11,6 +11,7 @@ const ReplyThread = () => {
   const [subscriberBadges, setSubscriberBadges] = useState([]);
   const [sevenTVEmotes, setSevenTVEmotes] = useState([]);
   const [originalMessage, setOriginalMessage] = useState(null);
+  const replyThreadRef = useRef(null);
 
   useEffect(() => {
     const loadData = async ({ chatroomId, messages, originalMessageId }) => {
@@ -36,7 +37,8 @@ const ReplyThread = () => {
     };
 
     const updateData = (data) => {
-      setReplyThreadMessages([...replyThreadMessages?.filter((message) => message?.id !== data?.id), ...data?.messages]);
+      setReplyThreadMessages(data?.messages);
+      replyThreadRef.current.scrollTop = 0;
     };
 
     const dataCleanup = window.app.replyThreadDialog.onData(loadData);
@@ -47,6 +49,12 @@ const ReplyThread = () => {
       updateCleanup();
     };
   }, []);
+
+  useEffect(() => {
+    if (replyThreadRef.current) {
+      replyThreadRef.current.scrollTop = replyThreadRef.current.scrollHeight;
+    }
+  }, [replyThreadMessages]);
 
   return (
     <>
@@ -59,7 +67,7 @@ const ReplyThread = () => {
           </button>
         </div>
 
-        <div className="replyThreadContent">
+        <div className="replyThreadContent" ref={replyThreadRef}>
           {originalMessage?.original_message?.id && (
             <div className="replyThreadOriginalMessage">
               <p>Original Message:</p>

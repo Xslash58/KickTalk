@@ -1,14 +1,30 @@
-import { memo, useMemo } from "react";
+import { memo, useMemo, useEffect, useState } from "react";
 import useChatStore from "../../providers/ChatProvider";
 import Message from "./Message";
 
 const MessagesHandler = memo(
   ({ chatroomId, slug, channel7TVEmotes, userChatroomInfo, subscriberBadges, kickTalkBadges, settings, username }) => {
     const messages = useChatStore((state) => state.messages[chatroomId]);
+    const [silencedUserIds, setSilencedUserIds] = useState(new Set());
 
-    const silencedUserIds = useMemo(() => {
-      const users = JSON.parse(localStorage.getItem("silencedUsers")) || [];
-      return new Set(users?.data?.map((user) => user.id) || []);
+    useEffect(() => {
+      const loadSilencedUsers = () => {
+        const users = JSON.parse(localStorage.getItem("silencedUsers")) || [];
+        setSilencedUserIds(new Set(users?.data?.map((user) => user.id) || []));
+      };
+
+      const handleStorageChange = (e) => {
+        if (e.key === "silencedUsers") {
+          loadSilencedUsers();
+        }
+      };
+
+      loadSilencedUsers();
+      window.addEventListener("storage", handleStorageChange);
+
+      return () => {
+        window.removeEventListener("storage", handleStorageChange);
+      };
     }, []);
 
     const filteredMessages = useMemo(() => {

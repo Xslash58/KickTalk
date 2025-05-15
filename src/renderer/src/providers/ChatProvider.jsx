@@ -237,7 +237,6 @@ const useChatStore = create((set, get) => ({
           });
 
           // Add Message to User Logs
-          console.log("parsedEvent", parsedEvent);
           if (parsedEvent?.type === "reply") {
             window.app.replyLogs.add({
               chatroomId: chatroom.id,
@@ -644,6 +643,11 @@ const useChatStore = create((set, get) => ({
 
     data?.forEach((message) => {
       get().addChatter(chatroomId, message?.sender);
+      window.app.logs.add({
+        chatroomId: chatroomId,
+        userId: message?.sender?.id,
+        message: message,
+      });
     });
 
     set((state) => ({

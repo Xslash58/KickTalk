@@ -19,7 +19,7 @@ const Updater = () => {
 
   return (
     <div className={clsx("updater", isUpdateAvailable?.files?.length && "updateAvailable")}>
-      <button onClick={() => window.open("https://api.kicktalk.app/downloads/KickTalkBetaTest.exe", "_blank")}>
+      <button onClick={() => window.open("https://kicktalk.app/changelogs?version=latest", "_blank")}>
         <img src={downloadIcon} alt="Update" width={20} height={20} />
       </button>
     </div>

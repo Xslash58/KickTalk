@@ -148,63 +148,67 @@ const KickEmoteDialog = memo(
     const isChannelSet = kickEmotes?.find((emoteSection) => emoteSection?.name === "channel_set");
 
     return (
-      <div className={clsx("emoteDialog", isDialogOpen && "show")}>
-        <div className="dialogHead">
-          <div className="dialogHeadTitle">
-            <img src={KickLogoFull} height={16} alt="Kick.com" />
-          </div>
-          <div className="dialogHeadSearch">
-            <input
-              type="text"
-              placeholder="Search..."
-              onChange={(e) => setSearchTerm(e.target.value.trim())}
-              value={searchTerm}
-            />
-          </div>
-          <div className="dialogHeadMenuItems">
-            {isChannelSet && (
-              <button
-                className={clsx("dialogHeadMenuItem", currentSection === "channel_set" && "active")}
-                onClick={() => setCurrentSection(currentSection === "channel_set" ? null : "channel_set")}>
-                <img src={isChannelSet?.user?.profile_pic} height={24} width={24} alt="Channel Emotes" />
-              </button>
-            )}
-            <button
-              className={clsx("dialogHeadMenuItem", currentSection === "Global" && "active")}
-              onClick={() => setCurrentSection(currentSection === "Global" ? null : "Global")}>
-              <img src={GlobeIcon} height={24} width={24} alt="Global Emotes" />
-            </button>
-            <button
-              className={clsx("dialogHeadMenuItem", currentSection === "Emojis" && "active")}
-              onClick={() => setCurrentSection(currentSection === "Emojis" ? null : "Emojis")}>
-              <img src={KickLogoIcon} height={16} width={16} alt="Emojis" />
-            </button>
-          </div>
-        </div>
-
-        <div className="dialogBody">
-          {!searchResults.length && searchTerm ? (
-            <div className="dialogBodyEmpty">
-              <p>No Kick Emotes found</p>
-            </div>
-          ) : (
-            searchResults
-              ?.filter((emoteSection) => (currentSection ? emoteSection.name === currentSection : true))
-              ?.map((emoteSection, index) => (
-                <EmoteSection
-                  key={`${emoteSection.name || "sub_emojis"}-${index}`}
-                  emotes={emoteSection.emotes}
-                  section={currentSection}
-                  title={`${emoteSection.name === "channel_set" ? "Subscriber Emotes" : emoteSection.name} ${
-                    searchTerm ? `[${emoteSection.emotes.length} matches]` : ""
-                  }`}
-                  type={"kick"}
-                  handleEmoteClick={handleEmoteClick}
+      <>
+        {isDialogOpen && (
+          <div className={clsx("emoteDialog", isDialogOpen && "show")}>
+            <div className="dialogHead">
+              <div className="dialogHeadTitle">
+                <img src={KickLogoFull} height={16} alt="Kick.com" />
+              </div>
+              <div className="dialogHeadSearch">
+                <input
+                  type="text"
+                  placeholder="Search..."
+                  onChange={(e) => setSearchTerm(e.target.value.trim())}
+                  value={searchTerm}
                 />
-              ))
-          )}
-        </div>
-      </div>
+              </div>
+              <div className="dialogHeadMenuItems">
+                {isChannelSet && (
+                  <button
+                    className={clsx("dialogHeadMenuItem", currentSection === "channel_set" && "active")}
+                    onClick={() => setCurrentSection(currentSection === "channel_set" ? null : "channel_set")}>
+                    <img src={isChannelSet?.user?.profile_pic} height={24} width={24} alt="Channel Emotes" />
+                  </button>
+                )}
+                <button
+                  className={clsx("dialogHeadMenuItem", currentSection === "Global" && "active")}
+                  onClick={() => setCurrentSection(currentSection === "Global" ? null : "Global")}>
+                  <img src={GlobeIcon} height={24} width={24} alt="Global Emotes" />
+                </button>
+                <button
+                  className={clsx("dialogHeadMenuItem", currentSection === "Emojis" && "active")}
+                  onClick={() => setCurrentSection(currentSection === "Emojis" ? null : "Emojis")}>
+                  <img src={KickLogoIcon} height={16} width={16} alt="Emojis" />
+                </button>
+              </div>
+            </div>
+
+            <div className="dialogBody">
+              {!searchResults.length && searchTerm ? (
+                <div className="dialogBodyEmpty">
+                  <p>No Kick Emotes found</p>
+                </div>
+              ) : (
+                searchResults
+                  ?.filter((emoteSection) => (currentSection ? emoteSection.name === currentSection : true))
+                  ?.map((emoteSection, index) => (
+                    <EmoteSection
+                      key={`${emoteSection.name || "sub_emojis"}-${index}`}
+                      emotes={emoteSection.emotes}
+                      section={currentSection}
+                      title={`${emoteSection.name === "channel_set" ? "Subscriber Emotes" : emoteSection.name} ${
+                        searchTerm ? `[${emoteSection.emotes.length} matches]` : ""
+                      }`}
+                      type={"kick"}
+                      handleEmoteClick={handleEmoteClick}
+                    />
+                  ))
+              )}
+            </div>
+          </div>
+        )}
+      </>
     );
   },
   (prev, next) => prev.kickEmotes === next.kickEmotes && prev.isDialogOpen === next.isDialogOpen,

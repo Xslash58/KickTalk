@@ -240,6 +240,11 @@
   max-width: 112px;
   justify-content: center;
   border-left: 1px solid rgba(80, 123, 97, 0.3);
+
+  &.replyThread {
+    border-left: none;
+    display: none;
+  }
 }
 
 .editor-paragraph {

@@ -156,7 +156,7 @@ const ChatterSuggestions = memo(
   },
 );
 
-const KeyHandler = ({ chatroomId, onSendMessage, replyInputData, setReplyInputData }) => {
+const KeyHandler = ({ chatroomId, onSendMessage, replyInputData, setReplyInputData, isReplyThread }) => {
   const [editor] = useLexicalComposerContext();
   const [emoteSuggestions, setEmoteSuggestions] = useState([]);
   const [chatterSuggestions, setChatterSuggestions] = useState([]);
@@ -211,7 +211,7 @@ const KeyHandler = ({ chatroomId, onSendMessage, replyInputData, setReplyInputDa
     (emote) => {
       editor.update(() => {
         const selection = $getSelection();
-        if (!$isRangeSelection(selection)) return;
+        if (!$isRangeSelection(selection) || isReplyThread) return;
 
         const node = selection.anchor.getNode();
         const textContent = node.getTextContent();
@@ -607,6 +607,7 @@ const KeyHandler = ({ chatroomId, onSendMessage, replyInputData, setReplyInputDa
     selectedChatterIndex,
     insertEmote,
     insertChatterMention,
+    isReplyThread,
   ]);
 
   return (
@@ -821,7 +822,7 @@ const ChatInput = memo(
           });
         }
       },
-      [chatroomId, chatroom, sendMessage, replyInputData, setReplyInputData],
+      [chatroomId, chatroom, sendMessage, replyInputData, setReplyInputData, replyMessage],
     );
 
     return (
@@ -848,10 +849,11 @@ const ChatInput = memo(
               />
             </div>
 
-            <div className="chatInputActions">
-              <EmoteHandler chatroomId={chatroomId} />
+            <div className={clsx("chatInputActions", isReplyThread && "replyThread")}>
+              {!isReplyThread && <EmoteHandler chatroomId={chatroomId} />}
             </div>
             <KeyHandler
+              isReplyThread={isReplyThread}
               chatroomId={chatroomId}
               onSendMessage={(content) => {
                 handleSendMessage(content, replyInputData ? "reply" : "message");
@@ -867,7 +869,7 @@ const ChatInput = memo(
       </div>
     );
   },
-  (prev, next) => prev.chatroomId === next.chatroomId,
+  (prev, next) => prev.chatroomId === next.chatroomId && prev.replyMessage === next.replyMessage,
 );
 
 export default ChatInput;

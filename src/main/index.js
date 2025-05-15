@@ -42,7 +42,7 @@ const replyLogsStore = new Map(); // Reply threads by chatroom
 const logLimits = {
   user: 80,
   reply: 50,
-  replyThreads: 50,
+  replyThreads: 25,
 };
 
 let tray = null;
@@ -1112,7 +1112,7 @@ ipcMain.handle("replyThreadDialog:open", (e, { data }) => {
 
   replyThreadDialog = new BrowserWindow({
     width: 550,
-    height: 600,
+    height: 500,
     x: newX,
     y: newY,
     show: false,

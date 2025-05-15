@@ -72,6 +72,7 @@ const Message = memo(
     // }
 
     const handleContextMenu = () => {
+      if (message?.deleted || message?.type === "system" || message?.type === "mod_action") return;
       window.app.contextMenu.messages(message);
     };
 
