@@ -17,7 +17,7 @@ export default defineConfig({
           userDialog: resolve("src/renderer/user.html"),
           authDialog: resolve("src/renderer/auth.html"),
           chattersDialog: resolve("src/renderer/chatters.html"),
-          searchDialog: resolve("src/renderer/search.html"),
+          // searchDialog: resolve("src/renderer/search.html"),
           // settingsDialog: resolve("src/renderer/settings.html"),
           // contextMenu: resolve("src/renderer/contextMenu.html"),
           replyThreadDialog: resolve("src/renderer/replyThread.html"),
