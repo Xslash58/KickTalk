@@ -169,4 +169,13 @@ export const userKickTalkBadges = [
       },
     ],
   },
+  {
+    username: "killerfish",
+    badges: [
+      {
+        type: "BetaTester",
+        title: "Beta Tester",
+      },
+    ],
+  },
 ];
