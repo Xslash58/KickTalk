@@ -1,12 +1,15 @@
 import ChatPage from "./pages/ChatPage";
 import SettingsProvider from "./providers/SettingsProvider";
+import ErrorBoundary from "./components/ErrorBoundary";
 
-function App() {
+const App = () => {
   return (
-    <SettingsProvider>
-      <ChatPage />
-    </SettingsProvider>
+    <ErrorBoundary>
+      <SettingsProvider>
+        <ChatPage />
+      </SettingsProvider>
+    </ErrorBoundary>
   );
-}
+};
 
 export default App;

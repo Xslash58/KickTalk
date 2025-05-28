@@ -11,12 +11,17 @@
   position: relative;
 
   > .chatInputContainer {
+<<<<<<< Updated upstream
     width: calc(100vw - 32px);
     margin: 0 auto;
+=======
+    width: calc(100vw - 16px);
+    margin-bottom: 8px;
+>>>>>>> Stashed changes
     display: flex;
     position: relative;
     min-height: 64px;
-    padding-left: 16px;
+    padding: 8px 0 8px 16px;
     z-index: 9;
     align-items: center;
     background: #182f21;
@@ -52,12 +57,12 @@
     width: calc(100% - 16px);
     border: 1px solid rgba(80, 123, 97, 0.5);
     border-bottom: none;
-    background: #182f21;
-    gap: 8px;
+    background: #14291c;
+    gap: 4px;
     opacity: 1;
     position: relative;
     min-height: min-content;
-    top: 0;
+    top: 1px;
     border-radius: 6px 6px 0 0;
 
     > .replyInputBoxHead {
@@ -166,11 +171,13 @@
 
       > .chatInfoBarIconTooltip {
         opacity: 0.4;
-        transition: opacity 0.2s ease-in-out;
+        height: 16px;
+        width: 16px;
         cursor: pointer;
+        transition: opacity 0.2s ease-in-out;
 
         &:hover {
-          opacity: 0.7;
+          opacity: 0.8;
         }
       }
     }
@@ -274,6 +281,7 @@
   display: flex;
   align-items: center;
   background-color: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.05);
   gap: 0px;
   height: 38px;
   overflow: hidden;
@@ -298,7 +306,7 @@
   transition: background-color 0.2s ease;
 
   &:hover {
-    background-color: rgba(255, 255, 255, 0.15);
+    background-color: rgba(255, 255, 255, 0.1);
     img {
       opacity: 1;
     }
@@ -333,6 +341,7 @@
   width: 100%;
   max-width: 550px;
   height: 280px;
+  backdrop-filter: blur(3px);
   background-color: rgba(22, 34, 25, 0.95);
   border: 1px solid #314d3c;
   box-shadow: 0 4px 5px rgba(2, 10, 5, 0.5019607843);
@@ -377,15 +386,13 @@
 }
 
 *::-webkit-scrollbar {
-  width: 6px;
+  width: 10px;
 }
 
 *::-webkit-scrollbar-thumb {
-  background-color: #405a45;
+  background-color: #364839;
   border-radius: 2px;
   background-clip: content-box;
-  min-width: 32px;
-  min-height: 32px;
 }
 
 .dialogHead {
@@ -563,11 +570,68 @@
 
 /** [End of Emote Dialogs] **/
 
+/** [Emoji Dialog] **/
+// .emojiGrid {
+//   height: 100%;
+//   flex-wrap: wrap;
+//   gap: 4px;
+//   width: 100%;
+
+//   .emptyState {
+//     display: flex;
+//     align-items: center;
+//     justify-content: center;
+//     opacity: 0.5;
+
+//     span {
+//       font-size: 16px;
+//       color: #fff;
+//     }
+//   }
+// }
+
+// .emojiItem {
+//   height: 40px;
+//   width: 40px;
+//   flex: 0 0 40px;
+//   padding: 4px;
+//   border-radius: 4px;
+//   border: 1px solid #314d3c;
+//   background: none;
+//   cursor: pointer;
+//   display: flex;
+//   align-items: center;
+//   justify-content: center;
+//   transition: all 0.2s ease-in-out;
+
+//   &:hover {
+//     background-color: #1c3627;
+//     border-color: #53ff24;
+//     transform: scale(1.1);
+//   }
+
+//   .emoji {
+//     font-size: 24px !important;
+//     line-height: 1;
+//     user-select: none;
+//   }
+// }
+
+// .emoji-emote {
+//   display: inline-block;
+//   font-size: 1.2em;
+//   vertical-align: middle;
+//   line-height: 1;
+// }
+
+/** [End of Emoji Dialog] **/
+
 /** [Emote Suggestions] **/
 
 .inputSuggestionsWrapper {
-  background: rgba(16, 33, 23, 0.9);
+  background: rgba(16, 33, 23, 0.98);
   border: 1px solid #294133;
+  backdrop-filter: blur(4px);
   border-radius: 6px;
   height: 180px;
   position: absolute;
@@ -576,7 +640,7 @@
   z-index: 9999;
   width: 100%;
   max-width: 100%;
-  padding: 8px;
+  padding: 4px;
   overflow-x: hidden;
   overflow-y: auto;
   display: none;

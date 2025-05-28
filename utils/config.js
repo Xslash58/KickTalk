@@ -10,19 +10,24 @@ const schema = {
     properties: {
       alwaysOnTop: {
         type: "boolean",
+        default: false,
       },
       wrapChatroomsList: {
         type: "boolean",
+        default: false,
       },
       showTabImages: {
         type: "boolean",
+        default: true,
       },
       showTimestamps: {
         type: "boolean",
+        default: true,
       },
       timestampFormat: {
         type: "string",
         enum: ["disabled", "h:mm", "hh:mm", "h:mm a", "hh:mm a", "h:mm:ss", "hh:mm:ss", "h:mm:ss a", "hh:mm:ss a"],
+        default: "disabled",
       },
     },
     default: {
@@ -38,6 +43,7 @@ const schema = {
     properties: {
       showModActions: {
         type: "boolean",
+        default: true,
       },
     },
     default: {
@@ -54,6 +60,12 @@ const schema = {
       sound: {
         type: "boolean",
         default: true,
+      },
+      volume: {
+        type: "number",
+        default: 0.1,
+        minimum: 0,
+        maximum: 1,
       },
       soundFile: {
         type: "string",
@@ -75,9 +87,8 @@ const schema = {
     default: {
       enabled: true,
       sound: true,
-      background: true,
-      backgroundColour: "#000000",
-      phrases: [],
+      volume: 1,
+      soundFile: "../resources/sounds/default.wav",
     },
   },
   sevenTV: {

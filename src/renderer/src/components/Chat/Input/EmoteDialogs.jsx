@@ -1,14 +1,19 @@
 import { useRef, useEffect, useMemo } from "react";
 import clsx from "clsx";
-import { useShallow } from "zustand/react/shallow";
 import KickLogoFull from "../../../assets/logos/kickLogoFull.svg?asset";
 import { memo, useCallback, useState } from "react";
-import useChatStore from "../../../providers/ChatProvider";
 import STVLogo from "../../../assets/logos/stvLogo.svg?asset";
 import CaretDown from "../../../assets/icons/caret-down-bold.svg?asset";
 import useClickOutside from "../../../utils/useClickOutside";
 import KickLogoIcon from "../../../assets/logos/kickLogoIcon.svg?asset";
 import GlobeIcon from "../../../assets/icons/globe-fill.svg?asset";
+<<<<<<< Updated upstream
+=======
+import LockIcon from "../../../assets/icons/lock-simple-fill.svg?asset";
+import useChatStore from "../../../providers/ChatProvider";
+import { useShallow } from "zustand/react/shallow";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../../Shared/Tooltip";
+>>>>>>> Stashed changes
 
 const EmoteSection = ({ emotes, title, handleEmoteClick, type, section }) => {
   const [isSectionOpen, setIsSectionOpen] = useState(true);
@@ -51,6 +56,7 @@ const EmoteSection = ({ emotes, title, handleEmoteClick, type, section }) => {
         </button>
       </div>
       <div className="emoteItems">
+<<<<<<< Updated upstream
         {emotes?.slice(0, visibleCount).map((emote, index) => (
           <button
             // disabled={type === "kick" && emote?.subscriber_only}
@@ -63,6 +69,45 @@ const EmoteSection = ({ emotes, title, handleEmoteClick, type, section }) => {
               <img src={"https://cdn.7tv.app/emote/" + emote.id + "/1x.webp"} alt={emote.name} loading="lazy" decoding="async" />
             )}
           </button>
+=======
+        {emotes?.slice(0, visibleCount).map((emote, i) => (
+          <Tooltip key={`${emote.id}-${emote.name}-${i}`} delayDuration={0}>
+            <TooltipTrigger asChild>
+              <button
+                disabled={type === "kick" && emote?.subscribers_only && !userChatroomInfo?.subscription}
+                onClick={() => handleEmoteClick(emote)}
+                className={clsx(
+                  "emoteItem",
+                  emote?.subscribers_only && !userChatroomInfo?.subscription && "emoteItemSubscriberOnly",
+                )}>
+                {type === "kick" ? (
+                  <img
+                    src={`https://files.kick.com/emotes/${emote.id}/fullsize`}
+                    alt={emote.name}
+                    loading="lazy"
+                    decoding="async"
+                  />
+                ) : (
+                  <img
+                    src={"https://cdn.7tv.app/emote/" + emote.id + "/1x.webp"}
+                    alt={emote.name}
+                    loading="lazy"
+                    decoding="async"
+                  />
+                )}
+
+                {emote?.subscribers_only && !userChatroomInfo?.subscription && (
+                  <div className="emoteItemSubscriberLock">
+                    <img src={LockIcon} alt="Subscriber" width={16} height={16} />
+                  </div>
+                )}
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{emote.name}</p>
+            </TooltipContent>
+          </Tooltip>
+>>>>>>> Stashed changes
         ))}
         {visibleCount < emotes.length && <div ref={loadMoreTriggerRef} className="loadMoreTrigger" />}
       </div>
@@ -73,14 +118,18 @@ const EmoteSection = ({ emotes, title, handleEmoteClick, type, section }) => {
 const SevenTVEmoteDialog = memo(
   ({ isDialogOpen, sevenTVEmotes, handleEmoteClick }) => {
     const [searchTerm, setSearchTerm] = useState("");
+    const [currentSection, setCurrentSection] = useState(null);
 
-    const searchResults =
-      sevenTVEmotes
-        ?.map((emoteSection) => ({
+    const searchResults = useMemo(() => {
+      if (!sevenTVEmotes) return [];
+
+      return sevenTVEmotes
+        .map((emoteSection) => ({
           ...emoteSection,
-          emotes: emoteSection.emotes.filter((emote) => emote.name.toLowerCase().includes(searchTerm.toLowerCase())),
+          emotes: (emoteSection.emotes || []).filter((emote) => emote.name.toLowerCase().includes(searchTerm.toLowerCase())),
         }))
-        .filter((section) => section.emotes.length > 0) || [];
+        .filter((section) => section.emotes && section.emotes.length > 0);
+    }, [sevenTVEmotes, searchTerm]);
 
     return (
       <>
@@ -98,7 +147,27 @@ const SevenTVEmoteDialog = memo(
                   value={searchTerm}
                 />
               </div>
-              <div className="dialogHeadMenuItems"></div>
+              <div className="dialogHeadMenuItems">
+                {sevenTVEmotes?.find((set) => set.type === "channel" && set?.emotes?.length > 0) && (
+                  <button
+                    className={clsx("dialogHeadMenuItem", currentSection === "channel" && "active")}
+                    onClick={() => setCurrentSection(currentSection === "channel" ? null : "channel")}>
+                    <img
+                      src={sevenTVEmotes?.find((set) => set.type === "channel")?.user?.avatar_url}
+                      height={24}
+                      width={24}
+                      alt="Channel Emotes"
+                    />
+                  </button>
+                )}
+                {sevenTVEmotes?.find((set) => set.type === "global" && set?.emotes?.length > 0) && (
+                  <button
+                    className={clsx("dialogHeadMenuItem", currentSection === "global" && "active")}
+                    onClick={() => setCurrentSection(currentSection === "global" ? null : "global")}>
+                    <img src={GlobeIcon} height={24} width={24} alt="Global Emotes" />
+                  </button>
+                )}
+              </div>
             </div>
             <div className="dialogBody">
               {!searchResults.length && searchTerm ? (
@@ -107,17 +176,19 @@ const SevenTVEmoteDialog = memo(
                 </div>
               ) : (
                 <>
-                  {searchResults?.map((emoteSection, index) => {
-                    return (
-                      <EmoteSection
-                        key={`${emoteSection?.setInfo?.name || "7tv_emotes"}-${index}`}
-                        emotes={emoteSection.emotes}
-                        title={`${emoteSection?.setInfo?.name || "7TV Emotes"} ${searchTerm ? `[${emoteSection.emotes.length} matches]` : ""}`}
-                        type={"7tv"}
-                        handleEmoteClick={handleEmoteClick}
-                      />
-                    );
-                  })}
+                  {searchResults
+                    ?.filter((emoteSection) => (currentSection ? emoteSection.type === currentSection : true))
+                    ?.map((emoteSection, index) => {
+                      return (
+                        <EmoteSection
+                          key={`${emoteSection?.setInfo?.name || "7tv_emotes"}-${index}`}
+                          emotes={emoteSection.emotes}
+                          title={`${emoteSection?.setInfo?.name || "7TV Emotes"} ${searchTerm ? `[${emoteSection.emotes.length} matches]` : ""}`}
+                          type={"7tv"}
+                          handleEmoteClick={handleEmoteClick}
+                        />
+                      );
+                    })}
                 </>
               )}
             </div>
@@ -164,23 +235,27 @@ const KickEmoteDialog = memo(
                 />
               </div>
               <div className="dialogHeadMenuItems">
-                {isChannelSet && (
+                {isChannelSet && isChannelSet?.emotes?.length > 0 && (
                   <button
                     className={clsx("dialogHeadMenuItem", currentSection === "channel_set" && "active")}
                     onClick={() => setCurrentSection(currentSection === "channel_set" ? null : "channel_set")}>
                     <img src={isChannelSet?.user?.profile_pic} height={24} width={24} alt="Channel Emotes" />
                   </button>
                 )}
-                <button
-                  className={clsx("dialogHeadMenuItem", currentSection === "Global" && "active")}
-                  onClick={() => setCurrentSection(currentSection === "Global" ? null : "Global")}>
-                  <img src={GlobeIcon} height={24} width={24} alt="Global Emotes" />
-                </button>
-                <button
-                  className={clsx("dialogHeadMenuItem", currentSection === "Emojis" && "active")}
-                  onClick={() => setCurrentSection(currentSection === "Emojis" ? null : "Emojis")}>
-                  <img src={KickLogoIcon} height={16} width={16} alt="Emojis" />
-                </button>
+                {kickEmotes?.find((set) => set.name === "Global" && set?.emotes?.length > 0) && (
+                  <button
+                    className={clsx("dialogHeadMenuItem", currentSection === "Global" && "active")}
+                    onClick={() => setCurrentSection(currentSection === "Global" ? null : "Global")}>
+                    <img src={GlobeIcon} height={24} width={24} alt="Global Emotes" />
+                  </button>
+                )}
+                {kickEmotes?.find((set) => set.name === "Emojis" && set?.emotes?.length > 0) && (
+                  <button
+                    className={clsx("dialogHeadMenuItem", currentSection === "Emojis" && "active")}
+                    onClick={() => setCurrentSection(currentSection === "Emojis" ? null : "Emojis")}>
+                    <img src={KickLogoIcon} height={16} width={16} alt="Emojis" />
+                  </button>
+                )}
               </div>
             </div>
 
@@ -253,7 +328,7 @@ const EmoteDialogs = memo(
     }, [randomEmotes]);
 
     return (
-      <>
+      <TooltipProvider>
         <div className="chatEmoteBtns">
           <button
             className={clsx("emoteBtn", activeDialog === "7tv" && "activeDialog")}
@@ -283,7 +358,7 @@ const EmoteDialogs = memo(
           />
           <KickEmoteDialog isDialogOpen={activeDialog === "kick"} kickEmotes={kickEmotes} handleEmoteClick={handleEmoteClick} />
         </div>
-      </>
+      </TooltipProvider>
     );
   },
   (prev, next) => prev.chatroomId === next.chatroomId,

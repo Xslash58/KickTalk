@@ -150,20 +150,40 @@ const updateCosmetics = async (body) => {
 class StvWebSocket extends EventTarget {
   constructor(channelKickID, stvId = "0", stvEmoteSetId = "0") {
     super();
-    this.reconnectDelay = 5000;
+    this.startDelay = 1000;
+    this.maxRetrySteps = 5;
+    this.reconnectAttempts = 0;
     this.chat = null;
     this.channelKickID = String(channelKickID);
     this.stvId = stvId;
     this.stvEmoteSetId = stvEmoteSetId;
     this.shouldReconnect = true;
   }
-  connect() {
-    console.log(`[7TV]: Connecting to WebSocket`);
 
-    this.chat = new WebSocket("wss://events.7tv.io/v3");
+  connect() {
+    if (!this.shouldReconnect) {
+      console.log(`[7TV]: Not connecting to WebSocket - reconnect disabled`);
+      return;
+    }
+
+    console.log(`[7TV]: Connecting to WebSocket (attempt ${this.reconnectAttempts + 1})`);
+
+    this.chat = new WebSocket("wss://events.7tv.io/v3?app=kicktalk&version=420.69");
+
+    this.chat.onerror = (event) => {
+      console.log(`[7TV]: WebSocket error:`, event);
+      this.handleConnectionError();
+    };
+
+    this.chat.onclose = (event) => {
+      console.log(`[7TV]: WebSocket closed. Code: ${event.code}, Reason: ${event.reason}`);
+      this.handleReconnection();
+    };
 
     this.chat.onopen = async () => {
-      console.log(`[7TV]: Connection opened`);
+      console.log(`[7TV]: Connection opened successfully`);
+
+      this.reconnectAttempts = 0;
 
       await this.delay(1000);
 
@@ -188,11 +208,30 @@ class StvWebSocket extends EventTarget {
 
       // Setup message handler
       this.setupMessageHandler();
-
-      this.chat.onerror = (event) => {
-        console.log(`[7TV]: Error: ${event.message}`);
-      };
     };
+  }
+
+  handleConnectionError() {
+    this.reconnectAttempts++;
+    console.log(`[7TV]: Connection error. Attempt ${this.reconnectAttempts}`);
+  }
+
+  handleReconnection() {
+    if (!this.shouldReconnect) {
+      console.log(`[7TV]: Reconnection disabled for chatroom ${this.channelKickID}`);
+      return;
+    }
+
+    // exponential backoff: start * 2^(step-1)
+    // cap at maxRetrySteps, so after step 5 it stays at start * 2^(maxRetrySteps-1)
+    const step = Math.min(this.reconnectAttempts, this.maxRetrySteps);
+    const delay = this.startDelay * Math.pow(2, step - 1);
+
+    console.log(`[7TV]: Reconnecting in ${delay}ms (attempt ${this.reconnectAttempts})`);
+
+    setTimeout(() => {
+      this.connect();
+    }, delay);
   }
 
   /**
@@ -322,17 +361,22 @@ class StvWebSocket extends EventTarget {
   }
 
   close() {
-    console.log(`Closing connection for chatroom ${this.channelKickID}`);
+    console.log(`[7TV]: Closing connection for chatroom ${this.channelKickID}`);
     this.shouldReconnect = false;
 
-    if (this.chat && this.chat.readyState === WebSocket.OPEN) {
+    if (this.chat) {
       try {
-        this.chat.close();
+        if (this.chat.readyState === WebSocket.OPEN || this.chat.readyState === WebSocket.CONNECTING) {
+          console.log(`[7TV]: WebSocket state: ${this.chat.readyState}, closing...`);
+          this.chat.close();
+        }
         this.chat = null;
         console.log(`[7TV]: Connection closed for chatroom ${this.channelKickID}`);
       } catch (error) {
         console.error(`[7TV]: Error during closing of connection for chatroom ${this.channelKickID}:`, error);
       }
+    } else {
+      console.log(`[7TV]: No active connection to close for chatroom ${this.channelKickID}`);
     }
   }
 }

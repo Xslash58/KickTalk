@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 import {
   app,
   shell,
@@ -11,14 +12,19 @@ import {
   clipboard,
   ipcRenderer,
 } from "electron";
+=======
+import { app, shell, BrowserWindow, ipcMain, screen, session, Tray, dialog } from "electron";
+>>>>>>> Stashed changes
 import { join } from "path";
 import { electronApp, optimizer } from "@electron-toolkit/utils";
 import { update } from "./utils/update";
 import Store from "electron-store";
 import store from "../../utils/config";
-
+import fs from "fs";
 import dotenv from "dotenv";
 dotenv.config();
+
+const isDev = process.env.NODE_ENV === "development";
 
 const authStore = new Store({
   fileExtension: "env",
@@ -33,8 +39,6 @@ const authStore = new Store({
 });
 
 ipcMain.setMaxListeners(100);
-
-const isDev = process.env.NODE_ENV === "development";
 
 const userLogsStore = new Map(); // User logs by chatroom
 const replyLogsStore = new Map(); // Reply threads by chatroom
@@ -88,8 +92,77 @@ let chattersDialog = null;
 let settingsDialog = null;
 let searchDialog = null;
 let replyThreadDialog = null;
-let contextMenuWindow = null;
+let availableNotificationSounds = [];
 
+// Notification Sounds Handler
+const getNotificationSounds = () => {
+  // Determine the correct sounds directory based on packaging
+  const basePath = app.isPackaged
+    ? join(process.resourcesPath, "app.asar.unpacked/resources/sounds")
+    : join(__dirname, "../../resources/sounds");
+
+  availableNotificationSounds = fs
+    .readdirSync(basePath)
+    .filter((file) => file.endsWith(".mp3") || file.endsWith(".wav"))
+    .map((file) => ({
+      name: file.replace(/\.(mp3|wav)$/, ""),
+      value: join(basePath, file),
+    }));
+
+  console.log("Notification Sounds:", availableNotificationSounds);
+  return availableNotificationSounds;
+};
+
+getNotificationSounds(); // Load initially
+
+const handleNotificationSound = (soundFile) => {
+  if (!soundFile) return null;
+
+  const audioBuffer = fs.readFileSync(soundFile);
+  const audioBase64 = audioBuffer.toString("base64");
+  const mimeType = soundFile.endsWith(".mp3") ? "audio/mpeg" : "audio/wav";
+  return `data:${mimeType};base64,${audioBase64}`;
+};
+
+const getSoundUrl = (soundObject) => {
+  if (!soundObject?.value) return null;
+
+  if (isDev) {
+    try {
+      return handleNotificationSound(soundObject.value);
+    } catch (error) {
+      console.error("[Notification Sounds]: Error reading sound file:", error);
+      return null;
+    }
+  } else {
+    return `file://${soundObject.value}`;
+  }
+};
+
+ipcMain.handle("notificationSounds:getAvailable", () => {
+  getNotificationSounds();
+  return availableNotificationSounds;
+});
+
+ipcMain.handle("notificationSounds:getSoundUrl", (e, { soundFile }) => {
+  if (!soundFile) {
+    const defaultSound = availableNotificationSounds.find((s) => s.name === "default");
+    return getSoundUrl(defaultSound);
+  }
+
+  const found = availableNotificationSounds.find((s) => s.name === soundFile || s.value.endsWith(soundFile));
+
+  // If not found, fallback to default
+  if (!found) {
+    const defaultSound = availableNotificationSounds.find((s) => s.name === "default");
+    return getSoundUrl(defaultSound);
+  }
+
+  // Return the found sound
+  return getSoundUrl(found);
+});
+
+// [Store Handlers]
 ipcMain.handle("store:get", async (e, { key }) => {
   if (!key) return store.store;
   return store.get(key);
@@ -121,7 +194,7 @@ ipcMain.handle("store:delete", (e, { key }) => {
   return result;
 });
 
-const addUserLog = (chatroomId, userId, message) => {
+const addUserLog = (chatroomId, userId, message, isDeleted = false) => {
   if (!chatroomId || !userId || !message) {
     console.error("[Chat Logs]: Invalid data received:", data);
     return null;
@@ -131,7 +204,20 @@ const addUserLog = (chatroomId, userId, message) => {
 
   // Get or Create User Logs for room
   let userLogs = userLogsStore.get(key) || [];
-  userLogs = [...userLogs.filter((m) => m.id !== message.id), message].slice(-logLimits.user);
+
+  // If updating a deleted flag, update the existing message
+  if (isDeleted) {
+    userLogs = userLogs.map((msg) => {
+      if (msg.id === message.id) {
+        return { ...msg, deleted: true };
+      }
+      return msg;
+    });
+  } else {
+    userLogs = [...userLogs.filter((m) => m.id !== message.id), message]
+      .sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
+      .slice(-logLimits.user);
+  }
 
   // Store User Logs
   userLogsStore.set(key, userLogs);
@@ -147,7 +233,7 @@ const addUserLog = (chatroomId, userId, message) => {
   return { messages: userLogs };
 };
 
-const addReplyLog = (chatroomId, message) => {
+const addReplyLog = (chatroomId, message, isDeleted = false) => {
   if (!message || !chatroomId || !message.metadata?.original_message?.id) {
     console.error("[Reply Logs]: Invalid data received:", data);
     return null;
@@ -164,7 +250,21 @@ const addReplyLog = (chatroomId, message) => {
 
   // Get or Create Reply Logs for original message
   let replyThreadLogs = chatroomReplyThreads.get(key) || [];
-  replyThreadLogs = [...replyThreadLogs.filter((m) => m.id !== message.id), message].slice(-logLimits.reply);
+
+  // If this is a delete operation, update existing message
+  if (isDeleted) {
+    replyThreadLogs = replyThreadLogs.map((msg) => {
+      if (msg.id === message.id) {
+        return { ...msg, deleted: true };
+      }
+      return msg;
+    });
+  } else {
+    // Normal add operation
+    replyThreadLogs = [...replyThreadLogs.filter((m) => m.id !== message.id), message]
+      .sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
+      .slice(-logLimits.reply);
+  }
 
   // Store Reply Logs
   chatroomReplyThreads.set(key, replyThreadLogs);
@@ -172,6 +272,15 @@ const addReplyLog = (chatroomId, message) => {
   if (chatroomReplyThreads.size > logLimits.replyThreads) {
     const oldestKey = chatroomReplyThreads.keys().next().value;
     chatroomReplyThreads.delete(oldestKey);
+  }
+
+  // Update user dialog if the reply is from the user being viewed
+  if (userDialog && dialogInfo?.chatroomId === chatroomId && dialogInfo?.userId === message.sender.id) {
+    userDialog.webContents.send("chatLogs:updated", {
+      chatroomId,
+      userId: message.sender.id,
+      logs: replyThreadLogs,
+    });
   }
 
   if (replyThreadDialog && replyThreadInfo?.originalMessageId === key) {
@@ -198,12 +307,22 @@ ipcMain.handle("chatLogs:add", async (e, { data }) => {
 });
 
 ipcMain.handle("replyLogs:get", async (e, { data }) => {
-  const { originalMessageId, chatroomId } = data;
-  if (!originalMessageId || !chatroomId) return [];
+  const { originalMessageId, chatroomId, userId } = data;
+  if (!chatroomId) return [];
 
   const chatroomReplyThreads = replyLogsStore.get(chatroomId);
   if (!chatroomReplyThreads) return [];
 
+  if (userId) {
+    const allUserReplies = [];
+    chatroomReplyThreads.forEach((replies) => {
+      const userReplies = replies.filter((reply) => reply.sender.id === userId);
+      allUserReplies.push(...userReplies);
+    });
+    return allUserReplies;
+  }
+
+  // Otherwise return replies for a specific thread
   const replyThreadLogs = chatroomReplyThreads.get(originalMessageId);
   return replyThreadLogs || [];
 });
@@ -213,17 +332,35 @@ ipcMain.handle("replyLogs:add", async (e, data) => {
   return addReplyLog(chatroomId, message);
 });
 
-// setInterval(() => {
+ipcMain.handle("logs:updateDeleted", async (e, { chatroomId, messageId }) => {
+  let updated = false;
+  userLogsStore.forEach((userLogs, key) => {
+    if (key.startsWith(`${chatroomId}-`)) {
+      const messageToUpdate = userLogs.find((msg) => msg.id === messageId);
+      if (messageToUpdate) {
+        const userId = key.substring(`${chatroomId}-`.length);
+        addUserLog(chatroomId, userId, messageToUpdate, true);
+        updated = true;
+      }
+    }
+  });
+  return updated;
+});
 
-// const now = Date.now();
-// const maxAge = now - 1000 * 3 * 60 * 60; // 3 hours
+ipcMain.handle("replyLogs:updateDeleted", async (e, { chatroomId, messageId }) => {
+  const chatroomReplyThreads = replyLogsStore.get(chatroomId);
+  if (!chatroomReplyThreads) return false;
 
-// userLogsStore.forEach((logs, key) => {
-//   if (logs.timestamp < maxAge) {
-//     userLogsStore.delete(key);
-//   }
-// });
-// }, 3000);
+  let updated = false;
+  chatroomReplyThreads.forEach((replyThreadLogs) => {
+    const messageToUpdate = replyThreadLogs.find((msg) => msg.id === messageId);
+    if (messageToUpdate) {
+      addReplyLog(chatroomId, messageToUpdate, true);
+      updated = true;
+    }
+  });
+  return updated;
+});
 
 // Handle window focus
 ipcMain.handle("bring-to-front", () => {
@@ -263,6 +400,7 @@ const createWindow = () => {
     backgroundColor: "#06190e",
     autoHideMenuBar: true,
     titleBarStyle: "hidden",
+    roundedCorners: true,
     icon: join(__dirname, "../../resources/icons/win/KickTalk_v1.ico"),
     webPreferences: {
       devTools: true,
@@ -285,13 +423,12 @@ const createWindow = () => {
 
   setAlwaysOnTop(mainWindow);
 
-  mainWindow.on("ready-to-show", async () => {
+  mainWindow.once("ready-to-show", async () => {
     mainWindow.show();
     setAlwaysOnTop(mainWindow);
-    update(mainWindow);
 
     if (isDev) {
-      mainWindow.webContents.openDevTools();
+      mainWindow.webContents.openDevTools({ mode: "detach" });
     }
   });
 
@@ -319,6 +456,7 @@ const createWindow = () => {
   }
 };
 
+<<<<<<< Updated upstream
 // Create the context menu window
 // const createContextMenuWindow = (data) => {
 //   if (contextMenuWindow) {
@@ -408,6 +546,8 @@ ipcMain.handle("contextMenu:show", (e, { data }) => {
   contextMenuWindow.focus();
 });
 
+=======
+>>>>>>> Stashed changes
 const loginToKick = async (method) => {
   const authSession = {
     token: await retrieveToken("SESSION_TOKEN"),
@@ -417,12 +557,10 @@ const loginToKick = async (method) => {
   if (authSession.token && authSession.session) return true;
 
   const mainWindowPos = mainWindow.getPosition();
-  const currentDisplay = screen.getDisplayNearestPoint({
-    x: mainWindowPos[0],
-    y: mainWindowPos[1],
-  });
-  const newX = currentDisplay.bounds.x + Math.round((currentDisplay.bounds.width - 500) / 2);
-  const newY = currentDisplay.bounds.y + Math.round((currentDisplay.bounds.height - 600) / 2);
+  const mainWindowSize = mainWindow.getSize();
+
+  const newX = mainWindowPos[0] + Math.round((mainWindowSize[0] - 1400) / 2);
+  const newY = mainWindowPos[1] + Math.round((mainWindowSize[1] - 750) / 2);
 
   return new Promise((resolve) => {
     const loginDialog = new BrowserWindow({
@@ -436,6 +574,7 @@ const loginToKick = async (method) => {
       autoHideMenuBar: true,
       parent: authDialog,
       roundedCorners: true,
+
       icon: join(__dirname, "../../resources/icons/win/KickTalk_v1.ico"),
       webPreferences: {
         autoplayPolicy: "user-gesture-required",
@@ -447,7 +586,7 @@ const loginToKick = async (method) => {
 
     switch (method) {
       case "kick":
-        loginDialog.loadURL("https://kick.com/login");
+        loginDialog.loadURL("https://kick.com/");
         loginDialog.webContents.on("did-finish-load", () => {
           loginDialog.webContents.executeJavaScript(
             `const interval = setInterval(() => {
@@ -511,49 +650,6 @@ const loginToKick = async (method) => {
   });
 };
 
-const createSearchDialog = () => {
-  if (searchDialog) {
-    searchDialog.show();
-    searchDialog.focus();
-  } else {
-    searchDialog = new BrowserWindow({
-      width: 400,
-      height: 300,
-      x: mainWindow.getPosition()[0] + 100,
-      y: mainWindow.getPosition()[1] + 100,
-      show: true,
-      resizable: false,
-      frame: false,
-      transparent: true,
-      parent: mainWindow,
-      webPreferences: {
-        devtools: true,
-        nodeIntegration: false,
-        contextIsolation: true,
-        preload: join(__dirname, "../preload/index.js"),
-        sandbox: false,
-      },
-    });
-
-    if (isDev && process.env["ELECTRON_RENDERER_URL"]) {
-      searchDialog.loadURL(`${process.env["ELECTRON_RENDERER_URL"]}/search.html`);
-    } else {
-      searchDialog.loadFile(join(__dirname, "../renderer/search.html"));
-    }
-
-    searchDialog.once("ready-to-show", () => {
-      searchDialog.show();
-      if (isDev) {
-        searchDialog.webContents.openDevTools();
-      }
-    });
-
-    searchDialog.on("closed", () => {
-      searchDialog = null;
-    });
-  }
-};
-
 const setupLocalShortcuts = () => {
   mainWindow.webContents.on("before-input-event", (event, input) => {
     if (!mainWindow.isFocused()) return;
@@ -586,12 +682,15 @@ const setupLocalShortcuts = () => {
         store.set("zoomFactor", newZoomFactor);
       }
     }
+<<<<<<< Updated upstream
 
     // Open search dialog
     if (input.control && input.key === "f") {
       event.preventDefault();
       createSearchDialog();
     }
+=======
+>>>>>>> Stashed changes
   });
 };
 
@@ -622,6 +721,9 @@ app.whenReady().then(() => {
 
   createWindow();
 
+  // Initialize auto-updater
+  update(mainWindow);
+
   app.on("activate", function () {
     // On macOS it's common to re-create a window in the app when the
     // dock icon is clicked and there are no other windows open.
@@ -630,51 +732,27 @@ app.whenReady().then(() => {
 
   // Set up local shortcuts instead of global ones
   setupLocalShortcuts();
-
-  // Set Zoom Levels
-  // globalShortcut.register("CommandOrControl+Plus", () => {
-  //   if (mainWindow && mainWindow.isFocused()) {
-  //     if (mainWindow.webContents.getZoomFactor() < 1.5) {
-  //       const newZoomFactor = mainWindow.webContents.getZoomFactor() + 0.1;
-  //       mainWindow.webContents.setZoomFactor(newZoomFactor);
-  //       store.set("zoomFactor", newZoomFactor);
-  //     }
-  //   }
-  // });
-
-  // globalShortcut.register("CommandOrControl+-", () => {
-  //   if (mainWindow && mainWindow.isFocused()) {
-  //     if (mainWindow.webContents.getZoomFactor() > 0.8) {
-  //       const newZoomFactor = mainWindow.webContents.getZoomFactor() - 0.1;
-  //       mainWindow.webContents.setZoomFactor(newZoomFactor);
-  //       store.set("zoomFactor", newZoomFactor);
-  //     }
-  //   }
-  // });
-
-  // globalShortcut.register("CommandOrControl+0", () => {
-  //   if (mainWindow && mainWindow.isFocused()) {
-  //     const newZoomFactor = 1;
-  //     mainWindow.webContents.setZoomFactor(newZoomFactor);
-  //     store.set("zoomFactor", newZoomFactor);
-  //   }
-  // });
-
-  // // Open Search Dialog
-  // globalShortcut.register("Ctrl+F", () => {
-  //   if (mainWindow && mainWindow.isFocused()) {
-  //     console.log("Opening Search Dialog");
-  //     if (window?.app && window?.app?.searchDialog) {
-  //       window.app.searchDialog.open();
-  //     }
-  //   }
-  // });
 });
 
 // Logout Handler
 ipcMain.handle("logout", () => {
-  clearAuthTokens();
-  mainWindow.webContents.reload();
+  dialog
+    .showMessageBox(settingsDialog, {
+      type: "question",
+      title: "Sign Out",
+      message: "Are you sure you want to sign out?",
+      buttons: ["Yes", "Cancel"],
+    })
+    // Dialog returns a promise so let's handle it correctly
+    .then((result) => {
+      if (result.response !== 0) return;
+
+      if (result.response === 0) {
+        clearAuthTokens();
+        mainWindow.webContents.reload();
+        settingsDialog.close();
+      }
+    });
 });
 
 // User Dialog Handler
@@ -690,13 +768,13 @@ ipcMain.handle("userDialog:open", (e, { data }) => {
 
   if (userDialog) {
     userDialog.setPosition(newX, newY);
-    userDialog.webContents.send("userDialog:data", { ...data, pinned: userDialog.isAlwaysOnTop() });
+    userDialog.webContents.send("userDialog:data", { ...data, pinned: false });
 
     return;
   }
 
   userDialog = new BrowserWindow({
-    width: 550,
+    width: 600,
     height: 600,
     x: newX,
     y: newY,
@@ -726,19 +804,19 @@ ipcMain.handle("userDialog:open", (e, { data }) => {
     userDialog.setAlwaysOnTop(false);
     userDialog.focus();
 
-    userDialog.webContents.send("userDialog:data", { ...data, pinned: userDialog.isAlwaysOnTop() });
+    userDialog.webContents.send("userDialog:data", { ...data, pinned: false });
     userDialog.webContents.setWindowOpenHandler((details) => {
       shell.openExternal(details.url);
       return { action: "deny" };
     });
   });
 
-  userDialog.on("blur", () => {
-    if (userDialog && !userDialog.isAlwaysOnTop()) {
-      userDialog.close();
-      mainWindow.setAlwaysOnTop(store.get("general.alwaysOnTop"));
-    }
-  });
+  // userDialog.on("blur", () => {
+  //   if (userDialog && !userDialog.isAlwaysOnTop()) {
+  //     userDialog.close();
+  //     mainWindow.setAlwaysOnTop(store.get("general.alwaysOnTop"));
+  //   }
+  // });
 
   userDialog.on("closed", () => {
     dialogInfo = null;
@@ -891,6 +969,9 @@ app.on("window-all-closed", () => {
 ipcMain.handle("chattersDialog:open", (e, { data }) => {
   if (chattersDialog) {
     chattersDialog.focus();
+    if (data) {
+      chattersDialog.webContents.send("chattersDialog:data", data);
+    }
     return;
   }
 
@@ -929,11 +1010,11 @@ ipcMain.handle("chattersDialog:open", (e, { data }) => {
 
   chattersDialog.once("ready-to-show", () => {
     chattersDialog.show();
-    if (data) {
-      chattersDialog.webContents.send("chattersDialog:data", data);
-    }
     if (isDev) {
       chattersDialog.webContents.openDevTools();
+    }
+    if (data) {
+      chattersDialog.webContents.send("chattersDialog:data", data);
     }
   });
 
@@ -955,59 +1036,65 @@ ipcMain.handle("chattersDialog:close", () => {
 });
 
 // Search Dialog Handler
-// ipcMain.handle("searchDialog:open", (e, { data }) => {
-// if (searchDialog) {
-//   searchDialog.focus();
-//   return;
-// }
+ipcMain.handle("searchDialog:open", (e, { data }) => {
+  if (searchDialog) {
+    searchDialog.focus();
+    searchDialog.webContents.send("searchDialog:data", data);
+    return;
+  }
 
-// const mainWindowPos = mainWindow.getPosition();
-// const newX = mainWindowPos[0] + 100;
-// const newY = mainWindowPos[1] + 100;
+  const mainWindowPos = mainWindow.getPosition();
+  const newX = mainWindowPos[0] + 100;
+  const newY = mainWindowPos[1] + 100;
 
-// searchDialog = new BrowserWindow({
-//   width: 350,
-//   minWidth: 350,
-//   height: 600,
-//   minHeight: 400,
-//   x: newX,
-//   y: newY,
-//   show: false,
-//   resizable: true,
-//   frame: false,
-//   transparent: true,
-//   roundedCorners: true,
-//   parent: mainWindow,
-//   icon: join(__dirname, "../../resources/icons/win/KickTalk_v1.ico"),
-//   webPreferences: {
-//     devtools: true,
-//     nodeIntegration: false,
-//     contextIsolation: true,
-//     preload: join(__dirname, "../preload/index.js"),
-//     sandbox: false,
-//   },
-// });
+  searchDialog = new BrowserWindow({
+    width: 650,
+    minWidth: 650,
+    height: 600,
+    minHeight: 600,
+    x: newX,
+    y: newY,
+    show: false,
+    resizable: true,
+    frame: false,
+    transparent: true,
+    roundedCorners: true,
+    parent: mainWindow,
+    icon: join(__dirname, "../../resources/icons/win/KickTalk_v1.ico"),
+    webPreferences: {
+      devtools: true,
+      nodeIntegration: false,
+      contextIsolation: true,
+      preload: join(__dirname, "../preload/index.js"),
+      sandbox: false,
+    },
+  });
 
-// if (isDev && process.env["ELECTRON_RENDERER_URL"]) {
-//   searchDialog.loadURL(`${process.env["ELECTRON_RENDERER_URL"]}/search.html`);
-// } else {
-//   searchDialog.loadFile(join(__dirname, "../renderer/search.html"));
-// }
+  if (isDev && process.env["ELECTRON_RENDERER_URL"]) {
+    searchDialog.loadURL(`${process.env["ELECTRON_RENDERER_URL"]}/search.html`);
+  } else {
+    searchDialog.loadFile(join(__dirname, "../renderer/search.html"));
+  }
 
-// searchDialog.once("ready-to-show", () => {
-//   searchDialog.show();
-//   if (data) {
-//     searchDialog.webContents.send("searchDialog:data", data);
-//   }
-//   if (isDev) {
-//     searchDialog.webContents.openDevTools();
-//   }
-// });
+  searchDialog.once("ready-to-show", () => {
+    searchDialog.show();
+    if (isDev) {
+      searchDialog.webContents.openDevTools({ mode: "detach" });
+    }
 
-// searchDialog.on("closed", () => {
-//   searchDialog = null;
-// });
-// });
+    if (data) {
+      searchDialog.webContents.send("searchDialog:data", data);
+      searchDialog.webContents.setWindowOpenHandler((details) => {
+        shell.openExternal(details.url);
+        return { action: "deny" };
+      });
+    }
+  });
+
+  searchDialog.on("closed", () => {
+    searchDialog = null;
+  });
+});
 
 ipcMain.handle("searchDialog:close", () => {
   try {
@@ -1022,21 +1109,26 @@ ipcMain.handle("searchDialog:close", () => {
 });
 
 // Settings Dialog Handler
-ipcMain.handle("settingsDialog:open", (e, { data }) => {
+ipcMain.handle("settingsDialog:open", async (e, { data }) => {
+  const settings = await store.get();
+
   if (settingsDialog) {
     settingsDialog.focus();
+    settingsDialog.webContents.send("settingsDialog:data", { ...data, settings });
     return;
   }
 
   const mainWindowPos = mainWindow.getPosition();
-  const newX = mainWindowPos[0] + 100;
-  const newY = mainWindowPos[1] + 100;
+  const mainWindowSize = mainWindow.getSize();
+
+  const newX = mainWindowPos[0] + Math.round((mainWindowSize[0] - 1400) / 2);
+  const newY = mainWindowPos[1] + Math.round((mainWindowSize[1] - 750) / 2);
 
   settingsDialog = new BrowserWindow({
-    width: 1000,
-    minWidth: 1000,
-    height: 600,
-    minHeight: 600,
+    width: 1400,
+    minWidth: 1400,
+    height: 750,
+    minHeight: 750,
     x: newX,
     y: newY,
     show: false,
@@ -1064,11 +1156,16 @@ ipcMain.handle("settingsDialog:open", (e, { data }) => {
   settingsDialog.once("ready-to-show", () => {
     settingsDialog.show();
     if (data) {
-      settingsDialog.webContents.send("settingsDialog:data", data);
+      settingsDialog.webContents.send("settingsDialog:data", { ...data, settings });
     }
     if (isDev) {
       settingsDialog.webContents.openDevTools();
     }
+
+    settingsDialog.webContents.setWindowOpenHandler((details) => {
+      shell.openExternal(details.url);
+      return { action: "deny" };
+    });
   });
 
   settingsDialog.on("closed", () => {
@@ -1099,7 +1196,6 @@ ipcMain.handle("replyThreadDialog:open", (e, { data }) => {
     chatroomId: data.chatroomId,
     originalMessageId: data.originalMessageId,
   };
-
   if (replyThreadDialog) {
     replyThreadDialog.focus();
     replyThreadDialog.webContents.send("replyThreadDialog:data", data);

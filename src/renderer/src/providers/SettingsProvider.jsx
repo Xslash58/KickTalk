@@ -22,7 +22,14 @@ const SettingsProvider = ({ children }) => {
         const newSettings = { ...prev };
 
         Object.entries(data).forEach(([key, value]) => {
-          newSettings[key] = value;
+          if (typeof value === "object" && value !== null) {
+            newSettings[key] = {
+              ...newSettings[key],
+              ...value,
+            };
+          } else {
+            newSettings[key] = value;
+          }
         });
 
         return newSettings;
@@ -33,7 +40,15 @@ const SettingsProvider = ({ children }) => {
   }, []);
 
   const updateSettings = async (key, value) => {
-    window.app.store.set(key, value);
+    setSettings((prev) => ({
+      ...prev,
+      [key]: {
+        ...prev[key],
+        ...value,
+      },
+    }));
+
+    await window.app.store.set(key, value);
   };
 
   return <SettingsContext.Provider value={{ settings, updateSettings }}>{children}</SettingsContext.Provider>;

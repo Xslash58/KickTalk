@@ -4,10 +4,10 @@ import react from "@vitejs/plugin-react";
 
 export default defineConfig({
   main: {
-    plugins: [externalizeDepsPlugin({ exclude: ["electron-store", "electron-util"] })],
+    plugins: [externalizeDepsPlugin({ exclude: ["electron-store", "electron-util", "electron-timber"] })],
   },
   preload: {
-    plugins: [externalizeDepsPlugin({ exclude: ["electron-store", "electron-util"] })],
+    plugins: [externalizeDepsPlugin({ exclude: ["electron-store", "electron-util", "electron-timber"] })],
   },
   renderer: {
     build: {
@@ -17,10 +17,9 @@ export default defineConfig({
           userDialog: resolve("src/renderer/user.html"),
           authDialog: resolve("src/renderer/auth.html"),
           chattersDialog: resolve("src/renderer/chatters.html"),
-          // searchDialog: resolve("src/renderer/search.html"),
-          // settingsDialog: resolve("src/renderer/settings.html"),
-          // contextMenu: resolve("src/renderer/contextMenu.html"),
-          replyThreadDialog: resolve("src/renderer/replyThread.html"),
+          searchDialog: resolve("src/renderer/search.html"),
+          settings: resolve("src/renderer/settings.html"),
+          replyThread: resolve("src/renderer/replyThread.html"),
         },
       },
     },

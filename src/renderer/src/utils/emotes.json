@@ -28521,7 +28521,7 @@
   },
   {
     "codes": "1f3f4-e0067-e0062-e0065-e006e-e0067-e007f",
-    "char": "🏴󠁧󠁢󠁥󠁮󠁧󠁿",
+    "char": "🏴󠁧󠁢󠁥󠁮󠁧U+E007F",
     "name": "flag:-england",
     "category": "Flags (subdivision-flag)",
     "group": "Flags",
@@ -28529,7 +28529,7 @@
   },
   {
     "codes": "1f3f4-e0067-e0062-e0073-e0063-e0074-e007f",
-    "char": "🏴󠁧󠁢󠁳󠁣󠁴󠁿",
+    "char": "🏴󠁧󠁢󠁳󠁣󠁴U+E007F",
     "name": "flag:-scotland",
     "category": "Flags (subdivision-flag)",
     "group": "Flags",
@@ -28537,7 +28537,7 @@
   },
   {
     "codes": "1f3f4-e0067-e0062-e0077-e006c-e0073-e007f",
-    "char": "🏴󠁧󠁢󠁷󠁬󠁳󠁿",
+    "char": "🏴󠁧󠁢󠁷󠁬󠁳U+E007F",
     "name": "flag:-wales",
     "category": "Flags (subdivision-flag)",
     "group": "Flags",

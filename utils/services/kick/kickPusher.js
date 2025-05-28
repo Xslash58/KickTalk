@@ -6,11 +6,12 @@ class KickPusher extends EventTarget {
     this.chatroomNumber = chatroomNumber;
     this.streamerId = streamerId;
     this.shouldReconnect = true;
+    this.socketId = null;
   }
 
   connect() {
     if (!this.shouldReconnect) {
-      console.log("Not connecting to chatroom. Disabled recconect.");
+      console.log("Not connecting to chatroom. Disabled reconnect.");
       return;
     }
     console.log(`Connecting to chatroom: ${this.chatroomNumber} and streamerId: ${this.streamerId}`);
@@ -98,6 +99,77 @@ class KickPusher extends EventTarget {
 
         if (jsonData.event === "pusher:connection_established") {
           console.log(`Connection established: socket ID - ${JSON.parse(jsonData.data).socket_id}`);
+          this.socketId = JSON.parse(jsonData.data).socket_id;
+
+          const user_id = localStorage.getItem("kickId");
+
+          if (!user_id) {
+            console.log("[KickPusher] No user ID found, skipping private event subscriptions");
+            this.reconnectDelay = 5000;
+            return;
+          }
+
+          const chatrooms = JSON.parse(localStorage.getItem("chatrooms"));
+          const chatroom = chatrooms?.find((chatroom) => chatroom.id === this.chatroomNumber);
+
+          if (!chatroom) {
+            console.log(`[KickPusher] Could not find chatroom data for ${this.chatroomNumber}`);
+            this.reconnectDelay = 5000;
+            return;
+          }
+
+          // Subscribe to user-specific events (only once per user, regardless of chatroom)
+          const userEvents = [`private-userfeed.${user_id}`, `private-channelpoints-${user_id}`];
+
+          console.log("[KickPusher] Subscribing to user events:", userEvents);
+
+          userEvents.forEach(async (event) => {
+            try {
+              console.log("[KickPusher] Subscribing to private event:", event);
+              const AuthToken = await window.app.kick.getKickAuthForEvents(event, this.socketId);
+
+              if (AuthToken.auth) {
+                this.chat.send(
+                  JSON.stringify({
+                    event: "pusher:subscribe",
+                    data: { auth: AuthToken.auth, channel: event },
+                  }),
+                );
+                console.log("[KickPusher] Subscribed to event:", event);
+              }
+            } catch (error) {
+              console.error("[KickPusher] Error subscribing to event:", error);
+            }
+          });
+
+          // Subscribe to livestream event if streamer is live
+          if (chatroom.streamerData.livestream !== null) {
+            const livestreamId = chatroom.streamerData.livestream.id;
+            const liveEventToSubscribe = `private-livestream.${livestreamId}`;
+
+            try {
+              console.log(
+                `[KickPusher] Subscribing to livestream event for chatroom ${this.chatroomNumber}:`,
+                liveEventToSubscribe,
+              );
+
+              const AuthToken = await window.app.kick.getKickAuthForEvents(liveEventToSubscribe, this.socketId);
+
+              if (AuthToken.auth) {
+                this.chat.send(
+                  JSON.stringify({
+                    event: "pusher:subscribe",
+                    data: { auth: AuthToken.auth, channel: liveEventToSubscribe },
+                  }),
+                );
+                console.log("[KickPusher] Subscribed to livestream event:", liveEventToSubscribe);
+              }
+            } catch (error) {
+              console.error("[KickPusher] Error subscribing to livestream event:", error);
+            }
+          } else {
+            console.log(`[KickPusher] Chatroom ${this.chatroomNumber} is not live, skipping livestream subscription`);
+          }
 
           this.reconnectDelay = 5000;
         }
@@ -112,6 +184,7 @@ class KickPusher extends EventTarget {
         }
 
         if (
+          jsonData.event === `App\\Events\\LivestreamUpdated` ||
           jsonData.event === `App\\Events\\StreamerIsLive` ||
           jsonData.event === `App\\Events\\StopStreamBroadcast` ||
           jsonData.event === `App\\Events\\PinnedMessageCreatedEvent` ||

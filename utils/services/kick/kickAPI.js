@@ -1,72 +1,47 @@
 import axios from "axios";
-import { create } from "zustand";
 const APIUrl = "https://kick.com";
 const KickTalkAPIUrl = "https://api.kicktalk.app";
 const rateLimitMap = new Map();
 
-const kickAxios = axios.create({
-  baseURL: "https://kick.com",
-  withCredentials: true,
-  headers: {
-    Accept: "*/*",
-    "Content-Type": "application/json",
-  },
-});
+// const axiosClient = axios.create({
+//   baseURL: "https://kick.com",
+//   withCredentials: true,
+//   headers: {
+//     Accept: "*/*",
+//     "Content-Type": "application/json",
+//   },
+// });
 
-// const authTest = async (channelName, socketId, sessionCookie, kickSession) => {
-//   try {
-//     const response = await fetch("https://kick.com/broadcasting/auth", {
-//       method: "POST",
-//       credentials: "include",
-//       headers: {
-//         // Comprehensive headers matching browser request
-//         accept: "application/json",
-//         "accept-encoding": "gzip, deflate, br, zstd",
-//         "accept-language": "en-US,en;q=0.8",
-//         authorization: `Bearer ${sessionCookie}`,
-//         "content-type": "application/json",
-//         origin: "https://kick.com",
-//         priority: "u=1, i",
-//         referer: "https://kick.com/design",
+const getKickAuthForEvents = async (eventChannelName, socketId, sessionCookie, kickSession) => {
+  try {
+    const response = await axios.post(
+      `${APIUrl}/broadcasting/auth`,
+      {
+        socket_id: socketId,
+        channel_name: eventChannelName,
+      },
+      {
+        headers: {
+          accept: "application/json, text/plain, */*",
+          "accept-language": "en-US",
+          authorization: `Bearer ${sessionCookie}`,
+          "content-type": "application/json",
+          priority: "u=1, i",
+        },
+        Cookie: `kick_session=${kickSession}, session_token=${sessionCookie}, x-xsrf-token=${sessionCookie}, XSRF-TOKEN=${kickSession}`,
+        referrerPolicy: "strict-origin-when-cross-origin",
+        method: "POST",
+        mode: "cors",
+        credentials: "include",
+      },
+    );
 
-//         // XSRF Token handling
-//         "x-xsrf-token": kickSession,
-
-//         // Additional security headers
-//         "sec-ch-ua": '"Chromium";v="136", "Brave";v="136", "Not.A/Brand";v="99"',
-//         "sec-ch-ua-mobile": "?0",
-//         "sec-ch-ua-platform": '"Windows"',
-//         "sec-fetch-dest": "empty",
-//         "sec-fetch-mode": "cors",
-//         "sec-fetch-site": "same-origin",
-//         "sec-gpc": "1",
-//         "user-agent":
-//           "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36",
-
-//         // Additional potential headers
-//         cookie: `session_token=${sessionCookie}; kick_session=${kickSession}; XSRF-TOKEN=${kickSession}`,
-//       },
-//       body: JSON.stringify({
-//         channel_name: channelName, // Ensure this matches exactly
-//         socket_id: socketId, // Use provided or default socket ID
-//       }),
-//     });
-
-//     if (!response.ok) {
-//       const errorText = await response.text();
-//       console.error(`HTTP error! status: ${response.status}`);
-//       console.error("Error response body:", errorText);
-//       throw new Error(`HTTP error! status: ${response.status}`);
-//     }
-
-//     const data = await response.json();
-//     console.log("Response data:", data);
-//     return data;
-//   } catch (error) {
-//     console.error("Authentication test failed:", error);
-//     throw error;
-//   }
-// };
+    return response?.data;
+  } catch (error) {
+    console.error("[KickAPI]: Auth Token Retrieval Failed:", error);
+    throw error;
+  }
+};
 
 /**
  *
@@ -192,6 +167,24 @@ const getTimeoutUser = async (channelName, username, banDuration, sessionCookie,
   }
 };
 
+// Delete Message
+const getDeleteMessage = async (chatroomId, messageId, sessionCookie, kickSession) => {
+  try {
+    const response = await axios.delete(`${APIUrl}/api/v2/chatrooms/${chatroomId}/messages/${messageId}`, {
+      headers: {
+        Accept: "*/*",
+        Authorization: `Bearer ${sessionCookie}`,
+        "X-XSRF-TOKEN": kickSession,
+      },
+      Cookie: `kick_session=${kickSession}, session_token=${sessionCookie}, x-xsrf-token=${sessionCookie}, XSRF-TOKEN=${kickSession}`,
+    });
+    return response.data;
+  } catch (error) {
+    console.error(`[KickAPI]: Failed to delete message ${messageId} in chatroom ${chatroomId}:`, error);
+    throw error;
+  }
+};
+
 /** [END MOD ACTIONS] */
 
 const getLinkThumbnail = async (url) => {
@@ -261,6 +254,58 @@ const getChannelChatroomInfo = async (channelName) => {
   }
 };
 
+<<<<<<< Updated upstream
+=======
+const getInitialPollInfo = async (channelName, sessionCookie, kickSession) => {
+  try {
+    const response = await axios.get(`${APIUrl}/api/v2/channels/${channelName}/polls`, {
+      headers: {
+        Accept: "*/*",
+        Authorization: `Bearer ${sessionCookie}`,
+        "X-XSRF-TOKEN": kickSession,
+      },
+    });
+
+    return response;
+  } catch (error) {
+    if (channelName.includes("_")) {
+      const transformedChannelName = channelName.replaceAll("_", "-");
+
+      if (transformedChannelName !== channelName) {
+        return await getChannelChatroomInfo(transformedChannelName);
+      }
+    }
+
+    throw error;
+  }
+};
+
+const getSubmitPollVote = async (channelName, optionId, sessionCookie, kickSession) => {
+  try {
+    // https://kick.com/api/v2/channels/design/polls/vote
+
+    const response = await axios.post(
+      `${APIUrl}/api/v2/channels/${channelName}/polls/vote`,
+      {
+        id: optionId,
+      },
+      {
+        headers: {
+          Accept: "*/*",
+          Authorization: `Bearer ${sessionCookie}`,
+          "X-XSRF-TOKEN": kickSession,
+        },
+        Cookie: `kick_session=${kickSession}, session_token=${sessionCookie}, x-xsrf-token=${sessionCookie}, XSRF-TOKEN=${kickSession}`,
+      },
+    );
+
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+>>>>>>> Stashed changes
 const getUserKickId = async (sessionCookie, kickSession) => {
   const response = await axios.get(`${APIUrl}/api/v1/user`, {
     headers: {
@@ -437,7 +482,7 @@ const getSelfChatroomInfo = async (chatroomName, sessionCookie, kickSession) => 
   }
 };
 
-const getUserChatroomInfo = async (chatroomName, username, sessionCookie, kickSession) => {
+const getUserChatroomInfo = async (chatroomName, username) => {
   try {
     const response = await axios.get(`${APIUrl}/api/v2/channels/${chatroomName}/users/${username}`, {
       referrer: `https://kick.com/${chatroomName}`,
@@ -453,7 +498,7 @@ const getUserChatroomInfo = async (chatroomName, username, sessionCookie, kickSe
       const transformedChannelName = chatroomName.replaceAll("_", "-");
 
       if (transformedChannelName !== chatroomName) {
-        return await getUserChatroomInfo(transformedChannelName, username, sessionCookie, kickSession);
+        return await getUserChatroomInfo(transformedChannelName, username);
       }
     }
 
@@ -620,6 +665,26 @@ const getUnsilenceUser = (user_id, sessionCookie, kickSession) => {
   });
 };
 
+const getChatroomViewers = async (chatroomId) => {
+  try {
+    const response = await axios.get(`${APIUrl}/current-viewers`, {
+      params: {
+        "ids[]": chatroomId,
+      },
+      referrer: "https://kick.com/",
+      referrerPolicy: "strict-origin-when-cross-origin",
+      method: "GET",
+      mode: "cors",
+      credentials: "include",
+    });
+
+    return response.data;
+  } catch (error) {
+    console.error(`[KickAPI]: Failed to get current viewers for chatroom ${chatroomId}:`, error);
+    throw error;
+  }
+};
+
 export {
   getChannelInfo,
   getChannelChatroomInfo,
@@ -639,12 +704,19 @@ export {
   getUnsilenceUser,
   getPinMessage,
   getUnpinMessage,
+<<<<<<< Updated upstream
+=======
+  getInitialPollInfo,
+  getSubmitPollVote,
+  getChatroomViewers,
+>>>>>>> Stashed changes
 
   // Mod Actions
   getBanUser,
   getUnbanUser,
   getTimeoutUser,
+  getDeleteMessage,
 
-  // Auth Test
-  // authTest,
+  // Kick Auth
+  getKickAuthForEvents,
 };

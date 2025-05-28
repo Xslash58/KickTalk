@@ -1,7 +1,28 @@
+import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
+
+dayjs.extend(utc);
+
 export const scrollToBottom = (chatBodyRef, setShowScrollToBottom) => {
   if (!chatBodyRef.current) return;
   chatBodyRef.current.scrollTop = chatBodyRef.current.scrollHeight;
   setShowScrollToBottom(false);
+};
+
+export const convertDateToHumanReadable = (date) => {
+  const utcTime = dayjs.utc(date, "YYYY-MM-DD HH:mm:ss");
+
+  const now = dayjs();
+  const diff = now.diff(utcTime, "minutes");
+
+  const hours = Math.floor(diff / 60);
+  const minutes = diff % 60;
+
+  if (hours > 0) {
+    return `${hours}h ${minutes}m ago`;
+  } else {
+    return `${minutes}m ago`;
+  }
 };
 
 export const convertMinutesToHumanReadable = (minutes) => {
@@ -30,6 +51,32 @@ export const convertSecondsToHumanReadable = (seconds) => {
       return `${Math.floor(seconds / 2592000)} ${Math.floor(seconds / 2592000) > 1 ? "months" : "month"}`;
     case seconds >= 31536000:
       return `${Math.floor(seconds / 31536000)} ${Math.floor(seconds / 31536000) > 1 ? "years" : "year"}`;
+    default:
+      return "";
+  }
+};
+
+export const getTimestampFormat = (timestamp, format) => {
+  if (!timestamp) return "";
+  switch (format) {
+    case "disabled":
+      return "";
+    case "h:mm":
+      return dayjs(timestamp).format("h:mm");
+    case "hh:mm":
+      return dayjs(timestamp).format("HH:mm");
+    case "h:mm a":
+      return dayjs(timestamp).format("h:mm A");
+    case "hh:mm a":
+      return dayjs(timestamp).format("HH:mm A");
+    case "h:mm:ss":
+      return dayjs(timestamp).format("h:mm:ss");
+    case "hh:mm:ss":
+      return dayjs(timestamp).format("HH:mm:ss");
+    case "h:mm:ss a":
+      return dayjs(timestamp).format("h:mm:ss A");
+    case "hh:mm:ss a":
+      return dayjs(timestamp).format("HH:mm:ss A");
     default:
       return "";
   }

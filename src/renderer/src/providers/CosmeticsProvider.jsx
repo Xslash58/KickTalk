@@ -8,9 +8,13 @@ const useCosmeticsStore = create((set, get) => ({
   },
 
   addUserStyle: async (username, body) => {
+    console.log("Adding user style:", body);
     if (!body?.object?.user?.style) return;
     const transformedUsername = username.toLowerCase();
     const userStyle = body.object.user;
+
+    console.log("Adding user style for", body);
+    console.log("Adding user style for", userStyle.username);
 
     set((state) => {
       const currentStyle = state.userStyles[transformedUsername] || {};

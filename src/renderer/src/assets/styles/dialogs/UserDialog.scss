@@ -1,20 +1,26 @@
 .dialogWrapper {
   height: 100vh;
   display: flex;
-  border: 1px solid #192c1f;
   flex-direction: column;
+<<<<<<< Updated upstream
+=======
+  border: 1px solid #2e3c32;
+  background: linear-gradient(180deg, #020a05 0%, #06190e 100%), linear-gradient(180deg, #031209 0%, #06190e 100%);
+  border-radius: 4px;
+>>>>>>> Stashed changes
 }
 
 .dialogHeader {
-  border-bottom: 1px solid #182f21;
+  border-bottom: 1px solid #2e3c32;
   align-items: center;
   display: flex;
   position: relative;
   app-region: drag;
   flex-direction: column;
-  gap: 16px;
+  gap: 24px;
   flex: 0 1 30%;
-  padding: 16px 0;
+  padding: 24px 0;
+  padding-bottom: 16px;
 }
 
 .dialogLogs {
@@ -23,7 +29,12 @@
   flex: 1;
   display: flex;
   flex-direction: column;
+<<<<<<< Updated upstream
   background-color: #122017;
+=======
+  background: rgba(15, 25, 19, 0.95);
+  border-radius: 0 0 4px 4px;
+>>>>>>> Stashed changes
 }
 
 .dialogLogsHead {
@@ -34,10 +45,12 @@
   display: flex;
   align-items: center;
   text-transform: uppercase;
-  border-bottom: 1px solid #182f21;
+  border-bottom: 1px solid #2e3c32;
 
   > p {
-    opacity: 0.3;
+    opacity: 1;
+    font-weight: 700;
+    color: #3d4d41;
   }
 }
 
@@ -104,7 +117,7 @@
     height: inherit;
     object-fit: cover;
     border-radius: 4px;
-    border: 1px solid #192c1f;
+    border: 1px solid #2e3c32;
   }
 }
 
@@ -169,7 +182,7 @@
     justify-content: space-between;
     app-region: no-drag;
     padding-top: 12px;
-    border-top: 1px solid #182f21;
+    border-top: 1px solid #2e3c32;
 
     .dialogHeaderModActionsTimeout {
       display: flex;
@@ -180,7 +193,7 @@
       button {
         background-color: transparent;
         color: rgba(255, 255, 255, 0.4);
-        border-right: 1px solid #ffffff29;
+        border-right: 1px solid #2e3c32;
         padding: 4px 12px;
         cursor: pointer;
         transition:
@@ -234,10 +247,47 @@
   gap: 8px;
   flex-direction: column;
 
-  > h1 {
-    font-size: 22px;
-    width: max-content;
-    app-region: no-drag;
+  .dialogHeaderUserInfoProfile {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    // flex-direction: column;
+    > h1 {
+      font-size: 20px;
+      width: max-content;
+      app-region: no-drag;
+    }
+  }
+
+  .dialogHeaderUserBadges {
+    display: flex;
+    width: min-content;
+    align-items: center;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    gap: 10px;
+    min-height: 24px;
+    padding: 8px;
+
+    .chatroomBadge {
+      display: flex;
+      border: none;
+      align-items: center;
+      border-right: 1px solid rgba(255, 255, 255, 0.1);
+      padding-right: 8px;
+    }
+
+    .chatroomBadge:last-child {
+      border-right: none;
+      padding-right: 0;
+    }
+
+    .chatroomBadge img {
+      width: 16px;
+      height: auto;
+      border: none;
+      border-radius: 0;
+    }
   }
 }
 
@@ -265,18 +315,17 @@
 }
 
 .dialogHeaderUserImage {
-  height: 88px;
-  width: 88px;
+  height: 80px;
+  width: 80px;
   app-region: no-drag;
 }
 
 .dialogLogsContent {
   overflow-y: auto;
   overflow-x: hidden;
-  gap: 12px;
-  padding: 16px;
   flex: 1 1 100%;
   display: flex;
+  padding-top: 12px;
   min-height: 0;
   flex-direction: column;
   margin-right: 8px;

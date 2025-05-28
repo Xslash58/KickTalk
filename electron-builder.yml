@@ -19,6 +19,8 @@ nsis:
   uninstallDisplayName: ${productName}
   createDesktopShortcut: always
   deleteAppDataOnUninstall: false
+  oneClick: true
+  allowToChangeInstallationDirectory: false
 mac:
   entitlementsInherit: build/entitlements.mac.plist
   notarize: false
@@ -35,8 +37,8 @@ appImage:
   artifactName: ${name}-${version}.${ext}
 npmRebuild: false
 publish:
-  owner: kicktalkorg
-  repo: kicktalk
   provider: github
-  publisherName:
-    - ftk789 & darkness
+  owner: KickTalkOrg
+  repo: KickTalk
+  private: false
+  releaseType: release

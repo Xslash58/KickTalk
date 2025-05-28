@@ -1,4 +1,5 @@
-export const urlRegex = /(https:\/\/[www.]?[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b[-a-zA-Z0-9()@:%_+.~#?&/=]*)/gi;
+// export const urlRegex = /(https:\/\/[www.]?[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b[-a-zA-Z0-9()@:%_+.~#?&/=]*)/gi;
+export const urlRegex = /(https?:\/\/[^\s]+)/g;
 export const kickEmoteRegex = /\[emote:(?<id>\d+)[:]?(?<name>[a-zA-Z0-9-_!]*)[:]?\]/g;
 export const kickEmoteInputRegex = /(?:^|\s)(:(?<emoteCase1>\w{3,}):)|(?:^|\s)(?<emoteCase2>\w{2,})\b/g;
 export const mentionRegex = /(?:^|\s)(@(?<username>[a-zA-Z0-9_]{3,})[,.]?)(?=\s|$)/g;
@@ -10,9 +11,15 @@ export const kickBadgeMap = {
   subscriber: (badge, subscriberBadges) => {
     if (!subscriberBadges?.length) {
       return {
+<<<<<<< Updated upstream
         src: `${kickTalkCDN}/kickBadges/subscriber.svg`,
         title: `${badge.text}-${badge.count}`,
+=======
+        src: `${kickTalkCDN}/subscriber.svg`,
+        title: `${badge.count} Month ${badge.text}`,
+>>>>>>> Stashed changes
         info: `${badge.count} Month Subscriber`,
+        platform: "Kick",
       };
     }
 
@@ -20,30 +27,32 @@ export const kickBadgeMap = {
     return badgeData
       ? {
           src: badgeData.badge_image.src,
-          title: `${badge.text}-${badge.count}`,
+          title: `${badge.count} Month ${badge.text}`,
           info: `${badge.count} Month Subscriber`,
+          platform: "Kick",
         }
       : null;
   },
-  bot: { src: `${kickTalkCDN}/bot.svg`, title: "Bot", info: "Bot" },
-  moderator: { src: `${kickTalkCDN}/moderator.svg`, title: "Moderator", info: "Moderator" },
-  broadcaster: { src: `${kickTalkCDN}/broadcaster.svg`, title: "Broadcaster", info: "Broadcaster" },
-  vip: { src: `${kickTalkCDN}/vip.svg`, title: "VIP", info: "VIP" },
-  og: { src: `${kickTalkCDN}/og.svg`, title: "OG", info: "OG" },
-  founder: { src: `${kickTalkCDN}/founder.svg`, title: "Founder", info: "Founder" },
-  sub_gifter: { src: `${kickTalkCDN}/subgifter1.svg`, title: "Sub Gifter", info: "Sub gifter" },
-  subgifter25: { src: `${kickTalkCDN}/subgifter25.svg`, title: "Sub Gifter", info: "Sub gifter" },
-  subgifter50: { src: `${kickTalkCDN}/subgifter50.svg`, title: "Sub Gifter", info: "Sub gifter" },
-  subgifter100: { src: `${kickTalkCDN}/subgifter100.svg`, title: "Sub Gifter", info: "Sub gifter" },
-  subgifter200: { src: `${kickTalkCDN}/subgifter200.svg`, title: "Sub Gifter", info: "Sub gifter" },
-  staff: { src: `${kickTalkCDN}/staff.svg`, title: "Staff", info: "Staff" },
+  bot: { src: `${kickTalkCDN}/bot.svg`, title: "Bot", info: "Bot", platform: "Kick" },
+  moderator: { src: `${kickTalkCDN}/moderator.svg`, title: "Moderator", info: "Moderator", platform: "Kick" },
+  broadcaster: { src: `${kickTalkCDN}/broadcaster.svg`, title: "Broadcaster", info: "Broadcaster", platform: "Kick" },
+  vip: { src: `${kickTalkCDN}/vip.svg`, title: "VIP", info: "VIP", platform: "Kick" },
+  og: { src: `${kickTalkCDN}/og.svg`, title: "OG", info: "OG", platform: "Kick" },
+  founder: { src: `${kickTalkCDN}/founder.svg`, title: "Founder", info: "Founder", platform: "Kick" },
+  sub_gifter: { src: `${kickTalkCDN}/subgifter1.svg`, title: "Sub Gifter", info: "Sub gifter", platform: "Kick" },
+  subgifter25: { src: `${kickTalkCDN}/subgifter25.svg`, title: "Sub Gifter", info: "Sub gifter", platform: "Kick" },
+  subgifter50: { src: `${kickTalkCDN}/subgifter50.svg`, title: "Sub Gifter", info: "Sub gifter", platform: "Kick" },
+  subgifter100: { src: `${kickTalkCDN}/subgifter100.svg`, title: "Sub Gifter", info: "Sub gifter", platform: "Kick" },
+  subgifter200: { src: `${kickTalkCDN}/subgifter200.svg`, title: "Sub Gifter", info: "Sub gifter", platform: "Kick" },
+  staff: { src: `${kickTalkCDN}/staff.svg`, title: "Staff", info: "Staff", platform: "Kick" },
   trainwreckstv: {
     src: `${kickTalkCDN}/trainwreckstv.svg`,
     title: "Trainwreckstv",
     info: "Trainwreckstv",
+    platform: "Kick",
   },
-  verified: { src: `${kickTalkCDN}/verified.svg`, title: "Verified", info: "Verified" },
-  sidekick: { src: `${kickTalkCDN}/sidekick.svg`, title: "Sidekick", info: "Sidekick" },
+  verified: { src: `${kickTalkCDN}/verified.svg`, title: "Verified", info: "Verified", platform: "Kick" },
+  sidekick: { src: `${kickTalkCDN}/sidekick.svg`, title: "Sidekick", info: "Sidekick", platform: "Kick" },
 };
 
 // TODO: Finalize all possible errors returned
@@ -56,6 +65,7 @@ export const CHAT_ERROR_CODES = {
   ["SUBSCRIBERS_ONLY_EMOTE_ERROR"]: "Message contains subscriber only emote.",
   ["EMOTES_ONLY_ERROR"]: "Chatroom is in emote only mode. Only emotes are allowed.",
   ["SUBSCRIBERS_ONLY_ERROR"]: "Chatroom is in subscribers only mode.",
-  ["ORIGINAL_MESSAGE_NOT_FOUND_ERROR"]: "Message cannot be replied to.",
+  ["ORIGINAL_MESSAGE_NOT_FOUND_ERROR"]: "Message cannot be replied to. It is old or no longer exists.",
   ["CHAT_RATE_LIMIT_ERROR"]: "Rate limit triggered. Slow down.",
+  ["PINNED_MESSAGE_NOT_FOUND_ERROR"]: "Cannot pin message. It is old or no longer exists.",
 };

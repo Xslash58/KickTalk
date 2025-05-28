@@ -8,16 +8,28 @@ import ChatInput from "../Chat/Input";
 const ReplyThread = () => {
   const [dialogData, setDialogData] = useState(null);
   const [replyThreadMessages, setReplyThreadMessages] = useState([]);
-  const [subscriberBadges, setSubscriberBadges] = useState([]);
-  const [sevenTVEmotes, setSevenTVEmotes] = useState([]);
   const [originalMessage, setOriginalMessage] = useState(null);
   const replyThreadRef = useRef(null);
 
   useEffect(() => {
-    const loadData = async ({ chatroomId, messages, originalMessageId }) => {
+    const loadData = async ({
+      chatroomId,
+      messages,
+      originalMessageId,
+      userChatroomInfo,
+      chatroomName,
+      settings,
+      sevenTVEmotes,
+      subscriberBadges,
+    }) => {
       setDialogData({
         chatroomId,
         originalMessageId,
+        userChatroomInfo,
+        chatroomName,
+        settings,
+        sevenTVEmotes,
+        subscriberBadges,
       });
 
       setReplyThreadMessages(messages);
@@ -28,17 +40,10 @@ const ReplyThread = () => {
       if (!originalMessage) {
         return;
       }
-
-      const chatrooms = JSON.parse(localStorage.getItem("chatrooms")) || [];
-      const currentChatroom = chatrooms.find((chatroom) => chatroom.id === chatroomId);
-
-      setSubscriberBadges(currentChatroom?.streamerData?.subscriber_badges || []);
-      setSevenTVEmotes(currentChatroom?.channel7TVEmotes || []);
     };
 
     const updateData = (data) => {
       setReplyThreadMessages(data?.messages);
-      replyThreadRef.current.scrollTop = 0;
     };
 
     const dataCleanup = window.app.replyThreadDialog.onData(loadData);
@@ -86,9 +91,12 @@ const ReplyThread = () => {
                   key={`${message.id}-${i}`}
                   message={message}
                   chatroomId={dialogData?.chatroomId}
-                  subscriberBadges={subscriberBadges}
-                  sevenTVEmotes={sevenTVEmotes}
+                  subscriberBadges={dialogData?.subscriberBadges}
+                  sevenTVEmotes={dialogData?.sevenTVEmotes}
                   kickTalkBadges={userKickTalkBadges}
+                  userChatroomInfo={dialogData?.userChatroomInfo}
+                  chatroomName={dialogData?.chatroomName}
+                  settings={dialogData?.settings}
                   type="replyThread"
                 />
               );

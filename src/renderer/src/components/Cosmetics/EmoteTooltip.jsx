@@ -1,13 +1,14 @@
+import { memo, useEffect, useRef, useState, useCallback, useMemo } from "react";
 import clsx from "clsx";
-import { useEffect, useRef, useState, useCallback } from "react";
 
-const EmoteTooltip = ({ showEmoteInfo, mousePos, emoteInfo, type, emoteSrc }) => {
+const EmoteTooltip = memo(({ showEmoteInfo, mousePos, emoteInfo, type, emoteSrc }) => {
   const emoteTooltipRef = useRef(null);
   const [position, setPosition] = useState({ top: 0, left: 0 });
+  const [isImageLoaded, setIsImageLoaded] = useState(false);
 
   const calculatePosition = useCallback(() => {
     if (!mousePos.x || !mousePos.y || !showEmoteInfo || !emoteTooltipRef.current) {
-      return;
+      return null;
     }
 
     const windowWidth = window.innerWidth;
@@ -21,7 +22,6 @@ const EmoteTooltip = ({ showEmoteInfo, mousePos, emoteInfo, type, emoteSrc }) =>
     if (left + tooltipRect.width > windowWidth - 20) {
       left = mousePos.x - tooltipRect.width - 15;
     }
-
     if (left < 20) {
       left = windowWidth - tooltipRect.width - 20;
     }
@@ -29,17 +29,29 @@ const EmoteTooltip = ({ showEmoteInfo, mousePos, emoteInfo, type, emoteSrc }) =>
     if (top + tooltipRect.height > windowHeight - 20) {
       top = mousePos.y - tooltipRect.height - 15;
     }
-
     if (top < 20) {
       top = windowHeight - tooltipRect.height - 20;
     }
 
-    setPosition((prevPos) => (prevPos.top !== top || prevPos.left !== left ? { top, left } : prevPos));
+    return { top, left };
   }, [mousePos, showEmoteInfo]);
 
   useEffect(() => {
-    calculatePosition();
+    const newPosition = calculatePosition();
+    if (newPosition) {
+      setPosition(newPosition);
+    }
   }, [calculatePosition]);
+
+  const handleImageLoad = useCallback(() => {
+    setIsImageLoaded(true);
+  }, []);
+
+  useEffect(() => {
+    if (!showEmoteInfo) {
+      setIsImageLoaded(false);
+    }
+  }, [showEmoteInfo]);
 
   if (!showEmoteInfo || !emoteInfo) return null;
 
@@ -49,7 +61,7 @@ const EmoteTooltip = ({ showEmoteInfo, mousePos, emoteInfo, type, emoteSrc }) =>
       style={{
         top: position.top,
         left: position.left,
-        opacity: showEmoteInfo && emoteTooltipRef.current ? 1 : 0,
+        opacity: showEmoteInfo && isImageLoaded && emoteTooltipRef.current ? 1 : 0,
       }}
       className={clsx("tooltipItem", showEmoteInfo && emoteTooltipRef.current ? "emoteTooltip" : "")}>
       <img
@@ -60,23 +72,26 @@ const EmoteTooltip = ({ showEmoteInfo, mousePos, emoteInfo, type, emoteSrc }) =>
         loading="lazy"
         fetchpriority="low"
         decoding="async"
+        onLoad={handleImageLoad}
       />
-      <div className="emoteTooltipInfo">
-        <div className="emoteTooltipInfoHeader">
-          <span>{emoteInfo?.name}</span>
-          <p>
-            <span>{emoteInfo?.alias ? `Alias of ${emoteInfo?.alias}` : ""}</span>
-            <span className="emoteTooltipPlatform">{emoteInfo?.platform === "7tv" ? <span>7TV</span> : <span>Kick</span>}</span>
-          </p>
+      {isImageLoaded && (
+        <div className="emoteTooltipInfo">
+          <div className="emoteTooltipInfoHeader">
+            <span>{emoteInfo?.name}</span>
+            <p>
+              {emoteInfo?.alias && <span>Alias of {emoteInfo.alias}</span>}
+              <span className="emoteTooltipPlatform">{emoteInfo?.platform === "7tv" ? "7TV" : "Kick"}</span>
+            </p>
+          </div>
+          {type === "stv" && emoteInfo?.owner?.username && (
+            <p>
+              Made by <span>{emoteInfo.owner.username}</span>
+            </p>
+          )}
         </div>
-        {type === "stv" && (
-          <p>
-            Made by <span>{emoteInfo?.owner?.username}</span>
-          </p>
-        )}
-      </div>
+      )}
     </div>
   );
-};
+});
 
 export default EmoteTooltip;

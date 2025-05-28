@@ -1,3 +1,5 @@
+@use "../../components/Shared/shared.scss";
+
 @font-face {
   font-family: "Inter";
   font-weight: 500;
@@ -22,18 +24,11 @@
   src: url("../fonts/Inter/Inter-ExtraBold.ttf");
 }
 
-#root {
-  max-height: 100vh;
-}
-
-#settingsRoot {
-  height: 100vh;
-}
-
 #main {
   background: linear-gradient(180deg, #020a05 0%, #06190e 100%), linear-gradient(180deg, #031209 0%, #06190e 100%);
 }
 
+<<<<<<< Updated upstream
 #dialog,
 #replyThreadDialog {
   background: linear-gradient(180deg, rgba(4, 15, 8, 0.95) 0%, #091810 80%);
@@ -51,6 +46,29 @@
   background: linear-gradient(180deg, #142b1c 0%, #0e321d 10%);
   border: 1px solid #174329;
   height: 100vh;
+=======
+#main,
+#dialog,
+#settings,
+#replyThread {
+  height: 100vh;
+  border-radius: 4px;
+}
+
+#root {
+  height: 100vh;
+  overflow: hidden;
+}
+
+#contextMenu {
+  background: rgba(4, 15, 8, 1);
+}
+
+img {
+  user-select: none;
+  -webkit-user-drag: none;
+  pointer-events: none;
+>>>>>>> Stashed changes
 }
 
 html,

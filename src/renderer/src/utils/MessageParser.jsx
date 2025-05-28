@@ -1,6 +1,7 @@
 import { kickEmoteRegex, urlRegex, mentionRegex, kickClipRegex } from "../../../../utils/constants";
 import Emote from "../components/Cosmetics/Emote";
-import LinkPreview from "../components/Cosmetics/LinkPreview";
+import { parse } from "tldts";
+// import LinkPreview from "../components/Cosmetics/LinkPreview";
 
 const chatroomEmotes = new Map();
 const WHITESPACE_REGEX = /\s+/;
@@ -35,6 +36,9 @@ const rules = [
     regexPattern: urlRegex,
     component: ({ match, index }) => {
       const url = match[0];
+      const { isIcann, domain } = parse(url);
+
+      if (!isIcann || !domain) return url;
 
       // if (kickClipRegex.test(url)) {
       //   return <LinkPreview key={`link-${index}`} url={url} />;
@@ -51,7 +55,7 @@ const rules = [
   {
     // Mention rule
     regexPattern: mentionRegex,
-    component: ({ match, index, chatroomId, chatroomName, userChatroomInfo, type }) => {
+    component: ({ match, index, chatroomId, chatroomName, userChatroomInfo, type, subscriberBadges }) => {
       const { username } = match.groups;
 
       if (type === "minified") {
@@ -77,6 +81,7 @@ const rules = [
             await window.app.userDialog.open({
               sender,
               fetchedUser: user?.data,
+              subscriberBadges,
               chatroomId,
               userChatroomInfo,
               cords: [0, 300],
@@ -126,7 +131,16 @@ const getEmoteData = (emoteName, sevenTVEmotes, chatroomId) => {
   return null;
 };
 
-export const MessageParser = ({ message, sevenTVEmotes, sevenTVSettings, type, chatroomId, chatroomName, userChatroomInfo }) => {
+export const MessageParser = ({
+  message,
+  sevenTVEmotes,
+  sevenTVSettings,
+  subscriberBadges,
+  type,
+  chatroomId,
+  chatroomName,
+  userChatroomInfo,
+}) => {
   if (!message?.content) return [];
   const parts = [];
   let lastIndex = 0;
@@ -163,6 +177,7 @@ export const MessageParser = ({ message, sevenTVEmotes, sevenTVSettings, type, c
           chatroomId,
           chatroomName,
           userChatroomInfo,
+          subscriberBadges,
         }),
       );
     } else {
@@ -232,7 +247,7 @@ export const MessageParser = ({ message, sevenTVEmotes, sevenTVSettings, type, c
   }
 
   // Cleanup
-  if (chatroomEmotes.size > 500) {
+  if (chatroomEmotes.size > 300) {
     chatroomEmotes.clear();
   }
 

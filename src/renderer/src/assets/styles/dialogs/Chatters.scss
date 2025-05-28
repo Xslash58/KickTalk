@@ -2,6 +2,9 @@
   display: flex;
   flex-direction: column;
   height: 100vh;
+  border-radius: 6px;
+  border: 1px solid #323f36;
+  background-color: rgb(11 20 15 / 98%);
 }
 
 .chattersHead {
@@ -16,7 +19,9 @@
   h2 {
     font-size: 15px;
     font-weight: 500;
-    color: #ffffff80;
+    padding: 8px 0;
+    flex-wrap: wrap;
+    color: rgba(255, 255, 255, 0.5019607843);
     display: flex;
     align-items: center;
     gap: 8px;
@@ -62,9 +67,9 @@
 }
 
 .chattersSearch {
-  padding: 12px;
+  padding: 12px 8px;
   width: 100%;
-  border-bottom: 1px solid #ffffff21;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1294117647);
 
   input {
     width: 100%;
@@ -73,7 +78,7 @@
     background-color: #ffffff14;
     border: 1px solid #ffffff21;
     color: #ffffff;
-    font-size: 14px;
+    font-size: 16px;
     font-weight: 500;
     outline: none;
     transition:
@@ -84,12 +89,35 @@
       background-color: #ffffff21;
       border-color: #ffffff37;
     }
+
+    &::placeholder {
+      color: #ffffff40;
+    }
+
+    &:focus {
+      background-color: #ffffff21;
+      border-color: #ffffff37;
+    }
+  }
+}
+
+.virtualChattersList {
+  height: 100%;
+
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: #445648;
+    border-radius: 2px;
+    background-clip: content-box;
+    min-width: 32px;
+    min-height: 32px;
   }
 }
 
 .chattersList {
-  padding: 4px;
-  gap: 4px;
   display: flex;
   flex-direction: column;
   overflow-y: auto;
@@ -97,28 +125,73 @@
 
   .chatterListItem {
     padding: 0 8px;
-    min-height: 32px;
+    min-height: 40px;
     display: flex;
+    width: 100%;
     align-items: center;
-    border-bottom: 1px solid #163022;
+    justify-content: space-between;
+    gap: 4px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1294117647);
+    cursor: pointer;
+    background-color: transparent;
+    outline: none;
+    transition:
+      background-color 0.15s ease-in-out,
+      border-color 0.15s ease-in-out;
+
+    &:hover {
+      background-color: #ffffff12;
+    }
+
+    &:last-child {
+      border-bottom: none;
+    }
+
+    .chatterListItemUser {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      flex: 1;
+      min-width: 0;
+
+      .chatroomBadge {
+        width: 20px;
+        height: 20px;
+        vertical-align: middle;
+      }
+
+      > span {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+    }
+
+    .chatterListItemOpenBtn {
+      background-color: #ffffff12;
+      border-radius: 4px;
+      padding: 4px 8px;
+      font-size: 10px;
+      font-weight: 700;
+      color: #ffffff78;
+    }
+
+    .chatterListItemBadges {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+
+      img {
+        width: 20px;
+        height: 20px;
+      }
+    }
 
     span {
       font-size: 14px;
       font-weight: 600;
       color: #ffffff78;
     }
-  }
-
-  &::-webkit-scrollbar {
-    width: 8px;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background-color: #405a45;
-    border-radius: 2px;
-    background-clip: content-box;
-    min-width: 32px;
-    min-height: 32px;
   }
 }
 

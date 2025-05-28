@@ -4,14 +4,37 @@
   gap: 24px;
   padding: 24px;
   app-region: drag;
-  height: 100vh;
+  height: min-content;
+  border-radius: 4px;
+  background: linear-gradient(180deg, #0d2015 0%, #0b2314 80%);
+  border: 1px solid #2e3c32;
+
+  &::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+
+  &::-webkit-scrollbar-corner {
+    background: rgba(255, 255, 255, 0.429);
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: #b6d2c277;
+    border-radius: 2px;
+    background-clip: content-box;
+    min-width: 32px;
+    min-height: 32px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background-color: #ffffff26;
+  }
 }
 
 .authLoginHeader {
   font-size: 40px;
   font-weight: 700;
   color: #fff;
-  app-region: no-drag;
 }
 
 .authLoginOptions {

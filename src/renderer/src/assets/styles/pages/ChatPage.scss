@@ -2,22 +2,36 @@
   --chat-message-font-size: 16px;
 }
 
+.chatPageContainer {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
 .chatWrapper {
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 48px);
+  flex: 1;
   min-height: 0;
+  overflow: hidden;
 }
 
 .chatNavigation {
   flex: 0 0 auto;
 }
 
-.chatContainer {
-  flex: 1 1 auto;
+.chatContent {
+  flex: 1;
+  flex-direction: column;
   min-height: 0;
   display: flex;
+}
+
+.chatContainer {
+  display: flex;
   flex-direction: column;
+  height: 100%;
   width: 100%;
   position: relative;
   overflow: hidden;
@@ -31,6 +45,7 @@
   justify-content: space-between;
   border-bottom: 1px solid rgba(255, 255, 255, 0.075);
   background: rgba(255, 255, 255, 0.075);
+  cursor: default;
 
   .chatStreamerInfoContent {
     flex: 1 1 25%;
@@ -69,6 +84,68 @@
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+    }
+  }
+
+  .chatStreamerCard {
+    position: absolute;
+    top: 40px;
+    left: 0;
+    right: 0;
+    width: 75%;
+    max-width: 350px;
+    height: max-content;
+    overflow: hidden;
+    background: hsla(140, 20%, 6%, 0.8);
+    border: 1px solid #29332d;
+    box-shadow: 0px 2px 4px #040c06;
+    backdrop-filter: blur(8px);
+    border-radius: 6px;
+    padding: 16px;
+    z-index: 9999;
+    margin: 0 auto;
+
+    .chatStreamerCardContent {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+
+      .chatStreamerCardHeader {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        height: 100%;
+
+        img {
+          border-radius: 6px;
+          border: 1px solid #29332d;
+          width: 90%;
+          max-width: 250px;
+          height: auto;
+          object-fit: cover;
+        }
+      }
+    }
+
+    .chatStreamerCardBody {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+
+      .chatStreamerCardTitle {
+        font-size: 15px;
+        line-height: 1.5;
+        font-weight: 600;
+        color: #8cb29d;
+        white-space: wrap;
+      }
+
+      p {
+        font-size: 15px;
+        color: #5c7969;
+        white-space: wrap;
+      }
     }
   }
 
@@ -190,6 +267,357 @@
   }
 }
 
+<<<<<<< Updated upstream
+=======
+/** [Poll] **/
+
+.pollMessageBtn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+
+  img {
+    opacity: 0.4;
+    transition: opacity 0.2s ease;
+  }
+
+  &.open {
+    img {
+      opacity: 1;
+    }
+  }
+}
+
+.poll {
+  background: linear-gradient(to bottom, #1d2621, #1f2d25);
+  border: 1px solid rgba(255, 255, 255, 0.1019607843);
+  position: absolute;
+  margin: 0 auto;
+  left: 0;
+  right: 0;
+  width: calc(100% - 16px);
+  box-shadow: 0px 4px 12px #030a04;
+  top: 56px;
+  border-radius: 6px;
+  display: none;
+  gap: 16px;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 16px;
+  z-index: 9;
+  max-height: 80px;
+  transition: max-height 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+
+  &.expanded {
+    max-height: 100%;
+    transition: max-height 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+
+    .pollOptions,
+    .pollFooter {
+      opacity: 1;
+    }
+
+    .pollHeader > .pollHeaderInfo > span {
+      white-space: wrap;
+    }
+  }
+
+  &.open {
+    display: flex;
+    flex-direction: column;
+    animation: fadeIn 0.15s ease-in-out;
+    animation-fill-mode: forwards;
+  }
+
+  .pollHeader {
+    display: flex;
+    justify-content: space-between;
+
+    > .pollHeaderInfo {
+      display: flex;
+      gap: 8px;
+      flex-direction: column;
+      flex-grow: 0;
+      flex-basis: auto;
+      min-width: 0;
+
+      h4 {
+        color: #5f7b6b;
+      }
+
+      span {
+        color: #ccedda;
+        font-size: 20px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        transition: max-width 0.15s ease-in-out;
+      }
+    }
+
+    > .pollActions {
+      display: flex;
+      gap: 4px;
+
+      button {
+        background: none;
+        border: 1px solid #39463f;
+        border-radius: 4px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 20px;
+        transition: border-color 0.2s ease;
+
+        &:hover {
+          border-color: #8fa99a;
+          > img {
+            opacity: 1;
+          }
+        }
+
+        > img {
+          opacity: 0.4;
+          transition: opacity 0.2s ease;
+        }
+      }
+    }
+  }
+
+  .pollOptions {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    opacity: 0;
+    transition: opacity 0.15s ease-in-out;
+
+    &.pollOptionsVoted {
+      button {
+        cursor: default;
+      }
+    }
+  }
+
+  .pollOption {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background-color: #2e3933;
+    border-radius: 6px;
+    border: 1px solid transparent;
+    padding: 12px;
+    position: relative;
+    gap: 12px;
+    cursor: pointer;
+    transition:
+      background-color 0.2s ease,
+      border-color 0.2s ease;
+
+    &:hover {
+      background-color: #39453f;
+
+      .pollOptionBtn {
+        border-color: #7d9186;
+      }
+    }
+
+    &.pollOptionVoted {
+      background-color: #ffe45d29;
+      border-color: #ffe45d;
+      cursor: default;
+
+      .pollOptionBar > .pollOptionBarFill {
+        background-color: #ae930c;
+      }
+    }
+
+    &.pollOptionWon {
+      background-color: #1a96452a;
+      border-color: #1a9645;
+      overflow: hidden;
+
+      &:hover {
+        background-color: #1a96452a;
+      }
+
+      .pollOptionBar > .pollOptionBarFill {
+        background-color: #088d46;
+      }
+
+      .pollOptionVotedLabel {
+        span {
+          font-weight: 700;
+          border: 1px solid rgba(255, 255, 255, 0.163);
+          background: rgba(255, 255, 255, 0.163);
+          color: rgb(255, 255, 255, 0.8);
+          padding: 2px 4px;
+          font-size: 11px;
+          border-radius: 6px;
+        }
+      }
+    }
+
+    .pollOptionLabel {
+      &.pollOptionLabelVoted,
+      &.pollOptionLabelWon {
+        > span {
+          color: #ffffff;
+        }
+      }
+
+      .pollOptionLabelContent {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+
+        > p {
+          color: #ffffff;
+        }
+
+        .pollOptionLabelStatus {
+          display: flex;
+          align-items: center;
+          gap: 2px;
+          border-radius: 4px;
+          font-size: 11px;
+          font-weight: 700;
+          color: #ffffff;
+
+          #pollOptionWonLabel,
+          #pollOptionVotedLabel {
+            background-color: #ffffff38;
+            border: 1px solid #ffffff33;
+            font-weight: 800;
+            color: rgb(255, 255, 255, 0.9);
+            padding: 2px 4px;
+            font-size: 11px;
+            border-radius: 4px;
+          }
+
+          #pollOptionWonLabel {
+            background-color: #15e73438;
+            border: 1px solid #15e73438;
+            font-weight: 800;
+            color: rgb(255, 255, 255, 0.9);
+            padding: 2px 4px;
+          }
+        }
+      }
+    }
+
+    &.pollOptionSelected {
+      background-color: #61746a;
+      border-color: #95b6a4;
+
+      .pollOptionBar > .pollOptionBarFill {
+        background-color: #088d4661;
+      }
+
+      .pollOptionLabel {
+        > p {
+          color: #ccedda;
+        }
+
+        > span {
+          color: #ccedda;
+        }
+      }
+    }
+
+    .pollOptionBar {
+      position: absolute;
+      height: 100%;
+      left: 0;
+      right: 0;
+      z-index: 1;
+      overflow: hidden;
+
+      .pollOptionBarFill {
+        background-color: #ffffff0f;
+        border-radius: 6px;
+        height: 100%;
+        width: 0;
+        left: 0;
+        right: 0;
+        transition: background-color 0.2s ease-in-out;
+      }
+    }
+
+    .pollOptionBtn {
+      background: none;
+      border: 1.5px solid #516058;
+      cursor: pointer;
+      padding: 4px;
+      width: 20px;
+      height: 20px;
+      z-index: 2;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      transition: border-color 0.2s ease;
+
+      &.selected {
+        background-color: #1a96452a;
+        border-color: #1a9645;
+      }
+    }
+
+    .pollOptionLabel {
+      z-index: 2;
+      display: flex;
+      justify-content: space-between;
+      flex: 1;
+      align-items: center;
+      font-weight: 500;
+      color: #8ba496;
+      transition: color 0.2s ease;
+
+      > p {
+        font-weight: 600;
+      }
+    }
+  }
+
+  .pollFooter {
+    display: flex;
+    flex-direction: column;
+    opacity: 0;
+    gap: 16px;
+    transition: opacity 0.15s ease-in-out;
+
+    .pollVoteButton {
+      width: 104px;
+      height: 40px;
+      background-color: #d0f8d8;
+      border-radius: 4px;
+      color: #18221a;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .pollTimer {
+      background-color: #2e3933;
+      border-radius: 4px;
+      width: 100%;
+      position: relative;
+      height: 12px;
+
+      span {
+        background-color: #b6e7cb;
+        height: 100%;
+        width: 40px;
+        border-radius: 4px;
+      }
+    }
+  }
+}
+
+>>>>>>> Stashed changes
 /** [Pinned Message] **/
 
 .pinnedMessage {
@@ -197,14 +625,22 @@
   margin: 0 auto;
   left: 0;
   right: 0;
+<<<<<<< Updated upstream
   background: #102c1a;
   border: 1px solid #314d3c;
   width: calc(100% - 24px);
   box-shadow: 0px 2px 4px #07150a;
+=======
+  background: linear-gradient(to bottom, #1d2621, #1f2d25d9);
+  backdrop-filter: blur(3px);
+  border: 1px solid rgba(255, 255, 255, 0.1019607843);
+  box-shadow: 0px 4px 12px #030a04;
+  width: calc(100% - 16px);
+>>>>>>> Stashed changes
   top: 56px;
   border-radius: 6px;
   display: none;
-  gap: 8px;
+  gap: 4px;
   flex-direction: column;
   overflow: hidden;
   padding: 16px;
@@ -214,24 +650,37 @@
     display: flex;
   }
 
-  &.expanded .pinnedMessageContent > p {
-    white-space: wrap;
+  &.expanded .pinnedMessageContent {
+    white-space: normal;
+    margin-bottom: 8px;
+
+    > span {
+      white-space: normal;
+      text-overflow: unset;
+    }
+  }
+
+  .pinnedMessageTop {
+    gap: 8px;
+    display: flex;
+    flex-direction: column;
   }
 }
 
 .pinnedMessageFooterContent {
   display: flex;
   gap: 4px;
-  color: #71ad7f;
-  font-size: 14px;
+  color: #5f7b6b;
+  font-size: 16px;
+  align-items: center;
 }
 
 .pinnedMessageFooter {
   display: none;
   justify-content: space-between;
   align-items: center;
-  border-top: 1px solid #213c2c;
-  padding-top: 10px;
+  border-top: 1px solid #ffffff19;
+  padding-top: 16px;
 
   &.open {
     display: flex;
@@ -249,10 +698,12 @@
 
   > .chatroomBadge {
     margin-right: 4px;
+    width: 18px;
+    height: 18px;
 
     > img {
-      width: 18px;
-      height: 18px;
+      width: inherit;
+      height: inherit;
     }
   }
 
@@ -266,9 +717,37 @@
   justify-content: space-between;
   align-items: center;
 
-  > p {
-    color: #71ad7f;
-    font-size: 14px;
+  .pinnedMessageHeaderInfo {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 0;
+    flex-basis: auto;
+    min-width: 0;
+
+    h4 {
+      color: #5f7b6b;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+
+      .chatroomBadge {
+        width: 18px;
+        height: 18px;
+
+        > img {
+          width: inherit;
+          height: inherit;
+        }
+      }
+
+      span {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        transition: max-width 0.15s ease-in-out;
+        color: #ccedda;
+      }
+    }
   }
 }
 
@@ -277,8 +756,8 @@
   gap: 4px;
 
   button {
-    background: none;
-    border: 1px solid #314d3c;
+    background-color: transparent;
+    border: 1px solid #3d4b43;
     border-radius: 4px;
     cursor: pointer;
     display: flex;
@@ -286,12 +765,15 @@
     justify-content: center;
     width: 40px;
     height: 20px;
-    transition: border-color 0.2s ease;
+    transition:
+      border-color 0.2s ease,
+      background-color 0.2s ease;
 
     &:hover {
-      border-color: #50755f;
+      border-color: #687e71;
+      background-color: #3d4b43;
       > img {
-        opacity: 1;
+        opacity: 0.7;
       }
     }
 
@@ -303,27 +785,36 @@
 }
 
 .pinnedMessageContent {
-  > p {
-    font-size: 18px;
-    font-weight: 600;
-    text-overflow: ellipsis;
-    overflow: hidden;
-    white-space: nowrap;
-    color: #c5ebce;
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  width: 100%;
+
+  > a {
+    color: #ccedda;
+    font-size: 20px;
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
   }
 
   > span {
-    overflow-wrap: break-word;
+    color: #ccedda;
+    font-size: 20px;
   }
 }
 
 /** [End of Pinned Message] **/
 
 .chatroomsEmptyState {
-  height: calc(100vh - 128px);
+  height: 100%;
   align-items: center;
   display: flex;
   justify-content: center;
+  text-align: center;
   flex-direction: column;
   gap: 16px;
   p {
@@ -333,9 +824,6 @@
 
 .chatBody {
   flex: 1 1 auto;
-  min-height: 0;
-  overflow-y: auto;
-  padding-top: 8px;
   margin-right: 0;
   display: flex;
   max-width: 100%;
@@ -358,7 +846,7 @@
 /** [Scroll to Bottom Component] **/
 .scrollToBottomBtn {
   position: absolute;
-  top: -64px;
+  bottom: 24px;
   left: 0;
   right: 0;
   width: 196px;
@@ -366,23 +854,20 @@
   height: 40px;
   padding: 0 6px 0 8px;
   font-size: 16px;
+  color: #000000;
   cursor: pointer;
   border-radius: 4px;
-  border: 1px solid #41fc69;
-  background-color: #13e741f5;
-  font-weight: 600;
-  display: none;
+  border: 1px solid #6bff8b;
+  background-color: rgba(19, 231, 65, 0.9607843137);
+  box-shadow: 0px 8px 10px #07110b30;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   transition: background-color 0.2s ease;
 
   &:hover {
     background-color: #1fff4ff5;
-  }
-
-  &.show {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    animation: scrollToBottomBtn 0.2s ease forwards;
   }
 
   > img {

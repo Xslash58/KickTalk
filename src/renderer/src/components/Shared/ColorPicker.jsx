@@ -4,11 +4,10 @@ import clsx from "clsx";
 import useClickOutside from "../../utils/useClickOutside";
 import { useDebounceCallback } from "../../utils/hooks";
 
-const ColorPicker = ({ initialColor, handleColorChange, isColorPickerOpen, setIsColorPickerOpen }) => {
+const ColorPicker = ({ disabled, initialColor, handleColorChange, isColorPickerOpen, setIsColorPickerOpen }) => {
   const [color, setColor] = useState(initialColor);
   const colorPickerRef = useRef(null);
 
-  // Create a debounced version of handleColorChange
   const debouncedHandleColorChange = useDebounceCallback(handleColorChange, 300);
 
   useEffect(() => {
@@ -25,19 +24,29 @@ const ColorPicker = ({ initialColor, handleColorChange, isColorPickerOpen, setIs
     [debouncedHandleColorChange],
   );
 
-  useClickOutside(colorPickerRef, () => setIsColorPickerOpen(false));
-
   useEffect(() => {
     return () => {
       colorPickerRef.current = null;
     };
   }, []);
 
+  useClickOutside(colorPickerRef, () => {
+    setIsColorPickerOpen(false);
+  });
+
   return (
     <div className="colorPicker">
-      <div className="colorPickerHeader" onClick={() => setIsColorPickerOpen(!isColorPickerOpen)}>
-        <p>Select Highlight Colour:</p>
-        <button className="colorPickerPreview">
+      <div
+        className={clsx("colorPickerHeader", { disabled })}
+        onClick={() => {
+          if (disabled) return;
+          setIsColorPickerOpen(!isColorPickerOpen);
+        }}
+        style={{
+          opacity: disabled ? 0.5 : 1,
+          cursor: disabled ? "not-allowed" : "pointer",
+        }}>
+        <button className="colorPickerPreview" disabled={disabled}>
           <div className="colorPickerPreviewInner" style={{ backgroundColor: color }} />
         </button>
       </div>

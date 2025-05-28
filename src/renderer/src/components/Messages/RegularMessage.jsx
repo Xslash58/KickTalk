@@ -1,12 +1,13 @@
-import { memo, useCallback } from "react";
+import { memo, useCallback, useMemo } from "react";
 import { MessageParser } from "../../utils/MessageParser";
 import { KickBadges, KickTalkBadges, StvBadges } from "../Cosmetics/Badges";
+import { useSettings } from "../../providers/SettingsProvider";
+import { getTimestampFormat } from "../../utils/ChatUtils";
 import CopyIcon from "../../assets/icons/copy-simple-fill.svg?asset";
 import ReplyIcon from "../../assets/icons/reply-fill.svg?asset";
 import Pin from "../../assets/icons/push-pin-fill.svg?asset";
 import clsx from "clsx";
 import dayjs from "dayjs";
-import { useSettings } from "../../providers/SettingsProvider";
 
 const RegularMessage = memo(
   ({
@@ -19,99 +20,104 @@ const RegularMessage = memo(
     sevenTVSettings,
     type,
     chatroomName,
+    getPinMessage,
     chatroomId,
     userChatroomInfo,
+    isSearch = false,
   }) => {
     const { settings } = useSettings();
-    const canModerate = userChatroomInfo?.is_broadcaster || userChatroomInfo?.is_moderator || userChatroomInfo?.is_super_admin;
+    const canModerate = useMemo(
+      () => userChatroomInfo?.is_broadcaster || userChatroomInfo?.is_moderator || userChatroomInfo?.is_super_admin,
+      [userChatroomInfo],
+    );
 
-    const timestampFormat = () => {
-      if (!message?.created_at) return;
-      const timestamp = message.created_at;
-      switch (settings?.general?.timestampFormat) {
-        case "disabled":
-          return "";
-        case "h:mm":
-          return dayjs(timestamp).format("h:mm");
-        case "hh:mm":
-          return dayjs(timestamp).format("HH:mm");
-        case "h:mm a":
-          return dayjs(timestamp).format("h:mm A");
-        case "hh:mm a":
-          return dayjs(timestamp).format("HH:mm A");
-        case "h:mm:ss":
-          return dayjs(timestamp).format("h:mm:ss");
-        case "hh:mm:ss":
-          return dayjs(timestamp).format("HH:mm:ss");
-        case "h:mm:ss a":
-          return dayjs(timestamp).format("h:mm:ss A");
-        case "hh:mm:ss a":
-          return dayjs(timestamp).format("HH:mm:ss A");
-        default:
-          return "";
-      }
-    };
+    const timestamp = useMemo(
+      () => getTimestampFormat(message?.created_at, settings?.general?.timestampFormat),
+      [message?.created_at, settings?.general?.timestampFormat],
+    );
 
     const handleReply = useCallback(() => {
       window.app.reply.open(message);
-    }, [message]);
+    }, [message?.id]);
 
     const handleCopyMessage = useCallback(() => {
       navigator.clipboard.writeText(message?.content);
     }, [message?.content]);
 
+    const handlePinMessage = useCallback(() => {
+      const data = {
+        chatroom_id: message.chatroom_id,
+        content: message.content,
+        id: message.id,
+        sender: message.sender,
+        chatroomName: chatroomName,
+      };
+      getPinMessage(chatroomId, data);
+    }, [message?.id, message?.chatroom_id, message?.content, message?.sender, chatroomName]);
+
+    const usernameStyle = useMemo(() => {
+      if (userStyle?.paint) {
+        return {
+          backgroundImage: userStyle.paint.backgroundImage,
+          filter: userStyle.paint.shadows,
+        };
+      }
+      return { color: message.sender.identity?.color };
+    }, [userStyle?.paint, message.sender.identity?.color]);
+
+    const messageContent = useMemo(
+      () => (
+        <MessageParser
+          type={type}
+          message={message}
+          chatroomId={chatroomId}
+          chatroomName={chatroomName}
+          sevenTVEmotes={sevenTVEmotes}
+          sevenTVSettings={sevenTVSettings}
+          subscriberBadges={subscriberBadges}
+          userChatroomInfo={userChatroomInfo}
+        />
+      ),
+      [type, message, chatroomId, chatroomName, sevenTVEmotes, sevenTVSettings, subscriberBadges, userChatroomInfo],
+    );
+
     return (
       <span className={`chatMessageContainer ${message.deleted ? "deleted" : ""}`}>
         <div className="chatMessageUser">
           {settings?.general?.showTimestamps && settings?.general?.timestampFormat !== "disabled" && (
-            <span className="chatMessageTimestamp">{timestampFormat()}</span>
+            <span className="chatMessageTimestamp">{timestamp}</span>
           )}
 
           <div className="chatMessageBadges">
             {filteredKickTalkBadges && <KickTalkBadges badges={filteredKickTalkBadges} />}
             {userStyle?.badge && <StvBadges badge={userStyle?.badge} />}
             <KickBadges
-              badges={message?.sender.identity?.badges}
+              badges={message?.sender?.identity?.badges}
               subscriberBadges={subscriberBadges}
               kickTalkBadges={filteredKickTalkBadges}
             />
           </div>
+
           <button
-            onClick={handleOpenUserDialog}
+            onClick={(e) => {
+              e.preventDefault();
+              if (isSearch) {
+                return handleOpenUserDialog(e, message.sender.username);
+              } else {
+                return handleOpenUserDialog(e);
+              }
+            }}
             className={clsx("chatMessageUsername", userStyle?.paint && "chatMessageUsernamePaint")}
-            style={
-              userStyle?.paint
-                ? { backgroundImage: userStyle?.paint?.backgroundImage, filter: userStyle?.paint?.shadows }
-                : { color: message.sender.identity?.color }
-            }>
+            style={usernameStyle}>
             <span>{message.sender.username}:&nbsp;</span>
           </button>
         </div>
-        <div className="chatMessageContent">
-          <MessageParser
-            type={type}
-            message={message}
-            chatroomId={chatroomId}
-            chatroomName={chatroomName}
-            sevenTVEmotes={sevenTVEmotes}
-            sevenTVSettings={sevenTVSettings}
-            userChatroomInfo={userChatroomInfo}
-          />
-        </div>
+
+        <div className="chatMessageContent">{messageContent}</div>
+
         <div className="chatMessageActions">
           {canModerate && !message?.deleted && (
-            <button
-              onClick={() => {
-                const data = {
-                  chatroom_id: message.chatroom_id,
-                  content: message.content,
-                  id: message.id,
-                  sender: message.sender,
-                  chatroomName: chatroomName,
-                };
-                window.app.kick.getPinMessage(data);
-              }}
-              className="chatMessageActionButton">
+            <button onClick={handlePinMessage} className="chatMessageActionButton">
               <img src={Pin} alt="Pin Message" width={16} height={16} loading="lazy" />
             </button>
           )}
@@ -135,7 +141,12 @@ const RegularMessage = memo(
       prevProps.sevenTVSettings === nextProps.sevenTVSettings &&
       prevProps.sevenTVEmotes === nextProps.sevenTVEmotes &&
       prevProps.userChatroomInfo === nextProps.userChatroomInfo &&
-      prevProps.handleOpenUserDialog === nextProps.handleOpenUserDialog
+      prevProps.userStyle === nextProps.userStyle &&
+      prevProps.filteredKickTalkBadges === nextProps.filteredKickTalkBadges &&
+      prevProps.subscriberBadges === nextProps.subscriberBadges &&
+      prevProps.type === nextProps.type &&
+      prevProps.chatroomId === nextProps.chatroomId &&
+      prevProps.chatroomName === nextProps.chatroomName
     );
   },
 );

@@ -1,7 +1,7 @@
 import { memo, useCallback, useState, useMemo } from "react";
 import EmoteTooltip from "./EmoteTooltip";
 
-const Emote = ({ emote, type }) => {
+const Emote = memo(({ emote, type }) => {
   const { id, name, width, height } = emote;
 
   const [showEmoteInfo, setShowEmoteInfo] = useState(false);
@@ -44,8 +44,6 @@ const Emote = ({ emote, type }) => {
           <img
             className={type === "stv" ? "stvEmote emote" : "kickEmote emote"}
             src={emoteImageSrc}
-            alt={name}
-            title={name}
             loading="lazy"
             fetchpriority="low"
             decoding="async"
@@ -54,6 +52,6 @@ const Emote = ({ emote, type }) => {
       </div>
     </>
   );
-};
+});
 
 export default Emote;

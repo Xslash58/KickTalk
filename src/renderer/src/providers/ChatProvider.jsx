@@ -5,6 +5,7 @@ import queueChannelFetch from "../../../../utils/fetchQueue";
 import StvWebSocket from "../../../../utils/services/seventv/stvWebsocket";
 import useCosmeticsStore from "./CosmeticsProvider";
 import { sendUserPresence } from "../../../../utils/services/seventv/stvAPI";
+import dayjs from "dayjs";
 
 let stvPresenceUpdates = new Map();
 let storeStvId = null;
@@ -18,6 +19,7 @@ const getInitialState = () => {
     chatrooms: savedChatrooms,
     messages: {},
     connections: {},
+    isChatroomPaused: {},
   };
 };
 
@@ -25,7 +27,18 @@ const useChatStore = create((set, get) => ({
   ...getInitialState(),
 
   // Handles Sending Presence Updates to 7TV for a chatroom
-  sendPresenceUpdate: async (stvId, userId) => {
+  sendPresenceUpdate: (stvId, userId) => {
+    if (!stvId) {
+      console.log("[7TV Presence]: No STV ID provided, skipping presence update");
+      return;
+    }
+
+    const authTokens = window.app.auth.getToken();
+    if (!authTokens?.token || !authTokens?.session) {
+      console.log("[7TV Presence]: No auth tokens available, skipping presence update");
+      return;
+    }
+
     const currentTime = Date.now();
 
     if (stvPresenceUpdates.has(userId)) {
@@ -45,25 +58,30 @@ const useChatStore = create((set, get) => ({
       const message = content.trim();
       console.info("Sending message to chatroom:", chatroomId);
 
-      await window.app.kick.sendMessage(chatroomId, message);
+      const response = await window.app.kick.sendMessage(chatroomId, message);
+
+      if (response?.data?.status?.code === 401) {
+        get().addMessage(chatroomId, {
+          id: crypto.randomUUID(),
+          type: "system",
+          content: "You must login to chat.",
+          timestamp: new Date().toISOString(),
+        });
+
+        return false;
+      }
+
       return true;
     } catch (error) {
       const errMsg = chatroomErrorHandler(error);
 
-      set((state) => ({
-        messages: {
-          ...state.messages,
-          [chatroomId]: [
-            ...(state.messages[chatroomId] || []),
-            {
-              id: crypto.randomUUID(),
-              type: "system",
-              content: errMsg,
-              timestamp: new Date().toISOString(),
-            },
-          ],
-        },
-      }));
+      get().addMessage(chatroomId, {
+        id: crypto.randomUUID(),
+        type: "system",
+        chatroom_id: chatroomId,
+        content: errMsg,
+        timestamp: new Date().toISOString(),
+      });
 
       return false;
     }
@@ -74,49 +92,61 @@ const useChatStore = create((set, get) => ({
       const message = content.trim();
       console.info("Sending reply to chatroom:", chatroomId);
 
-      await window.app.kick.sendReply(chatroomId, message, metadata);
+      const response = await window.app.kick.sendReply(chatroomId, message, metadata);
+
+      if (response?.data?.status?.code === 401) {
+        get().addMessage(chatroomId, {
+          id: crypto.randomUUID(),
+          type: "system",
+          content: "You must login to chat.",
+          timestamp: new Date().toISOString(),
+        });
+
+        return false;
+      }
+
       return true;
     } catch (error) {
       const errMsg = chatroomErrorHandler(error);
 
-      set((state) => ({
-        messages: {
-          ...state.messages,
-          [chatroomId]: [
-            ...(state.messages[chatroomId] || []),
-            {
-              id: crypto.randomUUID(),
-              type: "system",
-              content: errMsg,
-              timestamp: new Date().toISOString(),
-            },
-          ],
-        },
-      }));
+      get().addMessage(chatroomId, {
+        id: crypto.randomUUID(),
+        type: "system",
+        content: errMsg,
+        timestamp: new Date().toISOString(),
+      });
 
       return false;
     }
   },
 
-  // updateSoundPlayed: (chatroomId, messageId) => {
-  //   set((state) => ({
-  //     messages: {
-  //       ...state.messages,
-  //       [chatroomId]: state.messages[chatroomId].map((message) => {
-  //         if (message.id === messageId) {
-  //           return { ...message, soundPlayed: true };
-  //         }
-  //         return message;
-  //       }),
-  //     },
-  //   }));
-  // },
+  getUpdateSoundPlayed: (chatroomId, messageId) => {
+    set((state) => ({
+      messages: {
+        ...state.messages,
+        [chatroomId]: state.messages[chatroomId].map((message) => {
+          if (message.id === messageId) {
+            return { ...message, soundPlayed: true };
+          }
+          return message;
+        }),
+      },
+    }));
+  },
 
   connectToStvWebSocket: (chatroom) => {
     const stvId = chatroom?.channel7TVEmotes?.user?.id;
-
     const stvEmoteSets = chatroom?.channel7TVEmotes?.emote_set?.id || [];
+
+    const existingConnection = get().connections[chatroom.id]?.stvSocket;
+    if (existingConnection) {
+      console.log("Closing existing 7TV WebSocket for chatroom:", chatroom.id);
+      existingConnection.close();
+    }
+
     const stvSocket = new StvWebSocket(chatroom.streamerData.user_id, stvId, stvEmoteSets);
+
+    console.log("Connecting to 7TV WebSocket for chatroom:", chatroom.id);
 
     set((state) => ({
       connections: {
@@ -131,6 +161,7 @@ const useChatStore = create((set, get) => ({
     stvSocket.connect();
 
     stvSocket.addEventListener("message", (event) => {
+      console.log("7TV WebSocket message:", event);
       const SevenTVEvent = event.detail;
       const { type, body } = SevenTVEvent;
 
@@ -146,10 +177,9 @@ const useChatStore = create((set, get) => ({
           break;
         case "entitlement.create":
           const username = body?.object?.user?.connections?.find((c) => c.platform === "KICK")?.username;
+          const transformedUsername = username?.replaceAll("-", "_").toLowerCase();
 
-          const transformedUsername = username?.replaceAll("-", "_");
-
-          console.log("Entitlement create event:", body, transformedUsername);
+          console.log("Entitlement create event:", body, transformedUsername, username);
           useCosmeticsStore?.getState()?.addUserStyle(transformedUsername, body);
           break;
 
@@ -164,9 +194,14 @@ const useChatStore = create((set, get) => ({
       console.log("7TV WebSocket connected for chatroom:", chatroom.id);
 
       setTimeout(() => {
-        sendUserPresence(storeStvId, chatroom.streamerData.user_id);
+        const authTokens = window.app.auth.getToken();
+        if (storeStvId && authTokens?.token && authTokens?.session) {
+          sendUserPresence(storeStvId, chatroom.streamerData.user_id);
+          stvPresenceUpdates.set(chatroom.streamerData.user_id, Date.now());
+        } else {
+          console.log("[7TV Presence]: No STV ID or auth tokens available for WebSocket presence update");
+        }
       }, 2000);
-      stvPresenceUpdates.set(chatroom.streamerData.user_id, Date.now());
     });
 
     stvSocket.addEventListener("close", () => {
@@ -195,9 +230,9 @@ const useChatStore = create((set, get) => ({
     pusher.addEventListener("channel", (event) => {
       const parsedEvent = JSON.parse(event.detail.data);
       switch (event.detail.event) {
-        // case "App\\Events\\LivestreamUpdated":
-        // get().handleStreamStatus(chatroom.id, parsedEvent, true);
-        // break;
+        case "App\\Events\\LivestreamUpdated":
+          get().handleStreamStatus(chatroom.id, parsedEvent, true);
+          break;
         case "App\\Events\\ChatroomUpdatedEvent":
           get().handleChatroomUpdated(chatroom.id, parsedEvent);
           break;
@@ -215,9 +250,19 @@ const useChatStore = create((set, get) => ({
         case "App\\Events\\PinnedMessageDeletedEvent":
           get().handlePinnedMessageDeleted(chatroom.id);
           break;
+<<<<<<< Updated upstream
         case "App\\Events\\PollUpdateEvent":
           get().handlePollCreate(chatroom.id, parsedEvent);
           break;
+=======
+        // case "App\\Events\\PollUpdateEvent":
+        //   console.log("Poll update event:", parsedEvent);
+        //   get().handlePollUpdate(chatroom.id, parsedEvent?.poll);
+        //   break;
+        // case "App\\Events\\PollDeleteEvent":
+        //   get().handlePollDelete(chatroom.id);
+        //   break;
+>>>>>>> Stashed changes
       }
     });
 
@@ -280,32 +325,55 @@ const useChatStore = create((set, get) => ({
       }
     });
 
+    // connect to Pusher after getting initial data
     pusher.connect();
 
     if (pusher.chat.OPEN) {
       const channel7TVEmotes = await window.app.stv.getChannelEmotes(chatroom.streamerData.user_id);
 
       if (channel7TVEmotes) {
+        const seenEmoteNames = new Set();
+
+        // Remove duplicate emotes across all sets
+        channel7TVEmotes.forEach((set) => {
+          set.emotes = set.emotes.filter((emote) => {
+            if (seenEmoteNames.has(emote.name)) {
+              return false; // Skip duplicate
+            }
+            seenEmoteNames.add(emote.name);
+            return true; // Keep first seen instance
+          });
+        });
+
+        seenEmoteNames.clear();
+
         const savedChatrooms = JSON.parse(localStorage.getItem("chatrooms")) || [];
         const updatedChatrooms = savedChatrooms.map((room) => (room.id === chatroom.id ? { ...room, channel7TVEmotes } : room));
 
         localStorage.setItem("chatrooms", JSON.stringify(updatedChatrooms));
-      }
 
-      set((state) => ({
-        chatrooms: state.chatrooms.map((room) => (room.id === chatroom.id ? { ...room, channel7TVEmotes } : room)),
-      }));
+        set((state) => ({
+          chatrooms: state.chatrooms.map((room) => (room.id === chatroom.id ? { ...room, channel7TVEmotes } : room)),
+        }));
+      }
     }
 
+    // TOOD: Cleanup promise.allSettled
+
     const fetchInitialUserChatroomInfo = async () => {
-      const { data } = await window.app.kick.getSelfChatroomInfo(chatroom?.slug);
+      const response = await window.app.kick.getSelfChatroomInfo(chatroom?.streamerData?.slug);
+
+      if (!response?.data) {
+        console.log("[Initial User Chatroom Info]: No data received, skipping update");
+        return;
+      }
 
       set((state) => ({
         chatrooms: state.chatrooms.map((room) => {
           if (room.id === chatroom.id) {
             return {
               ...room,
-              userChatroomInfo: data,
+              userChatroomInfo: response.data,
             };
           }
           return room;
@@ -316,7 +384,28 @@ const useChatStore = create((set, get) => ({
     fetchInitialUserChatroomInfo();
 
     const fetchEmotes = async () => {
-      const data = await window.app.kick.getEmotes(chatroom.slug);
+      const data = await window.app.kick.getEmotes(chatroom?.streamerData?.slug);
+
+      let sevenTVEmoteNames = new Set();
+      chatroom.channel7TVEmotes.forEach((set) => {
+        set.emotes.forEach((emote) => {
+          if (emote.name) sevenTVEmoteNames.add(emote.name);
+        });
+      });
+
+      let removedEmotes = [];
+      if (Array.isArray(data)) {
+        data.forEach((set) => {
+          set.emotes = set.emotes.filter((emote) => {
+            if (sevenTVEmoteNames.has(emote.name)) {
+              removedEmotes.push(emote.name);
+              return false;
+            }
+            return true;
+          });
+        });
+      }
+
       set((state) => ({
         chatrooms: state.chatrooms.map((room) => {
           if (room.id === chatroom.id) {
@@ -331,26 +420,45 @@ const useChatStore = create((set, get) => ({
 
     // Fetch Initial Chatroom Info
     const fetchInitialChatroomInfo = async () => {
-      const { data } = await window.app.kick.getChannelChatroomInfo(chatroom?.slug);
+      const response = await window.app.kick.getChannelChatroomInfo(chatroom?.streamerData?.slug);
+
+      if (!response?.data) {
+        console.log("[Initial Chatroom Info]: No data received, skipping update");
+        return;
+      }
+
+      const currentChatroom = get().chatrooms.find((room) => room.id === chatroom.id);
+      const updatedChatroom = {
+        ...currentChatroom,
+        initialChatroomInfo: response.data,
+        isStreamerLive: response.data?.livestream?.is_live,
+        streamerData: {
+          ...currentChatroom.streamerData,
+          livestream: response.data?.livestream
+            ? { ...currentChatroom.streamerData?.livestream, ...response.data?.livestream }
+            : null,
+        },
+      };
 
       set((state) => ({
         chatrooms: state.chatrooms.map((room) => {
           if (room.id === chatroom.id) {
-            return {
-              ...room,
-              initialChatroomInfo: data,
-              isStreamerLive: data?.livestream?.is_live,
-              streamStatus: data?.livestream,
-            };
+            return updatedChatroom;
           }
           return room;
         }),
       }));
+
+      // Update local storage with the updated chatroom
+      const savedChatrooms = JSON.parse(localStorage.getItem("chatrooms")) || [];
+      const updatedChatrooms = savedChatrooms.map((room) => (room.id === chatroom.id ? updatedChatroom : room));
+      localStorage.setItem("chatrooms", JSON.stringify(updatedChatrooms));
     };
 
     fetchInitialChatroomInfo();
 
     // Fetch initial messages
+<<<<<<< Updated upstream
     // TODO: Finish adding initial messages
     const fetchInitialMessages = async () => {
       const {
@@ -364,6 +472,23 @@ const useChatStore = create((set, get) => ({
         get().handlePinnedMessageCreated(chatroom.id, data.pinned_message);
       }
 
+=======
+    const fetchInitialMessages = async () => {
+      const response = await window.app.kick.getInitialChatroomMessages(chatroom.streamerData.id);
+
+      if (!response?.data?.data) {
+        console.log("[Initial Messages]: No data received, skipping update");
+        return;
+      }
+
+      const data = response.data.data;
+
+      // Handle initial pinned message
+      if (data?.pinned_message) {
+        get().handlePinnedMessageCreated(chatroom.id, data.pinned_message);
+      }
+
+>>>>>>> Stashed changes
       // Add initial messages to the chatroom
       if (data?.messages) {
         get().addInitialChatroomMessages(chatroom.id, data.messages.reverse());
@@ -371,11 +496,34 @@ const useChatStore = create((set, get) => ({
     };
 
     fetchInitialMessages();
+<<<<<<< Updated upstream
+=======
+
+    // const fetchInitialPollInfo = async () => {
+    //   const response = await window.app.kick.getInitialPollInfo(chatroom?.streamerData?.slug);
+
+    //   if (!response) {
+    //     console.log("[Initial Poll Info]: No response received, skipping update");
+    //     return;
+    //   }
+
+    //   if (response.data?.status?.code === 404) {
+    //     get().handlePollDelete(chatroom.id);
+    //   }
+
+    //   if (response.data?.status?.code === 200) {
+    //     get().handlePollUpdate(chatroom.id, response.data?.data?.poll);
+    //   }
+    // };
+
+    // fetchInitialPollInfo();
+>>>>>>> Stashed changes
 
     set((state) => ({
       connections: {
         ...state.connections,
         [chatroom.id]: {
+          ...state.connections[chatroom.id],
           kickPusher: pusher,
         },
       },
@@ -395,12 +543,39 @@ const useChatStore = create((set, get) => ({
   },
 
   addMessage: (chatroomId, message) => {
+<<<<<<< Updated upstream
     set((state) => ({
       messages: {
         ...state.messages,
         [chatroomId]: [...(state.messages[chatroomId] || []), { ...message, deleted: false }].slice(-200), // Keep last 200 messages
       },
     }));
+=======
+    set((state) => {
+      const messages = state.messages[chatroomId] || [];
+      const newMessage = { ...message, chatroom_id: chatroomId, deleted: false };
+
+      if (messages.some((msg) => msg.id === newMessage.id)) {
+        return state;
+      }
+
+      let updatedMessages = message?.is_old ? [newMessage, ...messages] : [...messages, newMessage];
+
+      // Keep a fixed window of messages based on pause state
+      if (state.isChatroomPaused?.[chatroomId] && updatedMessages.length > 800) {
+        updatedMessages = updatedMessages.slice(-400);
+      } else if (!state.isChatroomPaused?.[chatroomId] && updatedMessages.length > 150) {
+        updatedMessages = updatedMessages.slice(-150);
+      }
+
+      return {
+        messages: {
+          ...state.messages,
+          [chatroomId]: updatedMessages,
+        },
+      };
+    });
+>>>>>>> Stashed changes
   },
 
   addChatter: (chatroomId, chatter) => {
@@ -445,9 +620,11 @@ const useChatStore = create((set, get) => ({
       const newChatroom = {
         id: response.chatroom.id,
         username: response.user.username,
-        slug: username,
+        displayName: response.user.username, // Custom display name for renaming
+        slug: response?.slug,
         streamerData: response,
         channel7TVEmotes: [],
+        order: savedChatrooms.length,
       };
 
       set((state) => ({
@@ -470,13 +647,20 @@ const useChatStore = create((set, get) => ({
   },
 
   removeChatroom: (chatroomId) => {
+    console.log(`[ChatProvider]: Removing chatroom ${chatroomId}`);
+
     const { connections } = get();
     const connection = connections[chatroomId];
     const stvSocket = connection?.stvSocket;
     const kickPusher = connection?.kickPusher;
 
-    if (stvSocket) stvSocket.close();
-    if (kickPusher) kickPusher.close();
+    if (stvSocket) {
+      stvSocket.close();
+    }
+
+    if (kickPusher) {
+      kickPusher.close();
+    }
 
     set((state) => {
       const { [chatroomId]: _, ...messages } = state.messages;
@@ -492,6 +676,34 @@ const useChatStore = create((set, get) => ({
     // Remove chatroom from local storage
     const savedChatrooms = JSON.parse(localStorage.getItem("chatrooms")) || [];
     localStorage.setItem("chatrooms", JSON.stringify(savedChatrooms.filter((room) => room.id !== chatroomId)));
+  },
+
+  // Ordered Chatrooms
+  getOrderedChatrooms: () => {
+    return get().chatrooms.sort((a, b) => (a.order || 0) - (b.order || 0));
+  },
+
+  updateChatroomOrder: (chatroomId, newOrder) => {
+    set((state) => ({
+      chatrooms: state.chatrooms.map((room) => (room.id === chatroomId ? { ...room, order: newOrder } : room)),
+    }));
+
+    const updatedChatrooms = get().chatrooms;
+
+    // Update local storage
+    localStorage.setItem("chatrooms", JSON.stringify(updatedChatrooms));
+  },
+
+  reorderChatrooms: (reorderedChatrooms) => {
+    const chatroomsWithNewOrder = reorderedChatrooms.map((chatroom, index) => ({
+      ...chatroom,
+      order: index,
+    }));
+
+    set({ chatrooms: chatroomsWithNewOrder });
+
+    // Update local storage
+    localStorage.setItem("chatrooms", JSON.stringify(chatroomsWithNewOrder));
   },
 
   handleUserBanned: (chatroomId, event) => {
@@ -543,19 +755,19 @@ const useChatStore = create((set, get) => ({
     });
   },
 
-  handleUpdatePlaySound: (chatroomId, messageId) => {
-    set((state) => {
-      return {
-        ...state,
-        messages: state.messages[chatroomId].map((message) => {
-          if (message.id === messageId) {
-            return { ...message, playSound: !message.playSound };
-          }
-          return message;
-        }),
-      };
-    });
-  },
+  // handleUpdatePlaySound: (chatroomId, messageId) => {
+  //   set((state) => {
+  //     return {
+  //       ...state,
+  //       messages: state.messages[chatroomId].map((message) => {
+  //         if (message.id === messageId) {
+  //           return { ...message, playSound: !message.playSound };
+  //         }
+  //         return message;
+  //       }),
+  //     };
+  //   });
+  // },
 
   handleMessageDelete: (chatroomId, messageId) => {
     set((state) => {
@@ -577,6 +789,52 @@ const useChatStore = create((set, get) => ({
         },
       };
     });
+
+    // Update persistent logs with deleted status
+    window.app.logs.updateDeleted(chatroomId, messageId);
+    window.app.replyLogs.updateDeleted(chatroomId, messageId);
+  },
+
+  getDeleteMessage: async (chatroomId, messageId) => {
+    try {
+      await window.app.modActions.getDeleteMessage(chatroomId, messageId);
+      return true;
+    } catch (error) {
+      console.error("[Delete Message]: Error getting delete message:", error);
+
+      // if (error.response?.status === 400) {
+      //   const errMsg = chatroomErrorHandler({ code: "DELETE_MESSAGE_ERROR" });
+      //   get().addMessage(chatroomId, {
+      //     id: crypto.randomUUID(),
+      //     type: "system",
+      //     content: errMsg,
+      //     timestamp: new Date().toISOString(),
+      //   });
+      // }
+
+      return false;
+    }
+  },
+
+  getPinMessage: async (chatroomId, messageData) => {
+    try {
+      await window.app.kick.getPinMessage(messageData);
+      return true;
+    } catch (error) {
+      console.error("[Pin Message]: Error getting pin message:", error);
+
+      if (error.response?.status === 400) {
+        const errMsg = chatroomErrorHandler({ code: "PINNED_MESSAGE_NOT_FOUND_ERROR" });
+        get().addMessage(chatroomId, {
+          id: crypto.randomUUID(),
+          type: "system",
+          content: errMsg,
+          timestamp: new Date().toISOString(),
+        });
+      }
+
+      return false;
+    }
   },
 
   handlePinnedMessageCreated: (chatroomId, event) => {
@@ -590,6 +848,7 @@ const useChatStore = create((set, get) => ({
     }));
   },
 
+<<<<<<< Updated upstream
   handlePollCreate: (chatroomId, event) => {
     console.log("Poll event:", event);
     set((state) => ({
@@ -601,27 +860,75 @@ const useChatStore = create((set, get) => ({
       }),
     }));
   },
+=======
+  // handlePollUpdate: (chatroomId, poll) => {
+  //   set((state) => {
+  //     const currentPoll = state.chatrooms.find((room) => room.id === chatroomId)?.pollDetails;
+  //     return {
+  //       chatrooms: state.chatrooms.map((room) => {
+  //         if (room.id === chatroomId) {
+  //           return { ...room, pollDetails: currentPoll ? { ...currentPoll, ...poll } : poll };
+  //         }
+  //         return room;
+  //       }),
+  //     };
+  //   });
+  // },
+>>>>>>> Stashed changes
 
   handlePinnedMessageDeleted: (chatroomId, event) => {
     set((state) => ({
       chatrooms: state.chatrooms.map((room) => {
         if (room.id === chatroomId) {
+<<<<<<< Updated upstream
           return { ...room, pinnedMessage: null };
+=======
+          return { ...room, pinDetails: null };
+>>>>>>> Stashed changes
         }
         return room;
       }),
     }));
   },
+<<<<<<< Updated upstream
+=======
+
+  // handlePollDelete: (chatroomId) => {
+  //   set((state) => ({
+  //     chatrooms: state.chatrooms.map((room) => {
+  //       if (room.id === chatroomId) {
+  //         return { ...room, pollDetails: null };
+  //       }
+  //       return room;
+  //     }),
+  //   }));
+  // },
+>>>>>>> Stashed changes
 
   handleStreamStatus: (chatroomId, event, isLive) => {
+    const currentChatroom = get().chatrooms.find((room) => room.id === chatroomId);
+    const updatedChatroom = {
+      ...currentChatroom,
+      isStreamerLive: isLive,
+      streamerData: {
+        ...currentChatroom.streamerData,
+        livestream: event?.livestream ? { ...currentChatroom.streamerData?.livestream, ...event?.livestream } : null,
+      },
+    };
+
     set((state) => ({
       chatrooms: state.chatrooms.map((room) => {
         if (room.id === chatroomId) {
-          return { ...room, isStreamerLive: isLive, streamStatus: event };
+          return updatedChatroom;
         }
         return room;
       }),
     }));
+
+    // Update local storage with the updated chatroom
+    const savedChatrooms = JSON.parse(localStorage.getItem("chatrooms")) || [];
+    const updatedChatrooms = savedChatrooms.map((room) => (room.id === chatroomId ? updatedChatroom : room));
+    localStorage.setItem("chatrooms", JSON.stringify(updatedChatrooms));
   },
 
   handleChatroomUpdated: (chatroomId, event) => {
@@ -635,26 +942,26 @@ const useChatStore = create((set, get) => ({
     }));
   },
 
+  // Add initial chatroom messages, reverse the order of the messages
   addInitialChatroomMessages: (chatroomId, data) => {
-    data.map((message) => {
+    [...data].reverse().forEach((message) => {
       message.is_old = true;
       message.metadata = JSON.parse(message.metadata);
-    });
 
-    data?.forEach((message) => {
       get().addChatter(chatroomId, message?.sender);
       window.app.logs.add({
         chatroomId: chatroomId,
         userId: message?.sender?.id,
         message: message,
       });
-    });
 
+      get().addMessage(chatroomId, message);
+    });
+  },
+
+  handleChatroomPause: (chatroomId, isPaused) => {
     set((state) => ({
-      messages: {
-        ...state.messages,
-        [chatroomId]: [...(state.messages[chatroomId] || []), ...data],
-      },
+      isChatroomPaused: { ...state.isChatroomPaused, [chatroomId]: isPaused },
     }));
   },
 
@@ -746,6 +1053,124 @@ const useChatStore = create((set, get) => ({
   //     }),
   //   }));
   // },
+
+  refresh7TVEmotes: async (chatroomId) => {
+    try {
+      const chatroom = get().chatrooms.find((room) => room.id === chatroomId);
+      if (!chatroom || chatroom?.last7TVSetUpdated > dayjs().subtract(30, "second").toISOString()) return;
+
+      // System message starting refresh
+      get().addMessage(chatroomId, {
+        id: crypto.randomUUID(),
+        type: "system",
+        content: "Refreshing 7TV emotes...",
+        timestamp: new Date().toISOString(),
+      });
+
+      // Fetch new emote sets
+      const channel7TVEmotes = await window.app.stv.getChannelEmotes(chatroom.streamerData.user_id);
+
+      // Update local storage and state
+      if (channel7TVEmotes) {
+        const savedChatrooms = JSON.parse(localStorage.getItem("chatrooms")) || [];
+        const updatedChatrooms = savedChatrooms.map((room) =>
+          room.id === chatroomId ? { ...room, channel7TVEmotes, last7TVSetUpdated: dayjs().toISOString() } : room,
+        );
+        localStorage.setItem("chatrooms", JSON.stringify(updatedChatrooms));
+
+        set((state) => ({
+          chatrooms: state.chatrooms.map((room) => {
+            if (room.id === chatroom.id) {
+              return { ...room, channel7TVEmotes, last7TVSetUpdated: dayjs().toISOString() };
+            }
+            return room;
+          }),
+        }));
+
+        // Send system message on success
+        get().addMessage(chatroomId, {
+          id: crypto.randomUUID(),
+          type: "system",
+          content: "7TV emotes refreshed successfully!",
+          timestamp: new Date().toISOString(),
+        });
+      }
+    } catch (error) {
+      console.error("[7TV Refresh]: Error refreshing emotes:", error);
+      // Send system message on error
+      get().addMessage(chatroomId, {
+        id: crypto.randomUUID(),
+        type: "system",
+        content: "Failed to refresh 7TV emotes. Please try again.",
+        timestamp: new Date().toISOString(),
+      });
+    }
+  },
+
+  refreshKickEmotes: async (chatroomId) => {
+    try {
+      const chatroom = get().chatrooms.find((room) => room.id === chatroomId);
+      if (!chatroom || chatroom?.lastKickEmoteRefresh > dayjs().subtract(30, "second").toISOString()) return;
+
+      // System message starting Refresh
+      get().addMessage(chatroomId, {
+        id: crypto.randomUUID(),
+        type: "system",
+        content: "Refreshing Kick emotes...",
+        timestamp: new Date().toISOString(),
+      });
+
+      // Fetch new emote sets
+      const kickEmotes = await window.app.kick.getEmotes(chatroom.slug);
+
+      // Update local storage and state
+      if (kickEmotes) {
+        set((state) => ({
+          chatrooms: state.chatrooms.map((room) => {
+            if (room.id === chatroom.id) {
+              return { ...room, emotes: kickEmotes, lastKickEmoteRefresh: dayjs().toISOString() };
+            }
+            return room;
+          }),
+        }));
+
+        // Send system message on success
+        get().addMessage(chatroomId, {
+          id: crypto.randomUUID(),
+          type: "system",
+          content: "Kick emotes refreshed successfully!",
+          timestamp: new Date().toISOString(),
+        });
+      }
+    } catch (error) {
+      console.error("[Kick Refresh]: Error refreshing emotes:", error);
+      // Send system message on error
+      get().addMessage(chatroomId, {
+        id: crypto.randomUUID(),
+        type: "system",
+        content: "Failed to refresh Kick emotes. Please try again.",
+        timestamp: new Date().toISOString(),
+      });
+    }
+  },
+
+  renameChatroom: (chatroomId, newDisplayName) => {
+    // Update localStorage
+    const savedChatrooms = JSON.parse(localStorage.getItem("chatrooms")) || [];
+    localStorage.setItem(
+      "chatrooms",
+      JSON.stringify(savedChatrooms.map((room) => (room.id === chatroomId ? { ...room, displayName: newDisplayName } : room))),
+    );
+
+    set((state) => ({
+      chatrooms: state.chatrooms.map((room) => {
+        if (room.id === chatroomId) {
+          return { ...room, displayName: newDisplayName };
+        }
+        return room;
+      }),
+    }));
+  },
 }));
 
 if (window.location.pathname === "/" || window.location.pathname.endsWith("index.html")) {
@@ -764,17 +1189,26 @@ if (window.location.pathname === "/" || window.location.pathname.endsWith("index
       console.log("[7TV Presence]: No 7TV ID found, skipping presence update checks");
       setTimeout(() => {
         storeStvId = localStorage.getItem("stvId");
-        if (storeStvId) {
+        const authTokens = window.app.auth.getToken();
+
+        if (storeStvId && authTokens?.token && authTokens?.session) {
           initializePresenceUpdates();
         } else {
-          console.log("[7TV Presence]: No STV ID found after delay");
+          console.log("[7TV Presence]: No STV ID or auth tokens found after delay");
         }
-      }, 10 * 10000); // 10 seconds delay
+      }, 8 * 1000); // 8 seconds delay
 
       return;
     }
 
-    // Send presence updates every 1 minute
+    // Check for auth tokens before starting presence updates
+    const authTokens = window.app.auth.getToken();
+    if (!authTokens?.token || !authTokens?.session) {
+      console.log("[7TV Presence]: No auth tokens available, skipping presence update initialization");
+      return;
+    }
+
+    // Send presence updates every 2 minutes
     console.log("[7TV Presence]: Initializing presence update checks");
     presenceUpdatesInterval = setInterval(
       () => {
@@ -786,7 +1220,7 @@ if (window.location.pathname === "/" || window.location.pathname.endsWith("index
           useChatStore.getState().sendPresenceUpdate(storeStvId, chatroom.streamerData.user_id);
         });
       },
-      2 * 60 * 1000,
+      1 * 60 * 1000,
     );
 
     return () => {

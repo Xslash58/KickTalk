@@ -2,26 +2,18 @@ export const userKickTalkBadges = [
   {
     username: "ftk789",
     badges: [
-      // {
-      //   type: "Founder",
-      //   title: "Founder",
-      // },
       {
-        type: "BetaTester",
-        title: "Beta Tester",
+        type: "Founder",
+        title: "Founder",
       },
     ],
   },
   {
     username: "drkness_x",
     badges: [
-      // {
-      //   type: "Founder",
-      //   title: "Founder",
-      // },
       {
-        type: "BetaTester",
-        title: "Beta Tester",
+        type: "Founder",
+        title: "Founder",
       },
     ],
   },
@@ -36,6 +28,15 @@ export const userKickTalkBadges = [
   },
   {
     username: "physikz",
+    badges: [
+      {
+        type: "BetaTester",
+        title: "Beta Tester",
+      },
+    ],
+  },
+  {
+    username: "receipts",
     badges: [
       {
         type: "BetaTester",
@@ -85,6 +86,10 @@ export const userKickTalkBadges = [
       {
         type: "BetaTester",
         title: "Beta Tester",
+      },
+      {
+        type: "d9",
+        title: "d9",
       },
     ],
   },

@@ -12,6 +12,11 @@ import {
   $isRangeSelection,
   PASTE_COMMAND,
   TextNode,
+  KEY_ARROW_LEFT_COMMAND,
+  KEY_BACKSPACE_COMMAND,
+  KEY_DELETE_COMMAND,
+  KEY_SPACE_COMMAND,
+  COMMAND_PRIORITY_CRITICAL,
 } from "lexical";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AutoFocusPlugin } from "@lexical/react/LexicalAutoFocusPlugin";
@@ -26,7 +31,7 @@ import useChatStore from "../../../providers/ChatProvider";
 
 import EmoteDialogs from "./EmoteDialogs";
 import { useShallow } from "zustand/react/shallow";
-import { EmoteNode } from "./EmoteNode";
+import { $isEmoteNode, EmoteNode } from "./EmoteNode";
 import { kickEmoteInputRegex } from "../../../../../../utils/constants";
 import XIcon from "../../../assets/icons/x-bold.svg?asset";
 import InfoBar from "./InfoBar";
@@ -162,12 +167,23 @@ const KeyHandler = ({ chatroomId, onSendMessage, replyInputData, setReplyInputDa
   const [chatterSuggestions, setChatterSuggestions] = useState([]);
   const [searchText, setSearchText] = useState("");
   const [tabSuggestions, setTabSuggestions] = useState([]);
+<<<<<<< Updated upstream
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [selectedTabIndex, setSelectedTabIndex] = useState(0);
   const [showChatters, setShowChatters] = useState(false);
+=======
+  const [selectedTabIndex, setSelectedTabIndex] = useState(0);
+  // const [selectedIndex, setSelectedIndex] = useState(0);
+  // const [showChatters, setShowChatters] = useState(false);
+>>>>>>> Stashed changes
   const [selectedEmoteIndex, setSelectedEmoteIndex] = useState(0);
   const [selectedChatterIndex, setSelectedChatterIndex] = useState(0);
   const [position, setPosition] = useState(null);
+
+  const resetTabSuggestions = () => {
+    setTabSuggestions([]);
+    setSelectedTabIndex(0);
+  };
 
   const sevenTVEmotes = useChatStore(
     useShallow((state) => state.chatrooms.find((room) => room.id === chatroomId)?.channel7TVEmotes),
@@ -211,7 +227,7 @@ const KeyHandler = ({ chatroomId, onSendMessage, replyInputData, setReplyInputDa
     (emote) => {
       editor.update(() => {
         const selection = $getSelection();
-        if (!$isRangeSelection(selection) || isReplyThread) return;
+        if (!$isRangeSelection(selection)) return;
 
         const node = selection.anchor.getNode();
         const textContent = node.getTextContent();
@@ -401,11 +417,31 @@ const KeyHandler = ({ chatroomId, onSendMessage, replyInputData, setReplyInputDa
         COMMAND_PRIORITY_HIGH,
       ),
 
+      ...[
+        [KEY_ENTER_COMMAND, COMMAND_PRIORITY_CRITICAL],
+        [KEY_SPACE_COMMAND, COMMAND_PRIORITY_CRITICAL],
+        [KEY_BACKSPACE_COMMAND, COMMAND_PRIORITY_CRITICAL],
+      ].map(([command, priority]) =>
+        editor.registerCommand(
+          command,
+          () => {
+            resetTabSuggestions();
+            return false;
+          },
+          priority,
+        ),
+      ),
+
       editor.registerCommand(
         KEY_TAB_COMMAND,
         (e) => {
+          // return if shift key is being pressed
           if (e.shiftKey) return false;
           e.preventDefault();
+<<<<<<< Updated upstream
+=======
+          // check if we have suggestions
+>>>>>>> Stashed changes
           if (emoteSuggestions?.length) {
             insertEmote(emoteSuggestions[selectedEmoteIndex]);
             return true;
@@ -414,95 +450,114 @@ const KeyHandler = ({ chatroomId, onSendMessage, replyInputData, setReplyInputDa
             insertChatterMention(chatterSuggestions[selectedChatterIndex]);
             return true;
           }
-          // if (tabSuggestions?.length) {
-          //   const nextIndex = (selectedTabIndex + 1) % tabSuggestions.length;
-          //   setSelectedTabIndex(nextIndex);
+          if (tabSuggestions?.length) {
+            const prevEmote = tabSuggestions[selectedTabIndex]?.name;
+            const nextIndex = (selectedTabIndex + 1) % tabSuggestions.length;
+            const nextEmote = tabSuggestions[nextIndex]?.name;
+            setSelectedTabIndex(nextIndex);
+            editor.update(() => {
+              const selection = $getSelection();
+              if (!$isRangeSelection(selection)) return;
+              const node = selection.anchor.getNode();
+              if (!node) return;
+              const textContent = node.getTextContent();
+              const startIndex = textContent.lastIndexOf(prevEmote);
+              const endIndex = startIndex + prevEmote.length;
+              const textBefore = textContent.slice(0, startIndex);
+              const textAfter = textContent.slice(endIndex);
 
-          //   editor.update(() => {
-          //     const selection = $getSelection();
-          //     if (!$isRangeSelection(selection)) return;
+              node.setTextContent(textBefore + nextEmote);
 
-          //     const node = selection.anchor.getNode();
-          //     if (!node) return;
+              if (textAfter) {
+                const afterNode = $createTextNode(textAfter);
+                selection.insertNodes([afterNode]);
+              }
+              const newSelection = $getSelection();
+              if ($isRangeSelection(newSelection)) {
+                newSelection.anchor.offset = (textBefore + nextEmote).length;
+                newSelection.focus.offset = (textBefore + nextEmote).length;
+              }
+            });
 
-          //     const textContent = node.getTextContent();
-          //     const currentEmote = tabSuggestions[nextIndex - 1];
-          //     const startIndex = textContent.lastIndexOf(tabSuggestions[nextIndex - 1]);
-          //     const endIndex = startIndex + tabSuggestions[nextIndex].length;
-
-          //     const textBefore = textContent.slice(startIndex, endIndex);
-          //     const textAfter = textContent.slice(endIndex);
-
-          //     // Delete the current word
-          //     node.setTextContent(textBefore + textAfter);
-
-          //     // Set text after emote
-          //     if (textAfter) {
-          //       const afterNode = $createTextNode(textAfter);
-          //       selection.insertNodes([afterNode]);
-          //     }
-          //   });
-          //   return true;
-          // }
-
-          // const content = $rootTextContent();
-          // if (!content.trim()) return false;
-
-          // // Get the text before the cursor in the current node
-          // const cursorOffset = $getSelection().anchor.offset;
-          // const textBeforeCursor = content.slice(0, cursorOffset);
-
-          // // Find the last word before the cursor
-          // const words = textBeforeCursor.split(/\s+/);
-          // const currentWord = words[words.length - 1];
-
-          // const foundEmotes = [];
-
-          // // Search 7TV Emotes for matches
-          // [...sevenTVEmotes[0]?.emotes, ...sevenTVEmotes[1]?.emotes]?.filter((emote) => {
-          //   if (emote.name.toLowerCase().startsWith(currentWord.toLowerCase())) {
-          //     foundEmotes.push(emote);
-          //   }
-          // });
-
-          // if (foundEmotes.length > 0) {
-          //   setTabSuggestions(foundEmotes);
-          //   setSelectedTabIndex(0);
-
-          //   editor.update(() => {
-          //     const selection = $getSelection();
-          //     if (!$isRangeSelection(selection)) return;
-
-          //     const node = selection.anchor.getNode();
-          //     if (!node) return;
-
-          //     const textContent = node.getTextContent();
-          //     const startIndex = textContent.lastIndexOf(currentWord);
-
-          //     const endIndex = startIndex + currentWord.length;
-
-          //     const textBefore = textContent.slice(0, startIndex);
-          //     const textAfter = textContent.slice(endIndex);
-
-          //     // Delete the current word
-          //     node.setTextContent(textBefore + textAfter + foundEmotes[0]?.name);
-
-          //     // Set text after emote
-          //     if (textAfter) {
-          //       const afterNode = $createTextNode(textAfter);
-          //       selection.insertNodes([afterNode]);
-          //     }
-          //   });
-          //   return true;
-          // }
-          // const emote = getEmoteData(currentWord, sevenTVEmotes, chatroomId);
-
-          // if (emote) {
-          //   insertEmote(emote);
-          //   return true;
-          // }
-
+            return true;
+          }
+          const content = $rootTextContent();
+          if (!content.trim()) return false;
+          const cursorOffset = $getSelection().anchor.offset;
+          const textBeforeCursor = content.slice(0, cursorOffset);
+          const words = textBeforeCursor.split(/\s+/);
+          const currentWord = words[words.length - 1];
+          const foundEmotes = [];
+          const emotesA = sevenTVEmotes[0]?.emotes ?? [];
+          const emotesB = sevenTVEmotes[1]?.emotes ?? [];
+          [...emotesA, ...emotesB].forEach((emote) => {
+            if (emote.name.toLowerCase().startsWith(currentWord.toLowerCase())) {
+              foundEmotes.push({ ...emote, name: emote.name + " " });
+            }
+          });
+          console.log("Found emotes:", foundEmotes);
+          if (foundEmotes.length > 0) {
+            setTabSuggestions(foundEmotes);
+            setSelectedTabIndex(0);
+            editor.update(() => {
+              const selection = $getSelection();
+              if (!$isRangeSelection(selection)) return;
+              const node = selection.anchor.getNode();
+              if (!node) return;
+              if (tabSuggestions.length > 0) return;
+              const textContent = node.getTextContent();
+              const startIndex = textContent.lastIndexOf(currentWord);
+              const endIndex = startIndex + currentWord.length;
+              const textBefore = textContent.slice(0, startIndex);
+              const textAfter = textContent.slice(endIndex);
+              const emoteName = foundEmotes[0]?.name;
+              node.setTextContent(textBefore + emoteName);
+              if (textAfter) {
+                const afterNode = $createTextNode(textAfter);
+                selection.insertNodes([afterNode]);
+              }
+              const newSelection = $getSelection();
+              if ($isRangeSelection(newSelection)) {
+                newSelection.anchor.offset = (textBefore + emoteName).length;
+                newSelection.focus.offset = (textBefore + emoteName).length;
+              }
+            });
+            return true;
+          }
           return true;
+        },
+        COMMAND_PRIORITY_HIGH,
+      ),
+
+      editor.registerCommand(
+        KEY_BACKSPACE_COMMAND,
+        (e) => {
+          const selection = $getSelection();
+          if (!$isRangeSelection(selection)) return false;
+
+          const anchor = selection.anchor;
+          const anchorNode = anchor.getNode();
+
+          // Check if the paragraph contains an emote-like text
+          if (anchorNode.getType() === "paragraph") {
+            const textContent = anchorNode.getTextContent();
+            const emoteMatch = textContent.match(/\[emote:(\d+):([^\]]+)\]/);
+
+            if (emoteMatch) {
+              // Find the child nodes of the paragraph
+              const children = anchorNode.getChildren();
+
+              children.forEach((child) => {
+                if (child.getTextContent().includes(emoteMatch[0])) {
+                  child.remove();
+                }
+              });
+
+              return true;
+            }
+          }
+
+          return false;
         },
         COMMAND_PRIORITY_HIGH,
       ),
@@ -531,7 +586,7 @@ const KeyHandler = ({ chatroomId, onSendMessage, replyInputData, setReplyInputDa
             const query = currentWord.slice(1);
             const results = searchChatters(query);
             setSearchText(query);
-            setChatterSuggestions(results?.length ? results : chatters);
+            setChatterSuggestions(results?.length ? results : null);
             setSelectedChatterIndex(0);
             setPosition([cursorOffset - query.length, cursorOffset]);
           } else {
@@ -610,6 +665,26 @@ const KeyHandler = ({ chatroomId, onSendMessage, replyInputData, setReplyInputDa
     isReplyThread,
   ]);
 
+  useEffect(() => {
+    if (!editor) return;
+
+    const handleKeyDown = (e) => {
+      if (e.key !== "Tab") {
+        resetTabSuggestions();
+      }
+    };
+
+    const dom = editor.getRootElement();
+    if (dom) {
+      dom.addEventListener("keydown", handleKeyDown);
+    }
+    return () => {
+      if (dom) {
+        dom.removeEventListener("keydown", handleKeyDown);
+      }
+    };
+  }, [editor]);
+
   return (
     <>
       <EmoteSuggestions
@@ -661,6 +736,7 @@ const processEmoteInput = ({ node, kickEmotes }) => {
       if (part.getTextContent() === matchText && part.getParent()) {
         const emoteNode = new EmoteNode(emoteId, emoteName, emotePlatform);
         part.replace(emoteNode);
+
         lastIndex = endIndex;
       }
     });
@@ -757,7 +833,7 @@ const ChatInput = memo(
           if (editor) {
             editor.focus();
           }
-        }, 50);
+        }, 500);
       });
 
       return () => cleanup();
@@ -790,6 +866,8 @@ const ChatInput = memo(
               sender,
               fetchedUser: user?.data,
               chatroomId,
+              sevenTVEmotes: chatroom?.channel7TVEmotes,
+              subscriberBadges: chatroom?.streamerData?.subscriber_badges,
               userChatroomInfo: chatroom?.userChatroomInfo,
               cords: [0, 300],
             });
@@ -849,8 +927,13 @@ const ChatInput = memo(
               />
             </div>
 
+<<<<<<< Updated upstream
             <div className={clsx("chatInputActions", isReplyThread && "replyThread")}>
               {!isReplyThread && <EmoteHandler chatroomId={chatroomId} />}
+=======
+            <div className={clsx("chatInputActions")}>
+              <EmoteHandler chatroomId={chatroomId} userChatroomInfo={chatroom?.userChatroomInfo} />
+>>>>>>> Stashed changes
             </div>
             <KeyHandler
               isReplyThread={isReplyThread}

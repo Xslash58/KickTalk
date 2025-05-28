@@ -1,9 +1,19 @@
 import clsx from "clsx";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 
 const BadgeTooltip = ({ showBadgeInfo, mousePos, badgeInfo }) => {
   const badgeTooltipRef = useRef(null);
   const [position, setPosition] = useState({ top: 0, left: 0 });
+
+  const tooltipDimensions = useMemo(
+    () => ({
+      height: 165,
+      width: 400,
+      offset: 15,
+      fallbackOffset: 180,
+    }),
+    [],
+  );
 
   useEffect(() => {
     if (!mousePos.x || !mousePos.y || !showBadgeInfo) {
@@ -11,45 +21,52 @@ const BadgeTooltip = ({ showBadgeInfo, mousePos, badgeInfo }) => {
     }
 
     const calculatePosition = () => {
-      if (!badgeTooltipRef.current) return;
+      const { height, width, offset, fallbackOffset } = tooltipDimensions;
 
-      const tooltipHeight = 300;
-      const tooltipWidth = 400;
+      let top = mousePos.y + offset;
+      let left = mousePos.x + offset;
 
-      let top = mousePos.y + 15;
-      let left = mousePos.x + 15;
-
-      if (left - tooltipWidth > 80) {
-        left = mousePos.x - 180;
+      // make sure tooltip doesnt go right of available space
+      if (left + width > window.innerWidth) {
+        left = mousePos.x - fallbackOffset;
       }
 
-      if (top - tooltipHeight > 140) {
-        top = mousePos.y - 140;
+      // make sure tooltip doesnt go below available space
+      if (top + height > window.innerHeight) {
+        top = mousePos.y - height - offset;
+      }
+
+      // make sure tooltip doesnt go above available space
+      if (top < 0) {
+        top = offset;
+      }
+
+      // make sure tooltip doesnt go left of available space
+      if (left < 0) {
+        left = offset;
       }
 
       setPosition({ top, left });
     };
 
     calculatePosition();
-  }, [mousePos]);
+  }, [mousePos, showBadgeInfo, tooltipDimensions]);
 
   if (!showBadgeInfo) return null;
 
   return (
     <div
       ref={badgeTooltipRef}
-      style={{
-        top: showBadgeInfo && position.top,
-        left: showBadgeInfo && position.left,
-        opacity: showBadgeInfo ? 1 : 0,
-        height: "140px",
-      }}
-      className={clsx("tooltipItem showTooltip", showBadgeInfo ? "showTooltip" : "")}>
+      style={{ top: position.top, left: position.left, opacity: showBadgeInfo ? 1 : 0, height: `${tooltipDimensions.height}px` }}
+      className={clsx("tooltipItem", "showTooltip")}>
       <img src={badgeInfo?.src} alt={badgeInfo?.title} />
-      <span>{badgeInfo?.title}</span>
+      <div className="tooltipItemInfo">
+        <span>{badgeInfo?.title}</span>
+        <span className="badgeTooltipPlatform">{badgeInfo?.platform}</span>
+      </div>
       {badgeInfo?.owner?.username && (
         <span className="tooltipItemCreatedBy">
-          Created by <span className="tooltipItemCreatedByUsername">{badgeInfo?.owner?.username}</span>
+          Created by <span className="tooltipItemCreatedByUsername">{badgeInfo.owner.username}</span>
         </span>
       )}
     </div>

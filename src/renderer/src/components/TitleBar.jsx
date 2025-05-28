@@ -1,13 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 
-import CaretDown from "../assets/icons/caret-down-bold.svg?asset";
 import Minus from "../assets/icons/minus-bold.svg?asset";
 import Square from "../assets/icons/square-bold.svg?asset";
 import X from "../assets/icons/x-bold.svg?asset";
 import GearIcon from "../assets/icons/gear-fill.svg?asset";
 
 import "../assets/styles/components/TitleBar.scss";
-import Settings from "./Settings";
 import clsx from "clsx";
 import Updater from "./Updater";
 
@@ -33,7 +31,7 @@ const TitleBar = () => {
 
         setUserData(data);
       } catch (error) {
-        console.error("Failed to fetch user data:", error);
+        console.error("[TitleBar]: Failed to fetch user data:", error);
       }
     };
 
@@ -41,11 +39,11 @@ const TitleBar = () => {
     fetchUserData();
   }, []);
 
-  const handleAuthBtn = (e) => {
+  const handleAuthBtn = useCallback((e) => {
     const cords = [e.clientX, e.clientY];
 
     window.app.authDialog.open({ cords });
-  };
+  }, []);
 
   return (
     <div className="titleBar">
@@ -55,14 +53,33 @@ const TitleBar = () => {
 
       <div className={clsx("titleBarSettings", settingsModalOpen && "open")}>
         {userData?.id ? (
-          <button className="titleBarSettingsBtn" onClick={() => setSettingsModalOpen(!settingsModalOpen)}>
+          <button
+            className="titleBarSettingsBtn"
+            onClick={() =>
+              window.app.settingsDialog.open({
+                userData,
+              })
+            }>
             <span className="titleBarUsername">{userData?.username || "Loading..."}</span>
-            <img src={CaretDown} width={14} height={14} alt="Caret Down" />
+            <div className="titleBarDivider" />
+            <img className="titleBarSettingsIcon" src={GearIcon} width={16} height={16} alt="Settings" />
           </button>
         ) : (
-          <button className="titleBarLoginBtn" onClick={handleAuthBtn}>
-            Sign In
-          </button>
+          <div className="titleBarLoginBtn">
+            <button className="titleBarSignInBtn" onClick={handleAuthBtn}>
+              Sign In
+            </button>
+            <div className="titleBarDivider" />
+            <button
+              className="titleBarSettingsBtn"
+              onClick={() =>
+                window.app.settingsDialog.open({
+                  userData,
+                })
+              }>
+              <img src={GearIcon} width={16} height={16} alt="Settings" />
+            </button>
+          </div>
         )}
 
         {settingsModalOpen && (
@@ -73,9 +90,6 @@ const TitleBar = () => {
       <Updater />
 
       <div className="titleBarRight">
-        {/* <button className="titleBarSettingsBtn" onClick={() => window.app.settingsDialog.open()}>
-          <img src={GearIcon} width={16} height={16} alt="Settings" />
-        </button> */}
         <div className="titleBarControls">
           <button className="minimize" onClick={() => window.app.minimize()}>
             <img src={Minus} width={12} height={12} alt="Minimize" />

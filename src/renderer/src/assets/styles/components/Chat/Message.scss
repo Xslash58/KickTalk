@@ -17,6 +17,22 @@
     &:not(.highlighted) {
       background-color: rgba(255, 255, 255, 0.05) !important;
     }
+
+    &.highlighted {
+      position: relative;
+
+      &::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(255, 255, 255, 0.1);
+        pointer-events: none;
+        border-radius: inherit;
+      }
+    }
   }
 
   &.old,
@@ -38,7 +54,7 @@
   }
 
   &.dialogChatMessageItem {
-    padding: 0px;
+    padding: 4px 16px;
   }
 }
 
@@ -92,7 +108,7 @@
   top: -12px;
   opacity: 0;
   display: flex;
-  gap: 3px;
+  gap: 1px;
 
   > button {
     display: flex;
@@ -100,8 +116,9 @@
     justify-content: center;
     background: none;
     border: 1px solid rgba(255, 255, 255, 0.1);
-    background-color: #263d2f;
-    border-radius: 4px;
+    background-color: #36443c;
+    cursor: pointer;
+    border-radius: 3px;
     padding: 4px;
     transition: background-color 0.2s ease;
 
@@ -111,7 +128,7 @@
     }
 
     &:hover {
-      background-color: #395845;
+      background-color: #4a5c52;
       opacity: 1;
     }
   }
@@ -179,6 +196,10 @@
       width: calc(var(--chat-message-font-size) * (18 / 13));
       height: calc(var(--chat-message-font-size) * (18 / 13));
       vertical-align: middle;
+
+      &[alt="d9"] {
+        border-radius: 4px;
+      }
     }
   }
 }
@@ -236,6 +257,25 @@
   > span {
     font-weight: 800;
   }
+
+  > button {
+    border: none;
+    font-weight: 700;
+    cursor: pointer;
+    background-color: #2f3c33;
+    border-radius: 3px;
+    font-size: 14px;
+    padding: 2px 4px;
+    color: #819c89;
+    -webkit-background-clip: initial;
+    -webkit-text-fill-color: initial;
+    transition: all 0.2s ease;
+
+    &:hover {
+      background-color: #2f3c33;
+      color: #a0bda9;
+    }
+  }
 }
 
 /** [End of Mod Action Message] **/
@@ -260,6 +300,7 @@
   flex-direction: column;
   padding: 0;
   min-width: 132px;
+  min-height: min-content;
   z-index: 999;
   max-width: 250px;
   font-size: 18px;
@@ -302,6 +343,31 @@
     text-align: center;
     margin: 0;
     padding: 0;
+  }
+
+  .tooltipItemInfo {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 18px;
+    color: rgba(255, 255, 255, 0.7);
+    .badgeTooltipPlatform {
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background-color: rgba(255, 255, 255, 0.1);
+      margin-bottom: 4px;
+      width: 100%;
+      padding: 2px 8px;
+      font-size: 14px;
+      height: 20px;
+      border-radius: 4px;
+      color: rgba(255, 255, 255, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+    }
   }
 
   .tooltipItemCreatedBy {
@@ -387,7 +453,7 @@
     font-size: 14px;
     color: rgba(255, 255, 255, 0.7);
     > span {
-      font-weight: 800;
+      font-weight: 700;
       overflow-wrap: break-word;
       word-wrap: break-word;
       word-break: break-word;
@@ -399,9 +465,10 @@
 .emoteTooltipInfoHeader {
   display: flex;
   flex-direction: column;
+  gap: 4px;
 
   > span {
-    font-weight: 800;
+    font-weight: 700;
     font-size: 16px;
     color: rgba(255, 255, 255, 1);
   }

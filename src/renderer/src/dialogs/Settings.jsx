@@ -4,5 +4,10 @@ import "../assets/styles/dialogs/Chatters.scss";
 import React from "react";
 import ReactDOM from "react-dom/client";
 import Settings from "../components/Dialogs/Settings";
+import SettingsProvider from "../providers/SettingsProvider";
 
-ReactDOM.createRoot(document.getElementById("settingsRoot")).render(<Settings />);
+ReactDOM.createRoot(document.getElementById("root")).render(
+  <SettingsProvider>
+    <Settings />
+  </SettingsProvider>,
+);

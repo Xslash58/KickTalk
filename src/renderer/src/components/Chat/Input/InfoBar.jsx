@@ -14,6 +14,8 @@ const InfoBar = memo(
             return `Followers Only Mode [${convertSecondsToHumanReadable(chatroomInfo?.followers_mode?.min_duration * 60)}]`;
           case chatroomInfo?.subscribers_mode?.enabled:
             return `Subscribers Only Mode`;
+          case chatroomInfo?.account_age?.enabled:
+            return `Account Age Mode [${convertSecondsToHumanReadable(chatroomInfo?.account_age?.min_duration * 60)}]`;
           case chatroomInfo?.emotes_mode?.enabled:
             return `Emote Only Mode`;
           case chatroomInfo?.slow_mode?.enabled:
@@ -51,6 +53,14 @@ const InfoBar = memo(
                 {(chatroomInfo?.followers_mode?.enabled || initialChatroomInfo?.chatroom?.followers_mode) && (
                   <div className="chatInfoBarTooltipItem">
                     <span>Followers Only Mode Enabled</span>
+                  </div>
+                )}
+                {chatroomInfo?.account_age?.enabled && (
+                  <div className="chatInfoBarTooltipItem">
+                    <span>
+                      Account Age Restriction Enabled [
+                      {convertSecondsToHumanReadable(chatroomInfo?.account_age?.min_duration * 60)}]
+                    </span>
                   </div>
                 )}
                 {(chatroomInfo?.subscribers_mode?.enabled || initialChatroomInfo?.chatroom?.subscribers_mode) && (

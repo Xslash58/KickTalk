@@ -1,83 +1,123 @@
+import { ipcMain } from "electron";
 import { autoUpdater } from "electron-updater";
+import log from "electron-log";
 
-console.log("AutoUpdater initialized");
 export const update = (mainWindow) => {
-  autoUpdater.autoDownload = false;
+  // Only run auto-updater in production
+  const isDev = process.env.NODE_ENV === "development";
+  if (isDev) {
+    log.info("[Auto Updater]: Skipping auto-updater in development mode");
+    return;
+  }
+
+  autoUpdater.logger = log;
+  autoUpdater.logger.transports.file.level = "info";
+  log.info("[Auto Updater]: Initialized");
+
+  autoUpdater.autoDownload = true;
+  autoUpdater.autoInstallOnAppQuit = true;
   autoUpdater.disableWebInstaller = true;
   autoUpdater.disableDifferentialDownload = true;
   autoUpdater.allowDowngrade = false;
-  autoUpdater.autoInstallOnAppQuit = true;
   autoUpdater.forceDevUpdateConfig = true;
 
+  const sendUpdateEvent = (status) => {
+    log.info(`[Auto Updater]: Status - ${status}`);
+    mainWindow.webContents.send("autoUpdater:status", status);
+  };
+
+  // Setup Event Handlers
   autoUpdater.on("checking-for-update", () => {
-    console.log("Checking for update...");
+    log.info("[Auto Updater]: Checking for update...");
+    sendUpdateEvent({ event: "checking" });
   });
 
   autoUpdater.on("update-available", (info) => {
-    console.log("Update available:", info);
-    mainWindow.webContents.send("autoUpdater:update-available", info);
-    // startDownload(
-    //   (error, progressInfo) => {
-    //     if (error) {
-    //       console.log("autoUpdater:downloadError", error);
-    //       mainWindow.webContents.send("autoUpdater:downloadError", error);
-    //     } else {
-    //       console.log("autoUpdater:downloadProgress", progressInfo);
-    //       mainWindow.webContents.send("autoUpdater:downloadProgress", progressInfo);
-    //     }
-    //   },
-    //   () => {
-    //     console.log("autoUpdater:downloadCompleted");
-    //     mainWindow.webContents.send("autoUpdater:downloadCompleted");
-    //   },
-    // );
+    log.info("[Auto Updater]: Update available:", info);
+    sendUpdateEvent({ event: "available", version: info.version, releaseDate: info.releaseDate, files: info.files });
+
+    // autoUpdater.downloadUpdate().catch((error) => {
+    //   log.error("[Auto Updater]: Error downloading update:", err);
+    //   sendUpdateEvent({ event: "error", error: err.message });
+    // });
   });
 
   autoUpdater.on("update-not-available", (info) => {
-    // mainWindow.webContents.send("autoUpdater:update-not-available", info);
-    console.log("Update not available:", info);
+    log.info("[Auto Updater]: Update not available:", info);
+    sendUpdateEvent({ event: "not-available", version: info.version, releaseDate: info.releaseDate, files: info.files });
   });
 
-  // autoUpdater.on("error", (error) => {
-  //   console.log("Error:", error);
-  // });
+  autoUpdater.on("download-progress", (progress) => {
+    log.info(`[Auto Updater]: Download progress: ${progress.percent}%`);
+    sendUpdateEvent({
+      event: "downloading",
+      percent: progress.percent || 0,
+      bytesPerSecond: progress.bytesPerSecond,
+      transferred: progress.transferred,
+      total: progress.total,
+    });
+  });
 
-  // ipcMain.on("autoUpdater:checkForUpdates", () => {
-  //   autoUpdater.checkForUpdatesAndNotify();
-  // });
+  autoUpdater.on("update-downloaded", (info) => {
+    log.info("[Auto Updater]: Update downloaded");
+    sendUpdateEvent({
+      event: "ready",
+      version: info.version,
+    });
+  });
 
-  autoUpdater.checkForUpdatesAndNotify();
+  autoUpdater.on("error", (err) => {
+    log.error("[Auto Updater]: Update error:", err);
 
-  // ipcMain.on("autoUpdater:download", (event, callback) => {
-  //   startDownload(
-  //     (error, progressInfo) => {
-  //       if (error) {
-  //         event.reply("autoUpdater:downloadError", error);
-  //       } else {
-  //         event.reply("autoUpdater:downloadProgress", progressInfo);
-  //       }
-  //     },
-  //     () => {
-  //       event.sender.send("autoUpdater:downloadCompleted");
-  //     },
-  //   );
-  // });
+    if (err.message && (err.message.includes("download") || err.message.includes("Download"))) {
+      sendUpdateEvent({
+        event: "download-failed",
+        error: err.message,
+      });
+    } else {
+      sendUpdateEvent({
+        event: "error",
+        error: err.message,
+      });
+    }
+  });
 
-  // ipcMain.on("autoUpdater:quitAndInstall", () => {
-  //   autoUpdater.quitAndInstall();
-  // });
+  // IPC Handlers
+  ipcMain.handle("autoUpdater:check", async () => {
+    try {
+      log.info("[Auto Updater]: Checking for updates...");
+      await autoUpdater.checkForUpdates();
+      return { success: true };
+    } catch (error) {
+      log.error("[Auto Updater]: Error checking for updates:", error);
+      return { success: false, error: error.message };
+    }
+  });
 
-  // const startDownload = (callback, completedCallback) => {
-  //   autoUpdater.on("download-progress", (progress) => {
-  //     // mainWindow.webContents.send("autoUpdater:downloadProgress", progress);
-  //   });
+  ipcMain.handle("autoUpdater:download", async () => {
+    try {
+      log.info("[Auto Updater]: Downloading update...");
+      await autoUpdater.downloadUpdate();
+      return { success: true };
+    } catch (error) {
+      log.error("[Auto Updater]: Error downloading update:", error);
+      return { success: false, error: error.message };
+    }
+  });
 
-  //   autoUpdater.on("error", (error) => {
-  //     console.log("autoUpdater:downloadError", error);
-  //   });
+  // Force quit and install immediately
+  ipcMain.handle("autoUpdater:install", () => {
+    log.info("[Auto Updater]: Installing update and quitting...");
+    setImmediate(() => {
+      autoUpdater.quitAndInstall(false, true);
+    });
+  });
 
-  //   autoUpdater.on("update-downloaded", completedCallback);
-
-  //   autoUpdater.downloadUpdate();
-  // };
+  // Check for updates after a slight delay to allow app to fully initialize
+  setTimeout(() => {
+    log.info("[Auto Updater]: Performing initial update check...");
+    autoUpdater.checkForUpdates().catch((err) => {
+      log.error("[Auto Updater]: Initial update check failed:", err);
+    });
+  }, 3000);
 };
