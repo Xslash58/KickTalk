@@ -267,8 +267,6 @@
   }
 }
 
-<<<<<<< Updated upstream
-=======
 /** [Poll] **/
 
 .pollMessageBtn {
@@ -617,7 +615,6 @@
   }
 }
 
->>>>>>> Stashed changes
 /** [Pinned Message] **/
 
 .pinnedMessage {
@@ -625,18 +622,11 @@
   margin: 0 auto;
   left: 0;
   right: 0;
-<<<<<<< Updated upstream
-  background: #102c1a;
-  border: 1px solid #314d3c;
-  width: calc(100% - 24px);
-  box-shadow: 0px 2px 4px #07150a;
-=======
   background: linear-gradient(to bottom, #1d2621, #1f2d25d9);
   backdrop-filter: blur(3px);
   border: 1px solid rgba(255, 255, 255, 0.1019607843);
   box-shadow: 0px 4px 12px #030a04;
   width: calc(100% - 16px);
->>>>>>> Stashed changes
   top: 56px;
   border-radius: 6px;
   display: none;

@@ -12,14 +12,11 @@ import {
   getSilencedUsers,
   getLinkThumbnail,
   getInitialChatroomMessages,
-<<<<<<< Updated upstream
-=======
   getInitialPollInfo,
   getSubmitPollVote,
   getChatroomViewers,
 
   // Mod Actions
->>>>>>> Stashed changes
   getBanUser,
   getUnbanUser,
   getTimeoutUser,
@@ -185,19 +182,10 @@ if (process.contextIsolated) {
       logout: () => ipcRenderer.invoke("logout"),
       getAppInfo: () => ipcRenderer.invoke("get-app-info"),
       alwaysOnTop: () => ipcRenderer.invoke("alwaysOnTop"),
-      // showContextMenu: (message) => ipcRenderer.invoke("contextMenu:show", {
-      //   data: message,
-      // }),
 
-<<<<<<< Updated upstream
-      contextMenu: {
-        messages: (data) => ipcRenderer.invoke("contextMenu:messages", { data }),
-        streamerInfo: (data) => ipcRenderer.invoke("contextMenu:streamerInfo", { data }),
-=======
       notificationSounds: {
         getAvailable: () => ipcRenderer.invoke("notificationSounds:getAvailable"),
         getSoundUrl: (soundFile) => ipcRenderer.invoke("notificationSounds:getSoundUrl", { soundFile }),
->>>>>>> Stashed changes
       },
 
       authDialog: {
@@ -328,13 +316,9 @@ if (process.contextIsolated) {
       kick: {
         getChannelInfo,
         getChannelChatroomInfo,
-<<<<<<< Updated upstream
-        sendMessage: (channelId, message) => sendMessageToChannel(channelId, message, authSession.token, authSession.session),
-=======
         getInitialPollInfo: (channelName) => withAuth((token, session) => getInitialPollInfo(channelName, token, session)),
         sendMessage: (channelId, message) =>
           withAuth((token, session) => sendMessageToChannel(channelId, message, token, session)),
->>>>>>> Stashed changes
         sendReply: (channelId, message, metadata = {}) =>
           withAuth((token, session) => sendReplyToChannel(channelId, message, metadata, token, session)),
         getSilencedUsers: () => withAuth((token, session) => getSilencedUsers(token, session)),

@@ -8,8 +8,6 @@ import ArrowUpRight from "../../assets/icons/arrow-up-right-bold.svg?asset";
 import Copy from "../../assets/icons/copy-simple-fill.svg?asset";
 import BanIcon from "../../assets/icons/gavel-fill.svg?asset";
 import UnbanIcon from "../../assets/icons/circle-slash.svg?asset";
-<<<<<<< Updated upstream
-=======
 import Check from "../../assets/icons/check-bold.svg?asset";
 import { KickBadges, KickTalkBadges, StvBadges } from "../Cosmetics/Badges";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../Shared/Tooltip";
@@ -17,7 +15,6 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../Sha
 // TODO: Add Kick Talk Badges to User Dialog
 // TODO: Add Paints to User Dialog
 // TODO: Add Slider/Custom Timeout to User Dialog
->>>>>>> Stashed changes
 
 const User = () => {
   const [dialogData, setDialogData] = useState(null);
@@ -218,32 +215,8 @@ const User = () => {
             </div>
           </div>
 
-<<<<<<< Updated upstream
-        <div className="dialogHeaderOptions">
-          <div className="dialogHeaderOptionsTop">
-            <button
-              className="dialogHeaderOptionsButton"
-              disabled={kickUsername?.replaceAll("-", "_").toLowerCase() === dialogData?.sender?.username?.toLowerCase()}
-              onClick={silenceUser}>
-              <span>{isUserSilenced ? "Unmute User" : "Mute User"}</span>
-            </button>
-            <button
-              className="dialogHeaderOptionsButton"
-              onClick={() => {
-                // TODO: Fix different underscores effects
-                const transformedUsername = dialogData?.sender?.username.toLowerCase();
-                window.open(`https://kick.com/${transformedUsername}`, "_blank", "noopener,noreferrer");
-              }}>
-              Open Channel <img src={ArrowUpRight} width={18} height={18} />
-            </button>
-          </div>
-
-          {canModerate && (
-            <div className="dialogHeaderModActions">
-=======
           <div className="dialogHeaderOptions">
             <div className="dialogHeaderOptionsTop">
->>>>>>> Stashed changes
               <button
                 className={clsx("dialogHeaderOptionsButton", isUserSilenced && "muted")}
                 disabled={

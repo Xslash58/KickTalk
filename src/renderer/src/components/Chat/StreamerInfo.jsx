@@ -1,18 +1,8 @@
-<<<<<<< Updated upstream
-import { useState, useEffect } from "react";
-=======
 import { useState, useEffect, memo } from "react";
 import { useShallow } from "zustand/shallow";
->>>>>>> Stashed changes
 import clsx from "clsx";
-import PinnedMessage from "./PinnedMessage";
 import useChatStore from "../../providers/ChatProvider";
-import { useShallow } from "zustand/shallow";
 import PushPin from "../../assets/icons/push-pin-fill.svg?asset";
-<<<<<<< Updated upstream
-import UserIcon from "../../assets/icons/user-fill.svg?asset";
-import PollMessage from "./PollMessage";
-=======
 // import PollIcon from "../../assets/icons/poll-fill.svg?asset";
 import UserIcon from "../../assets/icons/user-fill.svg?asset";
 import Pin from "./Pin";
@@ -25,7 +15,6 @@ import {
   ContextMenuSeparator,
   ContextMenuTrigger,
 } from "../Shared/ContextMenu";
->>>>>>> Stashed changes
 
 const StreamerInfo = memo(({ streamerData, isStreamerLive, chatroomId, userChatroomInfo }) => {
   const [showPinnedMessage, setShowPinnedMessage] = useState(true);
@@ -35,45 +24,21 @@ const StreamerInfo = memo(({ streamerData, isStreamerLive, chatroomId, userChatr
   const refresh7TVEmotes = useChatStore((state) => state.refresh7TVEmotes);
   const refreshKickEmotes = useChatStore((state) => state.refreshKickEmotes);
 
-<<<<<<< Updated upstream
-  const pinnedMessage = useChatStore(
-    useShallow((state) => state.chatrooms.find((room) => room.id === chatroomId)?.pinnedMessage),
-  );
-  const pollMessage = useChatStore(useShallow((state) => state.chatrooms.find((room) => room.id === chatroomId)?.pollDetails));
-  const chatters = useChatStore(useShallow((state) => state.chatrooms.find((room) => room.id === chatroomId)?.chatters));
-
-  const handleChattersBtn = (e) => {
-    const chattersData = {
-      chatters: chatters || [],
-      streamerData,
-    };
-
-    window.app.chattersDialog.open(chattersData);
-  };
-=======
   const pinDetails = useChatStore(useShallow((state) => state.chatrooms.find((room) => room.id === chatroomId)?.pinDetails));
   // const predictions = useChatStore(useShallow((state) => state.chatrooms.find((room) => room.id === chatroomId)?.predictions));
   // const pollDetails = useChatStore(useShallow((state) => state.chatrooms.find((room) => room.id === chatroomId)?.pollDetails));
   // const handlePollDelete = useChatStore(useShallow((state) => state.handlePollDelete));
   // const handlePollUpdate = useChatStore(useShallow((state) => state.handlePollUpdate));
->>>>>>> Stashed changes
 
   useEffect(() => {
-    if (pinnedMessage) {
+    if (pinDetails) {
       setShowPinnedMessage(true);
     }
-<<<<<<< Updated upstream
-    if (pollMessage) {
-      setShowPollMessage(true);
-    }
-  }, [pinnedMessage, pollMessage]);
-=======
 
     // if (pollDetails) {
     //   setShowPollMessage(true);
     // }
   }, [pinDetails]);
->>>>>>> Stashed changes
 
   const handleRefresh7TV = () => {
     refresh7TVEmotes(chatroomId);
@@ -179,58 +144,20 @@ const StreamerInfo = memo(({ streamerData, isStreamerLive, chatroomId, userChatr
             Open Mod View in Browser
           </ContextMenuItem>
         )}
-<<<<<<< Updated upstream
-      </div>
-      <div className="chatStreamerInfoActions">
-        <button onClick={handleChattersBtn} className="chattersBtn">
-          <img src={UserIcon} width={20} height={20} alt="Pin Message" />
-        </button>
-        {pinnedMessage && (
-          <button
-            className={clsx("pinnedMessageBtn", pinnedMessage && "show", showPinnedMessage && "open")}
-            onClick={() => setShowPinnedMessage(!showPinnedMessage)}>
-            <img src={PushPin} width={20} height={20} alt="Pin Message" />
-          </button>
-        )}
-        {/* {pollMessage && (
-          <button
-            className={clsx("pollMessageBtn", pollMessage && "show", showPollMessage && "open")}
-            onClick={() => setShowPollMessage(!showPollMessage)}>
-            <img src={PushPin} width={20} height={20} alt="Pin Message" />
-          </button>
-        )} */}
-      </div>
-
-      {pinnedMessage && (
-        <PinnedMessage
-=======
       </ContextMenuContent>
 
       {pinDetails && (
         <Pin
           pinDetails={pinDetails}
           subscriberBadges={streamerData?.subscriber_badges}
->>>>>>> Stashed changes
           chatroomName={streamerData?.user?.username}
           showPinnedMessage={showPinnedMessage}
           setShowPinnedMessage={setShowPinnedMessage}
-          pinnedMessage={pinnedMessage}
           chatroomId={chatroomId}
           canModerate={canModerate}
           userChatroomInfo={userChatroomInfo}
         />
       )}
-<<<<<<< Updated upstream
-      {/* {pollMessage && (
-        <PollMessage
-          showPollMessage={showPollMessage}
-          setShowPollMessage={setShowPollMessage}
-          pollData={pollMessage.poll}
-          chatroomId={chatroomId}
-        />
-      )} */}
-    </div>
-=======
 
       {/* {pollDetails && (
         <Poll
@@ -245,7 +172,6 @@ const StreamerInfo = memo(({ streamerData, isStreamerLive, chatroomId, userChatr
         />
       )} */}
     </ContextMenu>
->>>>>>> Stashed changes
   );
 });
 

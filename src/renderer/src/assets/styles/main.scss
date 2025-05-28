@@ -28,25 +28,6 @@
   background: linear-gradient(180deg, #020a05 0%, #06190e 100%), linear-gradient(180deg, #031209 0%, #06190e 100%);
 }
 
-<<<<<<< Updated upstream
-#dialog,
-#replyThreadDialog {
-  background: linear-gradient(180deg, rgba(4, 15, 8, 0.95) 0%, #091810 80%);
-  border: 1px solid #ffffff21;
-  height: 100vh;
-}
-
-#settingsDialog {
-  background: linear-gradient(180deg, #020a05, #020a05);
-  border: 1px solid rgb(27, 55, 40);
-  height: 100vh;
-}
-
-#authDialog {
-  background: linear-gradient(180deg, #142b1c 0%, #0e321d 10%);
-  border: 1px solid #174329;
-  height: 100vh;
-=======
 #main,
 #dialog,
 #settings,
@@ -68,7 +49,6 @@ img {
   user-select: none;
   -webkit-user-drag: none;
   pointer-events: none;
->>>>>>> Stashed changes
 }
 
 html,
@@ -160,17 +140,17 @@ video {
 button {
   border: none;
   background: none;
+  padding: 0;
+  margin: 0;
   outline: none;
 }
 
 * {
-  font-family: "Inter";
+  font-family: "Inter", sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
-  margin: 0px;
-  padding: 0px;
   box-sizing: border-box;
 }
 
@@ -180,7 +160,7 @@ body {
   overflow-x: hidden;
   margin: 0;
   padding: 0;
-  height: 100vh;
+  // height: 100vh;
   display: flex;
   flex-direction: column;
 }

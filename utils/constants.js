@@ -11,13 +11,8 @@ export const kickBadgeMap = {
   subscriber: (badge, subscriberBadges) => {
     if (!subscriberBadges?.length) {
       return {
-<<<<<<< Updated upstream
-        src: `${kickTalkCDN}/kickBadges/subscriber.svg`,
-        title: `${badge.text}-${badge.count}`,
-=======
         src: `${kickTalkCDN}/subscriber.svg`,
         title: `${badge.count} Month ${badge.text}`,
->>>>>>> Stashed changes
         info: `${badge.count} Month Subscriber`,
         platform: "Kick",
       };

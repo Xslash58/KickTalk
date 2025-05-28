@@ -254,8 +254,6 @@ const getChannelChatroomInfo = async (channelName) => {
   }
 };
 
-<<<<<<< Updated upstream
-=======
 const getInitialPollInfo = async (channelName, sessionCookie, kickSession) => {
   try {
     const response = await axios.get(`${APIUrl}/api/v2/channels/${channelName}/polls`, {
@@ -305,7 +303,6 @@ const getSubmitPollVote = async (channelName, optionId, sessionCookie, kickSessi
   }
 };
 
->>>>>>> Stashed changes
 const getUserKickId = async (sessionCookie, kickSession) => {
   const response = await axios.get(`${APIUrl}/api/v1/user`, {
     headers: {
@@ -686,30 +683,33 @@ const getChatroomViewers = async (chatroomId) => {
 };
 
 export {
-  getChannelInfo,
-  getChannelChatroomInfo,
-  sendMessageToChannel,
-  sendReplyToChannel,
   getSelfInfo,
-  getKickEmotes,
   getKickTalkBadges,
-  getUserChatroomInfo,
-  getSelfChatroomInfo,
-  getSilencedUsers,
-  getInitialChatroomMessages,
-  getUserChatroomStatus,
   getUserKickId,
   getLinkThumbnail,
+  getKickEmotes,
+
+  // Chatroom Actions
+  sendMessageToChannel,
+  sendReplyToChannel,
+
+  // Silenced Users
+  getSilencedUsers,
   getSilenceUser,
   getUnsilenceUser,
+
+  // Chatroom Data
+  getChannelInfo,
+  getChannelChatroomInfo,
+  getUserChatroomInfo,
+  getSelfChatroomInfo,
+  getInitialChatroomMessages,
+  getUserChatroomStatus,
   getPinMessage,
   getUnpinMessage,
-<<<<<<< Updated upstream
-=======
   getInitialPollInfo,
   getSubmitPollVote,
   getChatroomViewers,
->>>>>>> Stashed changes
 
   // Mod Actions
   getBanUser,

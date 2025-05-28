@@ -7,15 +7,12 @@ import CaretDown from "../../../assets/icons/caret-down-bold.svg?asset";
 import useClickOutside from "../../../utils/useClickOutside";
 import KickLogoIcon from "../../../assets/logos/kickLogoIcon.svg?asset";
 import GlobeIcon from "../../../assets/icons/globe-fill.svg?asset";
-<<<<<<< Updated upstream
-=======
 import LockIcon from "../../../assets/icons/lock-simple-fill.svg?asset";
 import useChatStore from "../../../providers/ChatProvider";
 import { useShallow } from "zustand/react/shallow";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../../Shared/Tooltip";
->>>>>>> Stashed changes
 
-const EmoteSection = ({ emotes, title, handleEmoteClick, type, section }) => {
+const EmoteSection = ({ emotes, title, handleEmoteClick, type, section, userChatroomInfo }) => {
   const [isSectionOpen, setIsSectionOpen] = useState(true);
   const [visibleCount, setVisibleCount] = useState(20);
   const loadMoreTriggerRef = useRef(null);
@@ -32,7 +29,7 @@ const EmoteSection = ({ emotes, title, handleEmoteClick, type, section }) => {
           loadMoreEmotes();
         }
       },
-      { threshold: 0.5, rootMargin: "150px" },
+      { threshold: 0.5, rootMargin: "20px" },
     );
 
     if (loadMoreTriggerRef.current) {
@@ -56,20 +53,6 @@ const EmoteSection = ({ emotes, title, handleEmoteClick, type, section }) => {
         </button>
       </div>
       <div className="emoteItems">
-<<<<<<< Updated upstream
-        {emotes?.slice(0, visibleCount).map((emote, index) => (
-          <button
-            // disabled={type === "kick" && emote?.subscriber_only}
-            onClick={() => handleEmoteClick(emote)}
-            className={clsx("emoteItem", emote?.subscriber_only && "emoteItemSubscriberOnly")}
-            key={`${emote.id}-${emote.name}`}>
-            {type === "kick" ? (
-              <img src={`https://files.kick.com/emotes/${emote.id}/fullsize`} alt={emote.name} loading="lazy" decoding="async" />
-            ) : (
-              <img src={"https://cdn.7tv.app/emote/" + emote.id + "/1x.webp"} alt={emote.name} loading="lazy" decoding="async" />
-            )}
-          </button>
-=======
         {emotes?.slice(0, visibleCount).map((emote, i) => (
           <Tooltip key={`${emote.id}-${emote.name}-${i}`} delayDuration={0}>
             <TooltipTrigger asChild>
@@ -107,7 +90,6 @@ const EmoteSection = ({ emotes, title, handleEmoteClick, type, section }) => {
               <p>{emote.name}</p>
             </TooltipContent>
           </Tooltip>
->>>>>>> Stashed changes
         ))}
         {visibleCount < emotes.length && <div ref={loadMoreTriggerRef} className="loadMoreTrigger" />}
       </div>
@@ -201,7 +183,7 @@ const SevenTVEmoteDialog = memo(
 );
 
 const KickEmoteDialog = memo(
-  ({ isDialogOpen, kickEmotes, handleEmoteClick }) => {
+  ({ isDialogOpen, kickEmotes, handleEmoteClick, userChatroomInfo }) => {
     const [searchTerm, setSearchTerm] = useState("");
     const [currentSection, setCurrentSection] = useState(null);
 
@@ -277,6 +259,7 @@ const KickEmoteDialog = memo(
                       }`}
                       type={"kick"}
                       handleEmoteClick={handleEmoteClick}
+                      userChatroomInfo={userChatroomInfo}
                     />
                   ))
               )}
@@ -286,11 +269,14 @@ const KickEmoteDialog = memo(
       </>
     );
   },
-  (prev, next) => prev.kickEmotes === next.kickEmotes && prev.isDialogOpen === next.isDialogOpen,
+  (prev, next) =>
+    prev.kickEmotes === next.kickEmotes &&
+    prev.isDialogOpen === next.isDialogOpen &&
+    prev.userChatroomInfo === next.userChatroomInfo,
 );
 
 const EmoteDialogs = memo(
-  ({ chatroomId, handleEmoteClick }) => {
+  ({ chatroomId, handleEmoteClick, userChatroomInfo }) => {
     const kickEmotes = useChatStore(useShallow((state) => state.chatrooms.find((room) => room.id === chatroomId)?.emotes));
     const sevenTVEmotes = useChatStore(
       useShallow((state) => state.chatrooms.find((room) => room.id === chatroomId)?.channel7TVEmotes),
@@ -356,12 +342,17 @@ const EmoteDialogs = memo(
             sevenTVEmotes={sevenTVEmotes}
             handleEmoteClick={handleEmoteClick}
           />
-          <KickEmoteDialog isDialogOpen={activeDialog === "kick"} kickEmotes={kickEmotes} handleEmoteClick={handleEmoteClick} />
+          <KickEmoteDialog
+            isDialogOpen={activeDialog === "kick"}
+            kickEmotes={kickEmotes}
+            handleEmoteClick={handleEmoteClick}
+            userChatroomInfo={userChatroomInfo}
+          />
         </div>
       </TooltipProvider>
     );
   },
-  (prev, next) => prev.chatroomId === next.chatroomId,
+  (prev, next) => prev.chatroomId === next.chatroomId && prev.userChatroomInfo === next.userChatroomInfo,
 );
 
 export default EmoteDialogs;

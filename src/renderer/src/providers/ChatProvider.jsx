@@ -250,11 +250,6 @@ const useChatStore = create((set, get) => ({
         case "App\\Events\\PinnedMessageDeletedEvent":
           get().handlePinnedMessageDeleted(chatroom.id);
           break;
-<<<<<<< Updated upstream
-        case "App\\Events\\PollUpdateEvent":
-          get().handlePollCreate(chatroom.id, parsedEvent);
-          break;
-=======
         // case "App\\Events\\PollUpdateEvent":
         //   console.log("Poll update event:", parsedEvent);
         //   get().handlePollUpdate(chatroom.id, parsedEvent?.poll);
@@ -262,7 +257,6 @@ const useChatStore = create((set, get) => ({
         // case "App\\Events\\PollDeleteEvent":
         //   get().handlePollDelete(chatroom.id);
         //   break;
->>>>>>> Stashed changes
       }
     });
 
@@ -458,21 +452,6 @@ const useChatStore = create((set, get) => ({
     fetchInitialChatroomInfo();
 
     // Fetch initial messages
-<<<<<<< Updated upstream
-    // TODO: Finish adding initial messages
-    const fetchInitialMessages = async () => {
-      const {
-        data: { data },
-      } = await window.app.kick.getInitialChatroomMessages(chatroom.streamerData.id);
-
-      if (!data) return;
-
-      // Handle initial pinned message
-      if (data?.pinned_message) {
-        get().handlePinnedMessageCreated(chatroom.id, data.pinned_message);
-      }
-
-=======
     const fetchInitialMessages = async () => {
       const response = await window.app.kick.getInitialChatroomMessages(chatroom.streamerData.id);
 
@@ -488,7 +467,6 @@ const useChatStore = create((set, get) => ({
         get().handlePinnedMessageCreated(chatroom.id, data.pinned_message);
       }
 
->>>>>>> Stashed changes
       // Add initial messages to the chatroom
       if (data?.messages) {
         get().addInitialChatroomMessages(chatroom.id, data.messages.reverse());
@@ -496,8 +474,6 @@ const useChatStore = create((set, get) => ({
     };
 
     fetchInitialMessages();
-<<<<<<< Updated upstream
-=======
 
     // const fetchInitialPollInfo = async () => {
     //   const response = await window.app.kick.getInitialPollInfo(chatroom?.streamerData?.slug);
@@ -517,7 +493,6 @@ const useChatStore = create((set, get) => ({
     // };
 
     // fetchInitialPollInfo();
->>>>>>> Stashed changes
 
     set((state) => ({
       connections: {
@@ -543,14 +518,6 @@ const useChatStore = create((set, get) => ({
   },
 
   addMessage: (chatroomId, message) => {
-<<<<<<< Updated upstream
-    set((state) => ({
-      messages: {
-        ...state.messages,
-        [chatroomId]: [...(state.messages[chatroomId] || []), { ...message, deleted: false }].slice(-200), // Keep last 200 messages
-      },
-    }));
-=======
     set((state) => {
       const messages = state.messages[chatroomId] || [];
       const newMessage = { ...message, chatroom_id: chatroomId, deleted: false };
@@ -575,7 +542,6 @@ const useChatStore = create((set, get) => ({
         },
       };
     });
->>>>>>> Stashed changes
   },
 
   addChatter: (chatroomId, chatter) => {
@@ -841,26 +807,13 @@ const useChatStore = create((set, get) => ({
     set((state) => ({
       chatrooms: state.chatrooms.map((room) => {
         if (room.id === chatroomId) {
-          return { ...room, pinnedMessage: event };
+          return { ...room, pinDetails: event };
         }
         return room;
       }),
     }));
   },
 
-<<<<<<< Updated upstream
-  handlePollCreate: (chatroomId, event) => {
-    console.log("Poll event:", event);
-    set((state) => ({
-      chatrooms: state.chatrooms.map((room) => {
-        if (room.id === chatroomId) {
-          return { ...room, pollDetails: event };
-        }
-        return room;
-      }),
-    }));
-  },
-=======
   // handlePollUpdate: (chatroomId, poll) => {
   //   set((state) => {
   //     const currentPoll = state.chatrooms.find((room) => room.id === chatroomId)?.pollDetails;
@@ -874,24 +827,17 @@ const useChatStore = create((set, get) => ({
   //     };
   //   });
   // },
->>>>>>> Stashed changes
 
   handlePinnedMessageDeleted: (chatroomId, event) => {
     set((state) => ({
       chatrooms: state.chatrooms.map((room) => {
         if (room.id === chatroomId) {
-<<<<<<< Updated upstream
-          return { ...room, pinnedMessage: null };
-=======
           return { ...room, pinDetails: null };
->>>>>>> Stashed changes
         }
         return room;
       }),
     }));
   },
-<<<<<<< Updated upstream
-=======
 
   // handlePollDelete: (chatroomId) => {
   //   set((state) => ({
@@ -903,7 +849,6 @@ const useChatStore = create((set, get) => ({
   //     }),
   //   }));
   // },
->>>>>>> Stashed changes
 
   handleStreamStatus: (chatroomId, event, isLive) => {
     const currentChatroom = get().chatrooms.find((room) => room.id === chatroomId);

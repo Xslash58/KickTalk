@@ -34,6 +34,7 @@ import { useShallow } from "zustand/react/shallow";
 import { $isEmoteNode, EmoteNode } from "./EmoteNode";
 import { kickEmoteInputRegex } from "../../../../../../utils/constants";
 import XIcon from "../../../assets/icons/x-bold.svg?asset";
+import LockIcon from "../../../assets/icons/lock-simple-fill.svg?asset";
 import InfoBar from "./InfoBar";
 
 const onError = (error) => {
@@ -49,7 +50,7 @@ const theme = {
 const messageHistory = new Map();
 
 const EmoteSuggestions = memo(
-  ({ suggestions, onSelect, selectedIndex }) => {
+  ({ suggestions, onSelect, selectedIndex, userChatroomInfo }) => {
     const suggestionsRef = useRef(null);
     const selectedSuggestionRef = useRef(null);
 
@@ -72,8 +73,14 @@ const EmoteSuggestions = memo(
               <div
                 key={`${emote.id}-${emote.alias}`}
                 ref={selectedIndex === i ? selectedSuggestionRef : null}
-                className={clsx("inputSuggestion", selectedIndex === i && "selected")}
+                disabled={emote?.subscribers_only && !userChatroomInfo?.subscription}
+                className={clsx(
+                  "inputSuggestion",
+                  selectedIndex === i && "selected",
+                  emote?.subscribers_only && !userChatroomInfo?.subscription && "emoteItemSubscriberOnly",
+                )}
                 onClick={() => {
+                  if (emote?.subscribers_only && !userChatroomInfo?.subscription) return;
                   onSelect(emote);
                 }}>
                 <div className="inputSuggestionImage">
@@ -92,6 +99,11 @@ const EmoteSuggestions = memo(
                     fetchpriority="low"
                     decoding="async"
                   />
+                  {emote?.subscribers_only && !userChatroomInfo?.subscription && (
+                    <div className="emoteItemSubscriberLock">
+                      <img src={LockIcon} alt="Subscriber" width={16} height={16} />
+                    </div>
+                  )}
                 </div>
                 <div className="inputSuggestionInfo">
                   <span>{emote?.name}</span>
@@ -113,7 +125,8 @@ const EmoteSuggestions = memo(
       prevProps.selectedIndex === nextProps.selectedIndex &&
       prevProps.suggestions === nextProps.suggestions &&
       prevProps.selectedTabIndex === nextProps.selectedTabIndex &&
-      prevProps.tabSuggestions === nextProps.tabSuggestions
+      prevProps.tabSuggestions === nextProps.tabSuggestions &&
+      prevProps.userChatroomInfo === nextProps.userChatroomInfo
     );
   },
 );
@@ -137,7 +150,7 @@ const ChatterSuggestions = memo(
     return (
       <div className={clsx("inputSuggestionsWrapper", suggestions?.length && "show")} ref={suggestionsRef}>
         <div className="inputSuggestions">
-          {suggestions?.map((chatter, i) => {
+          {suggestions.map((chatter, i) => {
             return (
               <div
                 key={chatter?.id}
@@ -167,15 +180,9 @@ const KeyHandler = ({ chatroomId, onSendMessage, replyInputData, setReplyInputDa
   const [chatterSuggestions, setChatterSuggestions] = useState([]);
   const [searchText, setSearchText] = useState("");
   const [tabSuggestions, setTabSuggestions] = useState([]);
-<<<<<<< Updated upstream
-  const [selectedIndex, setSelectedIndex] = useState(0);
-  const [selectedTabIndex, setSelectedTabIndex] = useState(0);
-  const [showChatters, setShowChatters] = useState(false);
-=======
   const [selectedTabIndex, setSelectedTabIndex] = useState(0);
   // const [selectedIndex, setSelectedIndex] = useState(0);
   // const [showChatters, setShowChatters] = useState(false);
->>>>>>> Stashed changes
   const [selectedEmoteIndex, setSelectedEmoteIndex] = useState(0);
   const [selectedChatterIndex, setSelectedChatterIndex] = useState(0);
   const [position, setPosition] = useState(null);
@@ -187,6 +194,9 @@ const KeyHandler = ({ chatroomId, onSendMessage, replyInputData, setReplyInputDa
 
   const sevenTVEmotes = useChatStore(
     useShallow((state) => state.chatrooms.find((room) => room.id === chatroomId)?.channel7TVEmotes),
+  );
+  const userChatroomInfo = useChatStore(
+    useShallow((state) => state.chatrooms.find((room) => room.id === chatroomId)?.userChatroomInfo),
   );
   const chatters = useChatStore(useShallow((state) => state.chatrooms.find((room) => room.id === chatroomId)?.chatters));
   const kickEmotes = useChatStore(useShallow((state) => state.chatrooms.find((room) => room.id === chatroomId)?.emotes));
@@ -389,7 +399,10 @@ const KeyHandler = ({ chatroomId, onSendMessage, replyInputData, setReplyInputDa
           e.preventDefault();
 
           if (emoteSuggestions?.length > 0) {
-            insertEmote(emoteSuggestions[selectedEmoteIndex]);
+            const emote = emoteSuggestions[selectedEmoteIndex];
+            if (emote?.subscribers_only && !userChatroomInfo?.subscription) return false;
+
+            insertEmote(emote);
             return true;
           }
 
@@ -438,10 +451,7 @@ const KeyHandler = ({ chatroomId, onSendMessage, replyInputData, setReplyInputDa
           // return if shift key is being pressed
           if (e.shiftKey) return false;
           e.preventDefault();
-<<<<<<< Updated upstream
-=======
           // check if we have suggestions
->>>>>>> Stashed changes
           if (emoteSuggestions?.length) {
             insertEmote(emoteSuggestions[selectedEmoteIndex]);
             return true;
@@ -692,6 +702,7 @@ const KeyHandler = ({ chatroomId, onSendMessage, replyInputData, setReplyInputDa
         position={position}
         selectedIndex={selectedEmoteIndex}
         onSelect={insertEmote}
+        userChatroomInfo={userChatroomInfo}
       />
 
       <ChatterSuggestions suggestions={chatterSuggestions} selectedIndex={selectedChatterIndex} onSelect={insertChatterMention} />
@@ -756,7 +767,7 @@ const EmoteTransformer = ({ chatroomId }) => {
   }, [editor, kickEmotes]);
 };
 
-const EmoteHandler = ({ chatroomId }) => {
+const EmoteHandler = ({ chatroomId, userChatroomInfo }) => {
   const [editor] = useLexicalComposerContext();
 
   const handleEmoteClick = (emote) => {
@@ -772,7 +783,7 @@ const EmoteHandler = ({ chatroomId }) => {
     });
   };
 
-  return <EmoteDialogs chatroomId={chatroomId} handleEmoteClick={handleEmoteClick} />;
+  return <EmoteDialogs chatroomId={chatroomId} handleEmoteClick={handleEmoteClick} userChatroomInfo={userChatroomInfo} />;
 };
 
 const initialConfig = {
@@ -927,13 +938,8 @@ const ChatInput = memo(
               />
             </div>
 
-<<<<<<< Updated upstream
-            <div className={clsx("chatInputActions", isReplyThread && "replyThread")}>
-              {!isReplyThread && <EmoteHandler chatroomId={chatroomId} />}
-=======
             <div className={clsx("chatInputActions")}>
               <EmoteHandler chatroomId={chatroomId} userChatroomInfo={chatroom?.userChatroomInfo} />
->>>>>>> Stashed changes
             </div>
             <KeyHandler
               isReplyThread={isReplyThread}
