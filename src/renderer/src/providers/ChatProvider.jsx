@@ -378,21 +378,26 @@ const useChatStore = create((set, get) => ({
     fetchInitialUserChatroomInfo();
 
     const fetchEmotes = async () => {
+      console.log("[Kick Emotes]: Fetching emotes for chatroom:", chatroom?.streamerData?.slug);
       const data = await window.app.kick.getEmotes(chatroom?.streamerData?.slug);
+      const currentChatroom = get().chatrooms.find((room) => room.id === chatroom.id);
 
       let sevenTVEmoteNames = new Set();
-      chatroom.channel7TVEmotes.forEach((set) => {
+      await currentChatroom?.channel7TVEmotes.forEach((set) => {
         set.emotes.forEach((emote) => {
           if (emote.name) sevenTVEmoteNames.add(emote.name);
         });
       });
 
       let removedEmotes = [];
+      console.log("BUH", currentChatroom?.channel7TVEmotes);
       if (Array.isArray(data)) {
+        console.log("WUH", data);
         data.forEach((set) => {
           set.emotes = set.emotes.filter((emote) => {
             if (sevenTVEmoteNames.has(emote.name)) {
               removedEmotes.push(emote.name);
+              console.log("[DEBUGGING]: Removing 7TV emote from Kick emotes:", emote.name);
               return false;
             }
             return true;
@@ -408,6 +413,8 @@ const useChatStore = create((set, get) => ({
           return room;
         }),
       }));
+      sevenTVEmoteNames.clear();
+      console.log(sevenTVEmoteNames);
     };
 
     fetchEmotes();
