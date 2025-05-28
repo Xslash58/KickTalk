@@ -440,7 +440,6 @@ const createWindow = () => {
   }
 };
 
-<<<<<<< Updated upstream
 // Create the context menu window
 // const createContextMenuWindow = (data) => {
 //   const mainWindowPos = mainWindow.getPosition();
@@ -619,7 +618,6 @@ ipcMain.handle("contextMenu:streamerInfo", (e, { data }) => {
   menu.popup({ window: mainWindow });
 });
 
-
 const loginToKick = async (method) => {
   const authSession = {
     token: await retrieveToken("SESSION_TOKEN"),
@@ -754,7 +752,6 @@ const setupLocalShortcuts = () => {
         store.set("zoomFactor", newZoomFactor);
       }
     }
-<<<<<<< Updated upstream
 
     // Open search dialog
     // if (input.control && input.key === "f") {
