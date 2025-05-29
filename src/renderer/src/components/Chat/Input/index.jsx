@@ -250,8 +250,8 @@ const KeyHandler = ({ chatroomId, onSendMessage, replyInputData, setReplyInputDa
         node.setTextContent(textBefore);
 
         if (!emote?.platform) return;
-        const emoteNode = new EmoteNode(emote.id, emote.name, emote.platform);
-        selection.insertNodes([emoteNode, $createTextNode(" ")]);
+        //const emoteNode = new EmoteNode(emote.id, emote.name, emote.platform);
+        selection.insertNodes([$createTextNode(emote.name + " ")]);
 
         if (textAfter) {
           selection.insertNodes([$createTextNode(textAfter)]);
