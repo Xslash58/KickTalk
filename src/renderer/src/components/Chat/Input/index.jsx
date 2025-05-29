@@ -17,6 +17,7 @@ import {
   KEY_DELETE_COMMAND,
   KEY_SPACE_COMMAND,
   COMMAND_PRIORITY_CRITICAL,
+  $getNodeByKey,
 } from "lexical";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AutoFocusPlugin } from "@lexical/react/LexicalAutoFocusPlugin";
@@ -186,6 +187,7 @@ const KeyHandler = ({ chatroomId, onSendMessage, replyInputData, setReplyInputDa
   const [selectedEmoteIndex, setSelectedEmoteIndex] = useState(0);
   const [selectedChatterIndex, setSelectedChatterIndex] = useState(0);
   const [position, setPosition] = useState(null);
+  const [tabCycleInfo, setTabCycleInfo] = useState({ originalWord: "", emoteNodeKey: null });
 
   const resetTabSuggestions = () => {
     setTabSuggestions([]);
@@ -250,8 +252,8 @@ const KeyHandler = ({ chatroomId, onSendMessage, replyInputData, setReplyInputDa
         node.setTextContent(textBefore);
 
         if (!emote?.platform) return;
-        //const emoteNode = new EmoteNode(emote.id, emote.name, emote.platform);
-        selection.insertNodes([$createTextNode(emote.name + " ")]);
+        const emoteNode = new EmoteNode(emote.id, emote.name, emote.platform);
+        selection.insertNodes([emoteNode, $createTextNode(" ")]);
 
         if (textAfter) {
           selection.insertNodes([$createTextNode(textAfter)]);
@@ -448,10 +450,8 @@ const KeyHandler = ({ chatroomId, onSendMessage, replyInputData, setReplyInputDa
       editor.registerCommand(
         KEY_TAB_COMMAND,
         (e) => {
-          // return if shift key is being pressed
           if (e.shiftKey) return false;
           e.preventDefault();
-          // check if we have suggestions
           if (emoteSuggestions?.length) {
             insertEmote(emoteSuggestions[selectedEmoteIndex]);
             return true;
@@ -460,80 +460,64 @@ const KeyHandler = ({ chatroomId, onSendMessage, replyInputData, setReplyInputDa
             insertChatterMention(chatterSuggestions[selectedChatterIndex]);
             return true;
           }
-          if (tabSuggestions?.length) {
-            const prevEmote = tabSuggestions[selectedTabIndex]?.name;
-            const nextIndex = (selectedTabIndex + 1) % tabSuggestions.length;
-            const nextEmote = tabSuggestions[nextIndex]?.name;
-            setSelectedTabIndex(nextIndex);
-            editor.update(() => {
-              const selection = $getSelection();
-              if (!$isRangeSelection(selection)) return;
-              const node = selection.anchor.getNode();
-              if (!node) return;
-              const textContent = node.getTextContent();
-              const startIndex = textContent.lastIndexOf(prevEmote);
-              const endIndex = startIndex + prevEmote.length;
-              const textBefore = textContent.slice(0, startIndex);
-              const textAfter = textContent.slice(endIndex);
-
-              node.setTextContent(textBefore + nextEmote);
-
-              if (textAfter) {
-                const afterNode = $createTextNode(textAfter);
-                selection.insertNodes([afterNode]);
+          const selection = $getSelection();
+          if (!$isRangeSelection(selection)) return false;
+          const anchorNode = selection.anchor.getNode();
+          if (!anchorNode) return false;
+          editor.update(() => {
+            console.log(tabCycleInfo);
+            if (tabSuggestions?.length && tabCycleInfo?.emoteNodeKey) {
+              const previousEmoteNode = $getNodeByKey(tabCycleInfo.emoteNodeKey);
+              if (previousEmoteNode && previousEmoteNode.__type === "emote") {
+                previousEmoteNode.remove();
+                const nextIndex = (selectedTabIndex + 1) % tabSuggestions.length;
+                setSelectedTabIndex(nextIndex);
+                const nextEmote = tabSuggestions[nextIndex];
+                if (nextEmote?.id && nextEmote?.platform) {
+                  const newEmoteNode = new EmoteNode(nextEmote.id, nextEmote.name, nextEmote.platform);
+                  selection.insertNodes([newEmoteNode]);
+                  setTabCycleInfo((prev) => ({
+                    ...prev,
+                    emoteNodeKey: newEmoteNode.getKey(),
+                  }));
+                }
               }
-              const newSelection = $getSelection();
-              if ($isRangeSelection(newSelection)) {
-                newSelection.anchor.offset = (textBefore + nextEmote).length;
-                newSelection.focus.offset = (textBefore + nextEmote).length;
-              }
-            });
 
-            return true;
-          }
-          const content = $rootTextContent();
-          if (!content.trim()) return false;
-          const cursorOffset = $getSelection().anchor.offset;
-          const textBeforeCursor = content.slice(0, cursorOffset);
-          const words = textBeforeCursor.split(/\s+/);
-          const currentWord = words[words.length - 1];
-          const foundEmotes = [];
-          const emotesA = sevenTVEmotes[0]?.emotes ?? [];
-          const emotesB = sevenTVEmotes[1]?.emotes ?? [];
-          [...emotesA, ...emotesB].forEach((emote) => {
-            if (emote.name.toLowerCase().startsWith(currentWord.toLowerCase())) {
-              foundEmotes.push({ ...emote, name: emote.name + " " });
+              return;
             }
-          });
-          console.log("Found emotes:", foundEmotes);
-          if (foundEmotes.length > 0) {
-            setTabSuggestions(foundEmotes);
-            setSelectedTabIndex(0);
-            editor.update(() => {
-              const selection = $getSelection();
-              if (!$isRangeSelection(selection)) return;
-              const node = selection.anchor.getNode();
-              if (!node) return;
-              if (tabSuggestions.length > 0) return;
-              const textContent = node.getTextContent();
-              const startIndex = textContent.lastIndexOf(currentWord);
+            const textContent = anchorNode.getTextContent();
+            const cursorOffset = selection.anchor.offset;
+            const textBeforeCursor = textContent.slice(0, cursorOffset);
+            const words = textBeforeCursor.split(/\s+/);
+            const currentWord = words[words.length - 1];
+            if (!currentWord) return;
+            const emotesA = sevenTVEmotes[0]?.emotes ?? [];
+            const emotesB = sevenTVEmotes[1]?.emotes ?? [];
+            const foundEmotes = [...emotesA, ...emotesB].filter((emote) =>
+              emote.name.toLowerCase().startsWith(currentWord.toLowerCase()),
+            );
+            if (foundEmotes.length > 0) {
+              const startIndex = textBeforeCursor.lastIndexOf(currentWord);
               const endIndex = startIndex + currentWord.length;
               const textBefore = textContent.slice(0, startIndex);
               const textAfter = textContent.slice(endIndex);
-              const emoteName = foundEmotes[0]?.name;
-              node.setTextContent(textBefore + emoteName);
+              anchorNode.setTextContent(textBefore);
+              const emote = foundEmotes[0];
+              setTabSuggestions(foundEmotes);
+              setSelectedTabIndex(0);
+              if (emote?.id && emote?.platform) {
+                const emoteNode = new EmoteNode(emote.id, emote.name, emote.platform);
+                selection.insertNodes([emoteNode]);
+                setTabCycleInfo({
+                  originalWord: currentWord,
+                  emoteNodeKey: emoteNode.getKey(),
+                });
+              }
               if (textAfter) {
-                const afterNode = $createTextNode(textAfter);
-                selection.insertNodes([afterNode]);
+                selection.insertNodes([$createTextNode(textAfter)]);
               }
-              const newSelection = $getSelection();
-              if ($isRangeSelection(newSelection)) {
-                newSelection.anchor.offset = (textBefore + emoteName).length;
-                newSelection.focus.offset = (textBefore + emoteName).length;
-              }
-            });
-            return true;
-          }
+            }
+          });
           return true;
         },
         COMMAND_PRIORITY_HIGH,
