@@ -1,5 +1,5 @@
 import "../assets/styles/pages/ChatPage.scss";
-import { useState } from "react";
+import { act, useState } from "react";
 import Chat from "../components/Chat";
 import Navbar from "../components/Navbar";
 import TitleBar from "../components/TitleBar";
