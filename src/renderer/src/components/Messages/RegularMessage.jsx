@@ -1,7 +1,6 @@
 import { memo, useCallback, useMemo } from "react";
 import { MessageParser } from "../../utils/MessageParser";
 import { KickBadges, KickTalkBadges, StvBadges } from "../Cosmetics/Badges";
-import { useSettings } from "../../providers/SettingsProvider";
 import { getTimestampFormat } from "../../utils/ChatUtils";
 import CopyIcon from "../../assets/icons/copy-simple-fill.svg?asset";
 import ReplyIcon from "../../assets/icons/reply-fill.svg?asset";
@@ -24,8 +23,8 @@ const RegularMessage = memo(
     chatroomId,
     userChatroomInfo,
     isSearch = false,
+    settings,
   }) => {
-    const { settings } = useSettings();
     const canModerate = useMemo(
       () => userChatroomInfo?.is_broadcaster || userChatroomInfo?.is_moderator || userChatroomInfo?.is_super_admin,
       [userChatroomInfo],
@@ -53,7 +52,7 @@ const RegularMessage = memo(
         chatroomName: chatroomName,
       };
       getPinMessage(chatroomId, data);
-    }, [message?.id, message?.chatroom_id, message?.content, message?.sender, chatroomName]);
+    }, [message?.id, message?.chatroom_id, message?.content, message?.sender, chatroomName, getPinMessage, chatroomId]);
 
     const usernameStyle = useMemo(() => {
       if (userStyle?.paint) {
@@ -146,7 +145,8 @@ const RegularMessage = memo(
       prevProps.subscriberBadges === nextProps.subscriberBadges &&
       prevProps.type === nextProps.type &&
       prevProps.chatroomId === nextProps.chatroomId &&
-      prevProps.chatroomName === nextProps.chatroomName
+      prevProps.chatroomName === nextProps.chatroomName &&
+      prevProps.settings === nextProps.settings
     );
   },
 );

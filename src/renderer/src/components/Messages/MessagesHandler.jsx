@@ -22,6 +22,16 @@ const MessagesHandler = ({
   const [atBottom, setAtBottom] = useState(true);
   const [isPaused, setIsPaused] = useState(false);
 
+  useEffect(() => {
+    if (filteredMessages.length > 0 && !isPaused) {
+      virtuosoRef.current?.scrollToIndex({
+        index: filteredMessages.length - 1,
+        behavior: "instant",
+        align: "end",
+      });
+    }
+  }, [chatroomId]);
+
   const filteredMessages = useMemo(() => {
     if (!messages?.length) return [];
 
@@ -56,14 +66,38 @@ const MessagesHandler = ({
     useChatStore.getState().handleChatroomPause(chatroomId, newPausedState);
 
     if (!newPausedState) {
-      setAtBottom(true);
       virtuosoRef.current?.scrollToIndex({
         index: filteredMessages.length - 1,
         behavior: "instant",
         align: "end",
       });
+      setAtBottom(true);
     }
   };
+
+  const itemContent = useCallback(
+    (index, message) => {
+      if (message?.type === "mod_action" && !settings?.chatrooms?.showModActions) {
+        return false;
+      }
+
+      return (
+        <Message
+          key={message?.id}
+          message={message}
+          chatroomId={chatroomId}
+          chatroomName={slug}
+          subscriberBadges={subscriberBadges}
+          sevenTVEmotes={channel7TVEmotes}
+          kickTalkBadges={kickTalkBadges}
+          settings={settings}
+          userChatroomInfo={userChatroomInfo}
+          username={username}
+        />
+      );
+    },
+    [chatroomId, slug, subscriberBadges, channel7TVEmotes, kickTalkBadges, settings, userChatroomInfo, username],
+  );
 
   useEffect(() => {
     const loadSilencedUsers = () => {
@@ -85,50 +119,21 @@ const MessagesHandler = ({
     };
   }, []);
 
-  // useEffect(() => {
-  //   if (filteredMessages.length > 0 && !isPaused) {
-  //     virtuosoRef.current?.scrollToIndex({
-  //       index: filteredMessages.length - 1,
-  //       behavior: "instant",
-  //       align: "end",
-  //     });
-  //   }
-  // }, [chatroomId, filteredMessages, isPaused]);
-
   return (
     <div className="chatContainer" style={{ height: "100%", flex: 1 }} ref={chatContainerRef}>
       <Virtuoso
         ref={virtuosoRef}
         data={filteredMessages}
-        itemContent={(index, message) => {
-          if (message?.type === "mod_action" && !settings?.chatrooms?.showModActions) {
-            return null;
-          }
-
-          return (
-            <Message
-              key={message?.id}
-              message={message}
-              chatroomId={chatroomId}
-              chatroomName={slug}
-              subscriberBadges={subscriberBadges}
-              sevenTVEmotes={channel7TVEmotes}
-              kickTalkBadges={kickTalkBadges}
-              settings={settings}
-              userChatroomInfo={userChatroomInfo}
-              username={username}
-            />
-          );
-        }}
+        itemContent={itemContent}
         computeItemKey={(index, message) => message?.id}
         followOutput={"auto"}
         onScroll={handleScroll}
         initialTopMostItemIndex={filteredMessages?.length - 1}
         alignToBottom={true}
-        defaultItemHeight={48}
-        atBottomThreshold={150}
+        defaultItemHeight={45}
+        atBottomThreshold={100}
         overscan={10}
-        increaseViewportBy={200}
+        increaseViewportBy={50}
         style={{
           height: "100%",
           width: "100%",

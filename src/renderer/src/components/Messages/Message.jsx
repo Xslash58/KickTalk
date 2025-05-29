@@ -105,8 +105,7 @@ const Message = ({
   const checkForPhrases = () => {
     if (
       settings?.notifications?.enabled &&
-      settings?.notifications?.sound &&
-      settings?.notifications?.background &&
+      (settings?.notifications?.background || settings?.notifications?.sound) &&
       settings?.notifications?.phrases?.length &&
       message?.sender?.slug !== username
     ) {
@@ -117,14 +116,14 @@ const Message = ({
     return false;
   };
 
-  // Handles Highlighting the message if a phrase is found
-  const shouldHighlight = checkForPhrases();
+  const shouldDetectPhrases = checkForPhrases();
+  const shouldHighlight = shouldDetectPhrases && settings?.notifications?.background;
 
   // Handle notification sound in useEffect
   useEffect(() => {
     if (type === "dialog" || type === "replyThread") return;
 
-    if (shouldHighlight && settings.notifications.sound && message.soundPlayed !== true && !message?.is_old) {
+    if (shouldDetectPhrases && settings.notifications.sound && message.soundPlayed !== true && !message?.is_old) {
       // Only play sound for messages created within the last 5 seconds
       const messageTime = new Date(message.created_at).getTime();
       const now = Date.now();
@@ -148,7 +147,7 @@ const Message = ({
       getUpdateSoundPlayed(chatroomId, message.id);
     }
   }, [
-    shouldHighlight,
+    shouldDetectPhrases,
     settings?.notifications?.sound,
     settings?.notifications?.soundFile,
     settings?.notifications?.volume,
@@ -217,6 +216,7 @@ const Message = ({
           userChatroomInfo={userChatroomInfo}
           chatroomName={chatroomName}
           chatroomId={chatroomId}
+          settings={settings}
         />
       )}
 
