@@ -385,13 +385,12 @@
   padding: 0;
   min-width: 132px;
   z-index: 999;
-  max-width: 250px;
+  max-width: 300px;
   font-size: 18px;
   align-items: center;
   justify-content: center;
   opacity: 1;
   padding: 16px;
-  max-width: max-content !important;
 
   &.linkTooltip {
     .linkTooltipInfoHeader {

@@ -1008,10 +1008,10 @@ ipcMain.handle("settingsDialog:open", async (e, { data }) => {
   const newY = mainWindowPos[1] + Math.round((mainWindowSize[1] - 750) / 2);
 
   settingsDialog = new BrowserWindow({
-    width: 1400,
-    minWidth: 1400,
-    height: 750,
-    minHeight: 750,
+    width: 1200,
+    minWidth: 800,
+    height: 700,
+    minHeight: 600,
     x: newX,
     y: newY,
     show: false,
