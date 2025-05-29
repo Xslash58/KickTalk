@@ -1,6 +1,9 @@
-# kicktalk
+# Kick Talk
 
-An Electron application with React
+An Application for Kick to enhance your experience as a chatter.
+
+Designed & Developed by Dark
+Developed by ftk789
 
 ## Recommended IDE Setup
 
@@ -17,7 +20,7 @@ $ npm install
 ### Development
 
 ```bash
-$ npm run dev
+$ npm run dev or npm run dev-hr (hot reload)
 ```
 
 ### Build
