@@ -266,16 +266,54 @@ const useChatStore = create((set, get) => ({
 
       switch (event.detail.event) {
         case "App\\Events\\ChatMessageEvent":
-          // Add user to chatters list if they're not already in there
+          if (!window.__chatMessageBatch) {
+            window.__chatMessageBatch = {};
+          }
+          if (!window.__chatMessageBatch[chatroom.id]) {
+            window.__chatMessageBatch[chatroom.id] = {
+              queue: [],
+              timer: null,
+            };
+          }
+          // batching setting from settings
+          const batchingInterval = window.__chatMessageBatchInterval ?? 1000; // 0 = instant
           get().addChatter(chatroom.id, parsedEvent?.sender);
-
-          // Add Message to Chatroom
-          get().addMessage(chatroom.id, {
+          // queue batch
+          window.__chatMessageBatch[chatroom.id].queue.push({
             ...parsedEvent,
             timestamp: new Date().toISOString(),
           });
-
-          // Add Message to User Logs
+          console.log(
+            `[Batching] Added message to queue for chatroom ${chatroom.id}. Queue length:`,
+            window.__chatMessageBatch[chatroom.id].queue.length,
+            "Batching interval:",
+            batchingInterval,
+          );
+          // flusher
+          const flushBatch = () => {
+            const batch = window.__chatMessageBatch[chatroom.id].queue;
+            if (batch.length > 0) {
+              console.log(`[Batching] Flushing ${batch.length} messages for chatroom ${chatroom.id}`);
+              batch.forEach((msg) => get().addMessage(chatroom.id, msg));
+              window.__chatMessageBatch[chatroom.id].queue = [];
+            }
+          };
+          if (batchingInterval === 0) {
+            // If someone wants it instantly then it just basically always flushes and batches instantly
+            console.log("[Batching] Instant mode, flushing immediately");
+            flushBatch();
+          } else {
+            if (!window.__chatMessageBatch[chatroom.id].timer) {
+              console.log(`[Batching] Starting timer for chatroom ${chatroom.id} with interval ${batchingInterval}ms`);
+              window.__chatMessageBatch[chatroom.id].timer = setTimeout(() => {
+                flushBatch();
+                window.__chatMessageBatch[chatroom.id].timer = null;
+                console.log(`[Batching] Timer ended for chatroom ${chatroom.id}`);
+              }, batchingInterval);
+            } else {
+              console.log(`[Batching] Timer already running for chatroom ${chatroom.id}`);
+            }
+          }
           if (parsedEvent?.type === "reply") {
             window.app.replyLogs.add({
               chatroomId: chatroom.id,
@@ -288,7 +326,6 @@ const useChatStore = create((set, get) => ({
               message: parsedEvent,
             });
           }
-
           break;
         case "App\\Events\\MessageDeletedEvent":
           get().handleMessageDelete(chatroom.id, parsedEvent.message.id);
