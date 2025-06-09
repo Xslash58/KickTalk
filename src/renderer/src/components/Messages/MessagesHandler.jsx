@@ -110,7 +110,7 @@ const MessagesHandler = memo(
             chatroomName={slug}
             subscriberBadges={subscriberBadges}
             allStvEmotes={allStvEmotes}
-            kickTalkBadges={kickTalkBadges}
+            existingKickTalkBadges={kickTalkBadges}
             settings={settings}
             userChatroomInfo={userChatroomInfo}
             username={username}
@@ -119,7 +119,7 @@ const MessagesHandler = memo(
           />
         );
       },
-      [chatroomId, slug, subscriberBadges, allStvEmotes, kickTalkBadges, settings, userChatroomInfo, username, userId],
+      [chatroomId, slug, subscriberBadges, allStvEmotes, kickTalkBadges, settings, userChatroomInfo, username, userId, donators],
     );
 
     useEffect(() => {

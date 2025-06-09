@@ -12,7 +12,8 @@ import useChatStore from "../../providers/ChatProvider";
 const RegularMessage = memo(
   ({
     message,
-    filteredKickTalkBadges,
+    kickTalkBadges,
+    donatorBadges,
     subscriberBadges,
     userStyle,
     sevenTVEmotes,
@@ -102,13 +103,10 @@ const RegularMessage = memo(
           {shouldShowModActions && <ModActions chatroomName={chatroomName} message={message} />}
 
           <div className="chatMessageBadges">
-            {filteredKickTalkBadges && <KickTalkBadges badges={filteredKickTalkBadges} />}
+            {kickTalkBadges && <KickTalkBadges badges={kickTalkBadges} />}
+            {donatorBadges && <KickTalkBadges badges={donatorBadges} />}
             {userStyle?.badge && <StvBadges badge={userStyle?.badge} />}
-            <KickBadges
-              badges={message?.sender?.identity?.badges}
-              subscriberBadges={subscriberBadges}
-              kickTalkBadges={filteredKickTalkBadges}
-            />
+            <KickBadges badges={message?.sender?.identity?.badges} subscriberBadges={subscriberBadges} />
           </div>
 
           <button
@@ -154,7 +152,8 @@ const RegularMessage = memo(
       prevProps.sevenTVEmotes === nextProps.sevenTVEmotes &&
       prevProps.userChatroomInfo === nextProps.userChatroomInfo &&
       prevProps.userStyle === nextProps.userStyle &&
-      prevProps.filteredKickTalkBadges === nextProps.filteredKickTalkBadges &&
+      prevProps.kickTalkBadges === nextProps.kickTalkBadges &&
+      prevProps.donatorBadges === nextProps.donatorBadges &&
       prevProps.subscriberBadges === nextProps.subscriberBadges &&
       prevProps.type === nextProps.type &&
       prevProps.settings === nextProps.settings

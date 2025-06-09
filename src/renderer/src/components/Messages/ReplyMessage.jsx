@@ -9,7 +9,8 @@ const ReplyMessage = ({
   message,
   sevenTVEmotes,
   subscriberBadges,
-  filteredKickTalkBadges,
+  kickTalkBadges,
+  donatorBadges,
   handleOpenUserDialog,
   userStyle,
   chatroomId,
@@ -55,7 +56,8 @@ const ReplyMessage = ({
       <RegularMessage
         message={message}
         subscriberBadges={subscriberBadges}
-        filteredKickTalkBadges={filteredKickTalkBadges}
+        kickTalkBadges={kickTalkBadges}
+        donatorBadges={donatorBadges}
         sevenTVEmotes={sevenTVEmotes}
         handleOpenUserDialog={handleOpenUserDialog}
         userStyle={userStyle}

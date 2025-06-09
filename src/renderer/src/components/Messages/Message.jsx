@@ -26,7 +26,7 @@ const Message = ({
   chatroomId,
   subscriberBadges,
   allStvEmotes,
-  kickTalkBadges,
+  existingKickTalkBadges,
   settings,
   dialogUserStyle,
   type,
@@ -207,23 +207,25 @@ const Message = ({
   }, []);
 
   // Get existing KickTalk badges (Founder, Beta Tester, etc.)
-  const existingKickTalkBadges =
-    kickTalkBadges?.find((badge) => badge.username.toLowerCase() === message?.sender?.username?.toLowerCase())?.badges || [];
+  const kickTalkBadges =
+    existingKickTalkBadges?.find((badge) => badge.username.toLowerCase() === message?.sender?.username?.toLowerCase())?.badges ||
+    [];
 
   // Check if user is a donator
-  const donatorBadges = [];
-  if (message?.sender?.username) {
+  const donatorBadges = useMemo(() => {
+    if (!message?.sender?.username) return [];
+
     const donator = donators?.find((d) => d.message?.toLowerCase() === message?.sender?.username?.toLowerCase());
     if (donator) {
-      donatorBadges.push({
-        type: "Donator",
-        title: "KickTalk Donator",
-      });
+      return [
+        {
+          type: "Donator",
+          title: "KickTalk Donator",
+        },
+      ];
     }
-  }
-
-  // Combine all KickTalk badges (existing + donator)
-  const filteredKickTalkBadges = [...existingKickTalkBadges, ...donatorBadges];
+    return [];
+  }, [message?.sender?.username, donators]);
 
   const showContextMenu =
     !message?.deleted && message?.type !== "system" && message?.type !== "stvEmoteSetUpdate" && message?.type !== "mod_action";
@@ -304,7 +306,8 @@ const Message = ({
         <RegularMessage
           type={type}
           message={message}
-          filteredKickTalkBadges={filteredKickTalkBadges}
+          kickTalkBadges={kickTalkBadges}
+          donatorBadges={donatorBadges}
           subscriberBadges={subscriberBadges}
           sevenTVEmotes={allStvEmotes}
           userStyle={userStyle}
@@ -321,7 +324,8 @@ const Message = ({
         <ReplyMessage
           type={type}
           message={message}
-          filteredKickTalkBadges={filteredKickTalkBadges}
+          kickTalkBadges={kickTalkBadges}
+          donatorBadges={donatorBadges}
           subscriberBadges={subscriberBadges}
           sevenTVEmotes={allStvEmotes}
           userStyle={userStyle}

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { userKickTalkBadges } from "../../../../../utils/kickTalkBadges";
 import ChatInput from "./Input";
 import useChatStore from "../../providers/ChatProvider";
+import { useShallow } from "zustand/shallow";
 import MessagesHandler from "../Messages/MessagesHandler";
 
 import dayjs from "dayjs";
@@ -16,7 +17,7 @@ const Chat = ({ chatroomId, kickUsername, kickId, settings, updateSettings }) =>
   const personalEmoteSets = useChatStore((state) => state.personalEmoteSets);
   const messages = useChatStore((state) => state.messages[chatroomId]);
   const markChatroomMessagesAsRead = useChatStore((state) => state.markChatroomMessagesAsRead);
-  const donators = useChatStore((state) => state.donators);
+  const donators = useChatStore(useShallow((state) => state.donators));
 
   // Mark all messages as read when this chatroom becomes active
   useEffect(() => {
