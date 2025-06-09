@@ -1712,12 +1712,29 @@ if (window.location.pathname === "/" || window.location.pathname.endsWith("index
 
   initializePresenceUpdates();
 
+  let donationBadgesInterval = null;
+
+  // Initialize donation badge fetch every 30 minutes
+  const initializeDonationBadges = () => {
+    if (donationBadgesInterval) {
+      clearInterval(donationBadgesInterval);
+    }
+
+    donationBadgesInterval = setInterval(useChatStore.getState().fetchDonators, 1000);
+  };
+
+  initializeDonationBadges();
+
   // Cleanup when window is about to unload
   window.addEventListener("beforeunload", () => {
     useChatStore.getState().cleanupBatching();
 
     if (presenceUpdatesInterval) {
       clearInterval(presenceUpdatesInterval);
+    }
+
+    if (donationBadgesInterval) {
+      clearInterval(donationBadgesInterval);
     }
   });
 }
