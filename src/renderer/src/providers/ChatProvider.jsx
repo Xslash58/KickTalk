@@ -1720,7 +1720,7 @@ if (window.location.pathname === "/" || window.location.pathname.endsWith("index
       clearInterval(donationBadgesInterval);
     }
 
-    donationBadgesInterval = setInterval(useChatStore.getState().fetchDonators, 1000);
+    donationBadgesInterval = setInterval(useChatStore.getState().fetchDonators, 15 * 60 * 1000);
   };
 
   initializeDonationBadges();
