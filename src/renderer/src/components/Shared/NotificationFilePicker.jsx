@@ -34,6 +34,13 @@ const NotificationFilePicker = ({ getOptions, onChange, settingsData, disabled }
     });
   };
 
+  const handleOpenChange = async (isOpen) => {
+    if (isOpen) {
+      const newOptions = await getOptions();
+      setOptions(newOptions);
+    }
+  };
+
   return (
     <div className="notificationFilePickerContainer">
       <button
@@ -54,7 +61,7 @@ const NotificationFilePicker = ({ getOptions, onChange, settingsData, disabled }
         }}>
         <img src={playIcon} width={14} height={14} alt="Play" />
       </button>
-      <DropdownMenu>
+      <DropdownMenu onOpenChange={handleOpenChange}>
         <DropdownMenuTrigger disabled={disabled} asChild>
           <button className="soundFileName">
             {name} <img src={caretDownIcon} width={14} height={14} alt="Caret Down" />
