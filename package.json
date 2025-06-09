@@ -1,6 +1,6 @@
 {
   "name": "kick-talk",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "KickTalk",
   "contributors": [
     {
@@ -17,7 +17,8 @@
   "main": "./out/main/index.js",
   "scripts": {
     "format": "prettier --write .",
-    "lint": "eslint --cache .",
+    "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
+    "lint:fix": "eslint . --ext .js,.jsx,.ts,.tsx --fix",
     "start": "cross-env NODE_ENV=production electron-vite preview",
     "dev": "cross-env NODE_ENV=development electron-vite dev",
     "dev-hr": "cross-env NODE_ENV=development electron-vite dev --watch",
@@ -29,6 +30,10 @@
     "build:linux": "npm run build && electron-builder --linux"
   },
   "repository": "https://github.com/KickTalkOrg/KickTalk",
+  "publish": {
+    "provider": "github",
+    "releaseType": "release"
+  },
   "product-name": "KickTalk",
   "win": {
     "target": {
@@ -50,13 +55,11 @@
     "@radix-ui/react-switch": "^1.2.4",
     "@radix-ui/react-tooltip": "^1.2.7",
     "axios": "^1.8.4",
-    "cloudscraper": "^4.6.0",
     "clsx": "^2.1.1",
     "dayjs": "^1.11.13",
     "dotenv": "^16.4.7",
     "electron-log": "^5.4.0",
     "electron-store": "^10.0.1",
-    "electron-timber": "^1.0.0",
     "electron-updater": "^6.6.2",
     "electron-util": "^0.18.1",
     "emoji-picker-react": "^4.12.2",
@@ -81,10 +84,6 @@
     "electron": "^34.2.0",
     "electron-builder": "^25.1.8",
     "electron-vite": "^3.0.0",
-    "eslint": "^9.20.1",
-    "eslint-plugin-react": "^7.37.4",
-    "eslint-plugin-react-hooks": "^5.1.0",
-    "eslint-plugin-react-refresh": "^0.4.19",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "sass-embedded": "^1.87.0",

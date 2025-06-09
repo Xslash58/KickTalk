@@ -1,5 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { useSettings } from "../../providers/SettingsProvider";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { userKickTalkBadges } from "../../../../../utils/kickTalkBadges";
 import ChatInput from "./Input";
 import useChatStore from "../../providers/ChatProvider";
@@ -10,14 +9,27 @@ import relativeTime from "dayjs/plugin/relativeTime";
 import StreamerInfo from "./StreamerInfo";
 dayjs.extend(relativeTime);
 
-const Chat = ({ chatroomId, kickUsername }) => {
-  const { settings } = useSettings();
+const Chat = ({ chatroomId, kickUsername, kickId, settings, updateSettings }) => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
 
   const chatroom = useChatStore((state) => state.chatrooms.filter((chatroom) => chatroom.id === chatroomId)[0]);
+  const personalEmoteSets = useChatStore((state) => state.personalEmoteSets);
   const messages = useChatStore((state) => state.messages[chatroomId]);
+  const markChatroomMessagesAsRead = useChatStore((state) => state.markChatroomMessagesAsRead);
+  const donators = useChatStore((state) => state.donators);
+
+  // Mark all messages as read when this chatroom becomes active
+  useEffect(() => {
+    if (chatroomId) {
+      markChatroomMessagesAsRead(chatroomId);
+    }
+  }, [chatroomId, markChatroomMessagesAsRead]);
 
   const subscriberBadges = chatroom?.streamerData?.subscriber_badges || [];
+
+  const allStvEmotes = useMemo(() => {
+    return [...(personalEmoteSets || []), ...(chatroom?.channel7TVEmotes || [])];
+  }, [personalEmoteSets, chatroom?.channel7TVEmotes]);
 
   // Ctrl + F to open search dialog
   const handleSearch = useCallback(() => {
@@ -27,11 +39,12 @@ const Chat = ({ chatroomId, kickUsername }) => {
       window.app.searchDialog.open({
         messages: messages || [],
         chatroomId,
-        sevenTVEmotes: chatroom?.channel7TVEmotes,
-        sevenTVSettings: settings?.sevenTV,
+        sevenTVEmotes: allStvEmotes,
+        settings,
         subscriberBadges,
         userChatroomInfo: chatroom?.userChatroomInfo,
-        chatroomName: chatroom?.slug,
+        chatroomSlug: chatroom?.slug,
+        chatroomName: chatroom?.streamerData?.user?.username,
       });
     }
   }, [messages, isSearchOpen]);
@@ -58,6 +71,9 @@ const Chat = ({ chatroomId, kickUsername }) => {
         userChatroomInfo={chatroom?.userChatroomInfo}
         isStreamerLive={chatroom?.isStreamerLive}
         chatroomId={chatroomId}
+        settings={settings}
+        handleSearch={handleSearch}
+        updateSettings={updateSettings}
       />
 
       <div className="chatBody">
@@ -65,16 +81,18 @@ const Chat = ({ chatroomId, kickUsername }) => {
           messages={messages}
           chatroomId={chatroomId}
           slug={chatroom?.slug}
-          channel7TVEmotes={chatroom?.channel7TVEmotes}
+          allStvEmotes={allStvEmotes}
           subscriberBadges={subscriberBadges}
           kickTalkBadges={userKickTalkBadges}
           userChatroomInfo={chatroom?.userChatroomInfo}
           username={kickUsername}
+          userId={kickId}
           settings={settings}
+          donators={donators}
         />
       </div>
       <div className="chatBoxContainer">
-        <ChatInput chatroomId={chatroomId} />
+        <ChatInput chatroomId={chatroomId} settings={settings} />
       </div>
     </div>
   );

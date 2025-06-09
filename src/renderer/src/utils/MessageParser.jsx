@@ -1,10 +1,34 @@
-import { kickEmoteRegex, urlRegex, mentionRegex, kickClipRegex } from "../../../../utils/constants";
+import { kickEmoteRegex, urlRegex, mentionRegex } from "../../../../utils/constants";
 import Emote from "../components/Cosmetics/Emote";
 import { parse } from "tldts";
-// import LinkPreview from "../components/Cosmetics/LinkPreview";
 
-const chatroomEmotes = new Map();
-const WHITESPACE_REGEX = /\s+/;
+const messageContentCache = new Map();
+const MAX_MESSAGE_CACHE_SIZE = 800;
+
+const chatroomEmoteCache = new Map();
+const MAX_EMOTE_CACHE_SIZE = 300;
+const MAX_EMOTES_PER_ROOM = 50;
+const WHITESPACE_REGEX = /(\s+)/;
+
+const clearEmoteCache = () => {
+  if (chatroomEmoteCache.size > MAX_EMOTE_CACHE_SIZE) {
+    const entries = Array.from(chatroomEmoteCache.entries());
+    chatroomEmoteCache.clear();
+    entries.slice(-MAX_EMOTE_CACHE_SIZE / 2).forEach(([key, value]) => {
+      chatroomEmoteCache.set(key, value);
+    });
+  }
+};
+
+const clearMessageCache = () => {
+  if (messageContentCache.size > MAX_MESSAGE_CACHE_SIZE) {
+    const entries = Array.from(messageContentCache.entries());
+    messageContentCache.clear();
+    entries.slice(-MAX_MESSAGE_CACHE_SIZE / 2).forEach(([key, value]) => {
+      messageContentCache.set(key, value);
+    });
+  }
+};
 
 const rules = [
   {
@@ -40,10 +64,6 @@ const rules = [
 
       if (!isIcann || !domain) return url;
 
-      // if (kickClipRegex.test(url)) {
-      //   return <LinkPreview key={`link-${index}`} url={url} />;
-      // }
-
       return (
         <a style={{ color: "#c3d6c9" }} key={`link-${index}`} href={url} target="_blank" rel="noreferrer">
           {url}
@@ -58,7 +78,7 @@ const rules = [
     component: ({ match, index, chatroomId, chatroomName, userChatroomInfo, type, subscriberBadges }) => {
       const { username } = match.groups;
 
-      if (type === "minified") {
+      if (type === "minified" || type === "reply") {
         return (
           <span style={{ color: "#fff", fontWeight: "bold" }} key={`mention-${index}-${username}`}>
             {match[0]}
@@ -97,11 +117,20 @@ const rules = [
 ];
 
 const getEmoteData = (emoteName, sevenTVEmotes, chatroomId) => {
-  if (!chatroomEmotes?.has(chatroomId)) {
-    chatroomEmotes.set(chatroomId, new Map());
+  if (!chatroomEmoteCache?.has(chatroomId)) {
+    chatroomEmoteCache.set(chatroomId, new Map());
   }
 
-  const roomEmotes = chatroomEmotes.get(chatroomId);
+  const roomEmotes = chatroomEmoteCache.get(chatroomId);
+
+  // Limit per-room cache size
+  if (roomEmotes.size > MAX_EMOTES_PER_ROOM) {
+    const entries = Array.from(roomEmotes.entries());
+    roomEmotes.clear();
+    entries.slice(-MAX_EMOTES_PER_ROOM / 2).forEach(([k, v]) => {
+      roomEmotes.set(k, v);
+    });
+  }
 
   if (roomEmotes?.has(emoteName)) {
     return roomEmotes.get(emoteName);
@@ -114,11 +143,15 @@ const getEmoteData = (emoteName, sevenTVEmotes, chatroomId) => {
   if (emote) {
     const emoteData = {
       id: emote.id,
-      width: emote?.data?.host?.files[0]?.width || emote.file?.width,
-      height: emote?.data?.host?.files[0]?.height || emote.file?.height,
+      flags: emote.flags,
+      isZeroWidth: emote.flags !== 0,
+      width: emote.file?.width || 28,
+      height: emote.file?.height || 28,
       name: emote.name,
       alias: emote.alias,
       owner: emote.owner,
+      added_timestamp: emote.added_timestamp,
+      listed: emote.data?.listed !== false,
       platform: "7tv",
     };
 
@@ -131,7 +164,8 @@ const getEmoteData = (emoteName, sevenTVEmotes, chatroomId) => {
   return null;
 };
 
-export const MessageParser = ({
+// Main parsing function (extracted for caching)
+const parseMessageContent = ({
   message,
   sevenTVEmotes,
   sevenTVSettings,
@@ -201,55 +235,139 @@ export const MessageParser = ({
   // 7TV emotes
   const finalParts = [];
   let pendingTextParts = [];
+  let lastEmoteComponent = null;
 
   parts.forEach((part, i) => {
     if (typeof part !== "string") {
       // if there's a text string combine and add it before the non text part
       if (pendingTextParts.length) {
-        finalParts.push(<span key={`text-${i}`}>{pendingTextParts.join(" ")}</span>);
+        finalParts.push(<span key={`text-${i}`}>{pendingTextParts.join("")}</span>);
         pendingTextParts = [];
       }
 
       finalParts.push(part);
+      lastEmoteComponent = null;
       return;
     }
 
-    // Split where there is one or more whitespace
+    // Split with capture groups to preserve whitespace
     const textParts = part.split(WHITESPACE_REGEX);
     textParts.forEach((textPart, j) => {
+      if (!textPart) return;
+
+      // If this part is whitespace, add it to pending parts
+      if (WHITESPACE_REGEX.test(textPart)) {
+        pendingTextParts.push(textPart);
+        return;
+      }
+
       if (sevenTVSettings?.emotes) {
         const emoteData = getEmoteData(textPart, sevenTVEmotes, chatroomId || message?.chatroom_id);
 
         if (emoteData) {
+          // Check if this is a zero width emote and we have a previous emote
+          if (emoteData.isZeroWidth && lastEmoteComponent) {
+            const prevEmoteProps = lastEmoteComponent.props;
+            const updatedOverlaid = {
+              ...prevEmoteProps.overlaidEmotes,
+              [emoteData.name]: emoteData,
+            };
+
+            // Update the previous emote component with overlaid emote
+            const updatedEmoteComponent = (
+              <Emote
+                key={lastEmoteComponent.key}
+                emote={prevEmoteProps.emote}
+                type={prevEmoteProps.type}
+                overlaidEmotes={Object.values(updatedOverlaid)}
+              />
+            );
+
+            // Replace the last emote component in finalParts
+            let lastEmoteIndex = finalParts.length - 1;
+            let searchIndex = lastEmoteIndex;
+
+            while (searchIndex >= 0 && finalParts[searchIndex] !== lastEmoteComponent) {
+              searchIndex--;
+            }
+            lastEmoteIndex = searchIndex;
+
+            if (lastEmoteIndex >= 0) {
+              finalParts[lastEmoteIndex] = updatedEmoteComponent;
+              lastEmoteComponent = updatedEmoteComponent;
+            }
+
+            return;
+          }
+
           // if there's a text string combine and add it before the emote part
           if (pendingTextParts.length) {
-            finalParts.push(<span key={`text-${i}-${j}`}>{pendingTextParts.join(" ")}</span>);
+            finalParts.push(<span key={`text-${i}-${j}`}>{pendingTextParts.join("")}</span>);
             pendingTextParts = [];
           }
 
-          finalParts.push(
-            " ",
-            <Emote key={`stvEmote-${emoteData.id}-${message.timestamp}-${i}-${j}`} emote={emoteData} type={"stv"} />,
-            " ",
+          const emoteComponent = (
+            <Emote
+              key={`stvEmote-${emoteData.id}-${message.timestamp}-${i}-${j}`}
+              emote={emoteData}
+              type={"stv"}
+              overlaidEmotes={[]}
+            />
           );
+
+          finalParts.push(emoteComponent);
+          lastEmoteComponent = emoteComponent;
         } else {
           pendingTextParts.push(textPart);
+          if (textPart.trim()) lastEmoteComponent = null; // Reset on non-empty text
         }
       } else {
         pendingTextParts.push(textPart);
+        if (textPart.trim()) lastEmoteComponent = null; // Reset on non-empty text
       }
     });
   });
 
   // Add any remaining text
   if (pendingTextParts.length > 0) {
-    finalParts.push(<span key="final-text">{pendingTextParts.join(" ")}</span>);
-  }
-
-  // Cleanup
-  if (chatroomEmotes.size > 300) {
-    chatroomEmotes.clear();
+    finalParts.push(<span key="final-text">{pendingTextParts.join("")}</span>);
   }
 
   return finalParts;
+};
+
+export const MessageParser = ({
+  message,
+  sevenTVEmotes,
+  sevenTVSettings,
+  subscriberBadges,
+  type,
+  chatroomId,
+  chatroomName,
+  userChatroomInfo,
+}) => {
+  const cacheKey = `${message?.id}-${message?.content}-${sevenTVSettings?.emotes}-${type}`;
+
+  if (messageContentCache.has(cacheKey)) {
+    return messageContentCache.get(cacheKey);
+  }
+
+  const parsed = parseMessageContent({
+    message,
+    sevenTVEmotes,
+    sevenTVSettings,
+    subscriberBadges,
+    type,
+    chatroomId,
+    chatroomName,
+    userChatroomInfo,
+  });
+
+  messageContentCache.set(cacheKey, parsed);
+
+  // Cleanup caches
+  clearMessageCache();
+  clearEmoteCache();
+
+  return parsed;
 };

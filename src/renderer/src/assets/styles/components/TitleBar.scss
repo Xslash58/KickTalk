@@ -1,13 +1,12 @@
 .titleBar {
   min-height: 40px;
-  background-color: #ffffff0a;
+  background-color: var(--navbar-bg);
   color: white;
   display: flex;
   align-items: center;
   gap: 8px;
   justify-content: space-between;
-  app-region: drag;
-  // position: relative;
+  -webkit-app-region: drag;
   overflow: hidden;
 }
 
@@ -15,28 +14,28 @@
   position: absolute;
   display: none;
   align-items: center;
+  flex-direction: column;
   justify-content: start;
-  padding: 0 8px;
-  height: 56px;
+  height: max-content;
   top: 48px;
   right: 50%;
   margin: 0 auto;
   min-width: max-content;
   position: absolute;
-  z-index: 999;
+  z-index: -1;
   transform: translateX(50%);
   &.updateAvailable {
     display: flex;
+    z-index: 999;
 
-    button {
+    > button {
       padding: 8px;
       gap: 2px;
-      // padding-bottom: 24px;
       min-height: min-content;
       min-width: min-content;
-      background-color: #51ff36;
+      background-color: var(--update-btn-bg);
       border-radius: 4px;
-      min-width: 180px;
+      width: 100%;
       border: 1px solid rgba(255, 255, 255, 0.51);
       box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.1);
       backdrop-filter: blur(10px);
@@ -45,14 +44,14 @@
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      app-region: no-drag;
+      -webkit-app-region: no-drag;
       transition:
         0.2s ease-in-out background-color,
         0.2s ease-in-out opacity,
         0.2s ease-in-out border-color;
 
       &:hover {
-        background-color: rgb(45, 224, 18);
+        background-color: var(--btn-primary-hover);
         border-color: rgba(255, 255, 255, 0.7);
       }
 
@@ -108,10 +107,58 @@
   span {
     margin-left: 12px;
     font-size: 14px;
-    color: rgb(81 105 92);
+    color: var(--text-tertiary);
+    opacity: 0.7;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+}
+
+.updaterChangelog {
+  margin-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 0 16px;
+  padding-top: 16px;
+
+  h4 {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-primary);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  ul {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+
+    li {
+      font-size: 14px;
+      color: var(--text-primary);
+      opacity: 0.7;
+    }
+  }
+
+  .updaterChangelogButton {
+    margin-top: 8px;
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.5);
+    text-align: center;
+    background-color: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 12px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+
+    transition: 0.2s ease-in-out background-color;
+    gap: 4px;
   }
 }
 
@@ -120,7 +167,7 @@
   flex: 1 1 25%;
   align-items: center;
   display: flex;
-  app-region: drag;
+  -webkit-app-region: drag;
 }
 
 .titleBarControls {
@@ -131,7 +178,7 @@
   justify-content: flex-end;
 
   > button {
-    app-region: no-drag;
+    -webkit-app-region: no-drag;
     display: flex;
     align-items: center;
     width: 40px;
@@ -158,7 +205,7 @@
 
 .titleBarSettings {
   display: flex;
-  app-region: drag;
+  -webkit-app-region: drag;
   .titleBarLoginBtn {
     display: flex;
     height: 35px;
@@ -194,7 +241,7 @@
       cursor: pointer;
       color: rgba(255, 255, 255, 0.5);
       transition: 0.2s ease-in-out background-color;
-      app-region: no-drag;
+      -webkit-app-region: no-drag;
 
       &:hover {
         background-color: rgba(255, 255, 255, 0.1);
@@ -232,7 +279,7 @@
   }
 
   .titleBarSettingsBtn {
-    app-region: no-drag;
+    -webkit-app-region: no-drag;
     display: flex;
     align-items: center;
     height: 35px;
@@ -269,7 +316,7 @@
     }
 
     .titleBarUsername {
-      app-region: no-drag;
+      -webkit-app-region: no-drag;
       color: rgba(255, 255, 255, 0.5);
       font-size: 13px;
       font-weight: 600;
@@ -302,7 +349,7 @@
 }
 
 .titleBarLoginBtn {
-  app-region: no-drag;
+  -webkit-app-region: no-drag;
   color: rgba(255, 255, 255, 0.6);
   font-size: 12px;
   font-weight: 600;

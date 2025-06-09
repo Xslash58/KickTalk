@@ -1,8 +1,9 @@
-import { HexColorPicker } from "react-colorful";
+import { RgbaColorPicker } from "react-colorful";
 import { useRef, useState, useEffect, useCallback } from "react";
+import { useDebounceCallback } from "../../utils/hooks";
 import clsx from "clsx";
 import useClickOutside from "../../utils/useClickOutside";
-import { useDebounceCallback } from "../../utils/hooks";
+import { rgbaToString } from "../../utils/ChatUtils";
 
 const ColorPicker = ({ disabled, initialColor, handleColorChange, isColorPickerOpen, setIsColorPickerOpen }) => {
   const [color, setColor] = useState(initialColor);
@@ -11,7 +12,7 @@ const ColorPicker = ({ disabled, initialColor, handleColorChange, isColorPickerO
   const debouncedHandleColorChange = useDebounceCallback(handleColorChange, 300);
 
   useEffect(() => {
-    if (initialColor && initialColor !== color) {
+    if (initialColor) {
       setColor(initialColor);
     }
   }, [initialColor]);
@@ -42,28 +43,17 @@ const ColorPicker = ({ disabled, initialColor, handleColorChange, isColorPickerO
           if (disabled) return;
           setIsColorPickerOpen(!isColorPickerOpen);
         }}
+        ref={colorPickerRef}
         style={{
           opacity: disabled ? 0.5 : 1,
           cursor: disabled ? "not-allowed" : "pointer",
         }}>
         <button className="colorPickerPreview" disabled={disabled}>
-          <div className="colorPickerPreviewInner" style={{ backgroundColor: color }} />
+          <div className="colorPickerPreviewInner" style={{ backgroundColor: rgbaToString(color) }} />
         </button>
       </div>
-      <div className={clsx("colorPickerDialog", isColorPickerOpen && "show")} ref={colorPickerRef}>
-        <HexColorPicker color={color} onChange={handleChange} />
-        <input
-          type="text"
-          maxLength={7}
-          onChange={(e) => {
-            const value = e?.target?.value;
-            if (value.startsWith("#")) {
-              handleChange(value);
-            }
-          }}
-          value={color}
-          onBlur={() => setIsColorPickerOpen(false)}
-        />
+      <div className={clsx("colorPickerDialog", isColorPickerOpen && "show")}>
+        <RgbaColorPicker color={color} onChange={handleChange} />
       </div>
     </div>
   );

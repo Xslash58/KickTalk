@@ -4,7 +4,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(to bottom, #1d2621, #1f2d25);
+  background: var(--bg-dialog-primary);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -13,24 +13,23 @@
 }
 
 .errorBoundaryContent {
-  background: rgba(14, 38, 23, 0.95);
+  background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
+  border-radius: 4px;
   padding: 24px;
   max-width: 600px;
   width: 100%;
   text-align: center;
-  backdrop-filter: blur(10px);
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
 
   h1 {
-    color: #ff6b6b;
+    color: #ffffff;
     margin: 0 0 12px;
     font-size: 24px;
   }
 
   p {
-    color: #8ba496;
+    color: var(--text-secondary);
     margin: 0 0 24px;
     font-size: 16px;
   }
@@ -59,18 +58,18 @@
   }
 
   &.primary {
-    background: #1a9645;
-    border-color: #1a9645;
+    background: var(--btn-primary-bg);
+    border-color: var(--btn-primary-bg);
     color: white;
 
     &:hover {
-      background: #21b554;
+      background: var(--btn-primary-hover);
     }
   }
 
   &.success {
-    background: #1a9645;
-    border-color: #1a9645;
+    background: var(--btn-primary-bg);
+    border-color: var(--btn-primary-bg);
     color: white;
   }
 }
@@ -94,13 +93,13 @@
   h2 {
     margin: 0;
     font-size: 16px;
-    color: #ccedda;
+    color: var(--text-tertiary);
   }
 
   .closeButton {
     background: none;
     border: none;
-    color: #8ba496;
+    color: var(--text-tertiary);
     cursor: pointer;
     padding: 4px;
     font-size: 16px;
@@ -121,7 +120,7 @@
   overflow-y: auto;
   font-size: 13px;
   line-height: 1.5;
-  color: #8ba496;
+  color: var(--text-tertiary);
   text-align: left;
   background: transparent;
   white-space: pre-wrap;

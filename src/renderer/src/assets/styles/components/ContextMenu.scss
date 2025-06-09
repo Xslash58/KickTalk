@@ -4,7 +4,7 @@
   overflow: hidden;
   border-radius: 6px;
   border: 1px solid rgba(255, 255, 255, 0.1);
-  background-color: #0b160f;
+  background-color: var(--bg-dialog-secondary);
   padding: 4px;
   color: rgba(255, 255, 255, 0.9);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
@@ -75,7 +75,7 @@
     left: 8px;
     width: 14px;
     height: 14px;
-    color: #17f640;
+    color: var(--text-success);
   }
 }
 
@@ -106,7 +106,7 @@
     left: 8px;
     width: 14px;
     height: 14px;
-    color: #17f640;
+    color: var(--text-success);
   }
 }
 
@@ -135,6 +135,7 @@
   cursor: default;
   user-select: none;
   align-items: center;
+  justify-content: space-between;
   border-radius: 4px;
   padding: 6px 8px;
   font-size: 14px;
@@ -163,7 +164,7 @@
   overflow: hidden;
   border-radius: 6px;
   border: 1px solid rgba(255, 255, 255, 0.1);
-  background-color: #0b160f;
+  background-color: var(--bg-dialog-secondary);
   padding: 4px;
   color: rgba(255, 255, 255, 0.9);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);

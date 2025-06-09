@@ -1,4 +1,5 @@
 @use "../../components/Shared/shared.scss";
+@import "./themes.css";
 
 @font-face {
   font-family: "Inter";
@@ -25,7 +26,7 @@
 }
 
 #main {
-  background: linear-gradient(180deg, #020a05 0%, #06190e 100%), linear-gradient(180deg, #031209 0%, #06190e 100%);
+  background: var(--bg-primary);
 }
 
 #main,
@@ -41,14 +42,15 @@
   overflow: hidden;
 }
 
-#contextMenu {
-  background: rgba(4, 15, 8, 1);
-}
-
 img {
   user-select: none;
   -webkit-user-drag: none;
   pointer-events: none;
+}
+
+html {
+  overscroll-behavior: none;
+  -ms-overflow-style: none;
 }
 
 html,
@@ -154,15 +156,24 @@ button {
   box-sizing: border-box;
 }
 
+/* Disable spellcheck globally */
+input,
+[contenteditable="true"] {
+  spellcheck: false;
+  -webkit-spellcheck: false;
+  caret-color: var(--input-caret);
+}
+
 body {
-  color: white;
+  color: var(--text-primary);
   overflow-y: hidden;
   overflow-x: hidden;
   margin: 0;
   padding: 0;
-  // height: 100vh;
   display: flex;
   flex-direction: column;
+  overscroll-behavior: none;
+  -ms-overflow-style: none;
 }
 
 .message {
@@ -174,72 +185,10 @@ body {
   cursor: pointer;
 }
 
-.dialog {
-  width: 20rem;
-  display: none;
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background: #182f21;
-  padding: 20px;
-  border-radius: 4px;
-  box-shadow: 0 3px 6px rgb(255 255 255 / 5%);
-  text-align: center;
-
-  input {
-    width: 80%;
-    padding: 10px;
-    margin-bottom: 20px;
-    border: 1.5px solid #ffffff1c;
-    border-radius: 5px;
-    background: rgb(27 55 40);
-    color: white;
-    font-size: 16px;
-    outline: none;
-    transition: border 0.3s ease;
-
-    &:focus {
-      border-color: rgba(66, 202, 19, 1);
-    }
-  }
-
-  button {
-    background: rgba(66, 202, 19, 1);
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 16px;
-    transition: background 0.3s ease;
-
-    &:hover {
-      background: rgba(66, 202, 19, 0.8);
-    }
-  }
-
-  h3 {
-    font-size: 1rem;
-  }
-}
-
 .close {
   cursor: pointer;
   float: right;
   color: red;
-}
-
-#scrollToBottom {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  padding: 10px;
-  background: #444;
-  color: white;
-  border: none;
-  cursor: pointer;
-  display: none;
 }
 
 .badges {

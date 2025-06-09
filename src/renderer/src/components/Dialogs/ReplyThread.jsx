@@ -18,6 +18,7 @@ const ReplyThread = () => {
       originalMessageId,
       userChatroomInfo,
       chatroomName,
+      username,
       settings,
       sevenTVEmotes,
       subscriberBadges,
@@ -27,6 +28,7 @@ const ReplyThread = () => {
         originalMessageId,
         userChatroomInfo,
         chatroomName,
+        username,
         settings,
         sevenTVEmotes,
         subscriberBadges,
@@ -75,8 +77,6 @@ const ReplyThread = () => {
         <div className="replyThreadContent" ref={replyThreadRef}>
           {originalMessage?.original_message?.id && (
             <div className="replyThreadOriginalMessage">
-              <p>Original Message:</p>
-
               <span>
                 <p>{originalMessage?.original_sender?.username}: </p>
                 <MessageParser message={originalMessage?.original_message} type="minified" />
@@ -96,6 +96,7 @@ const ReplyThread = () => {
                   kickTalkBadges={userKickTalkBadges}
                   userChatroomInfo={dialogData?.userChatroomInfo}
                   chatroomName={dialogData?.chatroomName}
+                  username={dialogData?.username}
                   settings={dialogData?.settings}
                   type="replyThread"
                 />

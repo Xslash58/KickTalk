@@ -3,6 +3,8 @@
 import * as React from "react";
 import * as ContextMenuPrimitive from "@radix-ui/react-context-menu";
 // import { Check, ChevronRight, Circle } from "lucide-react";
+import CarotRight from "../../assets/icons/caret-right-fill.svg";
+import Circle from "../../assets/icons/circle-bold.svg";
 import "../../assets/styles/components/ContextMenu.scss";
 
 const ContextMenu = ContextMenuPrimitive.Root;
@@ -20,7 +22,7 @@ const ContextMenuRadioGroup = ContextMenuPrimitive.RadioGroup;
 const ContextMenuSubTrigger = React.forwardRef(({ className, inset, children, ...props }, ref) => (
   <ContextMenuPrimitive.SubTrigger ref={ref} className="contextMenuSubTrigger" {...props}>
     {children}
-    <ChevronRight className="chevronRight" />
+    <img src={CarotRight} width={16} height={16} />
   </ContextMenuPrimitive.SubTrigger>
 ));
 ContextMenuSubTrigger.displayName = ContextMenuPrimitive.SubTrigger.displayName;
@@ -45,9 +47,7 @@ ContextMenuItem.displayName = ContextMenuPrimitive.Item.displayName;
 const ContextMenuCheckboxItem = React.forwardRef(({ className, children, checked, ...props }, ref) => (
   <ContextMenuPrimitive.CheckboxItem ref={ref} className="contextMenuCheckboxItem" checked={checked} {...props}>
     <span className="contextMenuItemIndicator">
-      <ContextMenuPrimitive.ItemIndicator>
-        <Check className="h-4 w-4" />
-      </ContextMenuPrimitive.ItemIndicator>
+      <ContextMenuPrimitive.ItemIndicator>{/* <img src={Check} width={16} height={16} /> */}</ContextMenuPrimitive.ItemIndicator>
     </span>
     {children}
   </ContextMenuPrimitive.CheckboxItem>
@@ -58,7 +58,7 @@ const ContextMenuRadioItem = React.forwardRef(({ className, children, ...props }
   <ContextMenuPrimitive.RadioItem ref={ref} className="contextMenuRadioItem" {...props}>
     <span className="contextMenuItemIndicator">
       <ContextMenuPrimitive.ItemIndicator>
-        <Circle className="h-4 w-4 fill-current" />
+        <img src={Circle} width={16} height={16} />
       </ContextMenuPrimitive.ItemIndicator>
     </span>
     {children}

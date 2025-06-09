@@ -6,7 +6,8 @@ import CopyIcon from "../../assets/icons/copy-simple-fill.svg?asset";
 import ReplyIcon from "../../assets/icons/reply-fill.svg?asset";
 import Pin from "../../assets/icons/push-pin-fill.svg?asset";
 import clsx from "clsx";
-import dayjs from "dayjs";
+import ModActions from "./ModActions";
+import useChatStore from "../../providers/ChatProvider";
 
 const RegularMessage = memo(
   ({
@@ -16,15 +17,16 @@ const RegularMessage = memo(
     userStyle,
     sevenTVEmotes,
     handleOpenUserDialog,
-    sevenTVSettings,
     type,
     chatroomName,
-    getPinMessage,
+    username,
     chatroomId,
     userChatroomInfo,
     isSearch = false,
     settings,
   }) => {
+    const getPinMessage = useChatStore((state) => state.getPinMessage);
+
     const canModerate = useMemo(
       () => userChatroomInfo?.is_broadcaster || userChatroomInfo?.is_moderator || userChatroomInfo?.is_super_admin,
       [userChatroomInfo],
@@ -45,12 +47,14 @@ const RegularMessage = memo(
 
     const handlePinMessage = useCallback(() => {
       const data = {
-        chatroom_id: message.chatroom_id,
+        chatroom_id: chatroomId,
         content: message.content,
         id: message.id,
         sender: message.sender,
-        chatroomName: chatroomName,
+        chatroomName,
+        type,
       };
+
       getPinMessage(chatroomId, data);
     }, [message?.id, message?.chatroom_id, message?.content, message?.sender, chatroomName, getPinMessage, chatroomId]);
 
@@ -72,20 +76,30 @@ const RegularMessage = memo(
           chatroomId={chatroomId}
           chatroomName={chatroomName}
           sevenTVEmotes={sevenTVEmotes}
-          sevenTVSettings={sevenTVSettings}
+          sevenTVSettings={settings?.sevenTV}
           subscriberBadges={subscriberBadges}
           userChatroomInfo={userChatroomInfo}
         />
       ),
-      [type, message, chatroomId, chatroomName, sevenTVEmotes, sevenTVSettings, subscriberBadges, userChatroomInfo],
+      [type, message, chatroomId, chatroomName, sevenTVEmotes, settings, subscriberBadges, userChatroomInfo],
     );
+
+    const shouldShowModActions = useMemo(() => {
+      if (!username || !chatroomName) return false;
+
+      return (
+        canModerate &&
+        settings?.moderation?.quickModTools &&
+        message?.sender?.username.toLowerCase() !== chatroomName.toLowerCase() &&
+        message?.sender?.username.toLowerCase() !== username.replace("-", "_").toLowerCase()
+      );
+    }, [canModerate, settings?.moderation?.quickModTools, message?.deleted, message?.sender?.username, chatroomName, username]);
 
     return (
       <span className={`chatMessageContainer ${message.deleted ? "deleted" : ""}`}>
         <div className="chatMessageUser">
-          {settings?.general?.showTimestamps && settings?.general?.timestampFormat !== "disabled" && (
-            <span className="chatMessageTimestamp">{timestamp}</span>
-          )}
+          {settings?.general?.timestampFormat !== "disabled" && <span className="chatMessageTimestamp">{timestamp}</span>}
+          {shouldShowModActions && <ModActions chatroomName={chatroomName} message={message} />}
 
           <div className="chatMessageBadges">
             {filteredKickTalkBadges && <KickTalkBadges badges={filteredKickTalkBadges} />}
@@ -137,15 +151,12 @@ const RegularMessage = memo(
   (prevProps, nextProps) => {
     return (
       prevProps.message === nextProps.message &&
-      prevProps.sevenTVSettings === nextProps.sevenTVSettings &&
       prevProps.sevenTVEmotes === nextProps.sevenTVEmotes &&
       prevProps.userChatroomInfo === nextProps.userChatroomInfo &&
       prevProps.userStyle === nextProps.userStyle &&
       prevProps.filteredKickTalkBadges === nextProps.filteredKickTalkBadges &&
       prevProps.subscriberBadges === nextProps.subscriberBadges &&
       prevProps.type === nextProps.type &&
-      prevProps.chatroomId === nextProps.chatroomId &&
-      prevProps.chatroomName === nextProps.chatroomName &&
       prevProps.settings === nextProps.settings
     );
   },

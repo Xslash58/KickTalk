@@ -8,6 +8,7 @@ import useClickOutside from "../../../utils/useClickOutside";
 import KickLogoIcon from "../../../assets/logos/kickLogoIcon.svg?asset";
 import GlobeIcon from "../../../assets/icons/globe-fill.svg?asset";
 import LockIcon from "../../../assets/icons/lock-simple-fill.svg?asset";
+import UserIcon from "../../../assets/icons/user-fill.svg?asset";
 import useChatStore from "../../../providers/ChatProvider";
 import { useShallow } from "zustand/react/shallow";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../../Shared/Tooltip";
@@ -54,7 +55,7 @@ const EmoteSection = ({ emotes, title, handleEmoteClick, type, section, userChat
       </div>
       <div className="emoteItems">
         {emotes?.slice(0, visibleCount).map((emote, i) => (
-          <Tooltip key={`${emote.id}-${emote.name}-${i}`} delayDuration={0}>
+          <Tooltip key={`${emote.id}-${emote.name}-${i}`} delayDuration={500}>
             <TooltipTrigger asChild>
               <button
                 disabled={type === "kick" && emote?.subscribers_only && !userChatroomInfo?.subscription}
@@ -130,12 +131,19 @@ const SevenTVEmoteDialog = memo(
                 />
               </div>
               <div className="dialogHeadMenuItems">
+                {sevenTVEmotes?.find((set) => set.type === "personal" && set?.emotes?.length > 0) && (
+                  <button
+                    className={clsx("dialogHeadMenuItem", currentSection === "personal" && "active")}
+                    onClick={() => setCurrentSection(currentSection === "personal" ? null : "personal")}>
+                    <img src={UserIcon} height={24} width={24} alt="Personal Emotes" />
+                  </button>
+                )}
                 {sevenTVEmotes?.find((set) => set.type === "channel" && set?.emotes?.length > 0) && (
                   <button
                     className={clsx("dialogHeadMenuItem", currentSection === "channel" && "active")}
                     onClick={() => setCurrentSection(currentSection === "channel" ? null : "channel")}>
                     <img
-                      src={sevenTVEmotes?.find((set) => set.type === "channel")?.user?.avatar_url}
+                      src={`${sevenTVEmotes?.find((set) => set.type === "channel")?.user?.avatar_url.includes("static-cdn.jtvnw.net") ? sevenTVEmotes?.find((set) => set.type === "channel")?.user?.avatar_url : `https:${sevenTVEmotes?.find((set) => set.type === "channel")?.user?.avatar_url}`}`}
                       height={24}
                       width={24}
                       alt="Channel Emotes"
@@ -281,6 +289,11 @@ const EmoteDialogs = memo(
     const sevenTVEmotes = useChatStore(
       useShallow((state) => state.chatrooms.find((room) => room.id === chatroomId)?.channel7TVEmotes),
     );
+    const personalEmoteSets = useChatStore(useShallow((state) => state.personalEmoteSets));
+
+    const allStvEmotes = useMemo(() => {
+      return [...(personalEmoteSets || []), ...(sevenTVEmotes || [])];
+    }, [personalEmoteSets, sevenTVEmotes]);
 
     const [activeDialog, setActiveDialog] = useState(null);
     const [currentHoverEmote, setCurrentHoverEmote] = useState({});
@@ -315,7 +328,7 @@ const EmoteDialogs = memo(
 
     return (
       <TooltipProvider>
-        <div className="chatEmoteBtns">
+        <div className={clsx("chatEmoteBtns", activeDialog !== null && "activeDialog")}>
           <button
             className={clsx("emoteBtn", activeDialog === "7tv" && "activeDialog")}
             onClick={() => setActiveDialog(activeDialog === "7tv" ? null : "7tv")}>
@@ -339,7 +352,7 @@ const EmoteDialogs = memo(
         <div className="emoteDialogs" ref={emoteDialogRef}>
           <SevenTVEmoteDialog
             isDialogOpen={activeDialog === "7tv"}
-            sevenTVEmotes={sevenTVEmotes}
+            sevenTVEmotes={allStvEmotes}
             handleEmoteClick={handleEmoteClick}
           />
           <KickEmoteDialog

@@ -143,7 +143,7 @@ const updateCosmetics = async (body) => {
       url: `https:${data.host.url}/${data.host.files[data.host.files.length - 1].name}`,
     });
   } else {
-    console.log("[7TV] Didn't process cosmetics:", body);
+    console.log("[7tv] Didn't process cosmetics:", body);
   }
 };
 
@@ -201,8 +201,10 @@ class StvWebSocket extends EventTarget {
       // Subscribe to entitlement events
       if (this.channelKickID !== "0") {
         this.subscribeToEntitlementEvents();
+
+        // Only subscribe to emote set events if we have a valid emote set ID
         if (this.stvEmoteSetId !== "0") {
-          //this.subscribeToEmoteSetEvents();
+          this.subscribeToEmoteSetEvents();
         }
       }
 
@@ -238,6 +240,11 @@ class StvWebSocket extends EventTarget {
    * Subscribe to user events
    */
   subscribeToUserEvents() {
+    if (!this.chat || this.chat.readyState !== WebSocket.OPEN) {
+      console.log(`[7TV]: Cannot subscribe to user events - WebSocket not ready`);
+      return;
+    }
+
     const subscribeUserMessage = {
       op: 35,
       t: Date.now(),
@@ -255,6 +262,11 @@ class StvWebSocket extends EventTarget {
    * Subscribe to all cosmetic events
    */
   subscribeToCosmeticEvents() {
+    if (!this.chat || this.chat.readyState !== WebSocket.OPEN) {
+      console.log(`[7TV]: Cannot subscribe to cosmetic events - WebSocket not ready`);
+      return;
+    }
+
     const subscribeAllCosmetics = {
       op: 35,
       t: Date.now(),
@@ -272,6 +284,11 @@ class StvWebSocket extends EventTarget {
    * Subscribe to all entitlement events
    */
   subscribeToEntitlementEvents() {
+    if (!this.chat || this.chat.readyState !== WebSocket.OPEN) {
+      console.log(`[7TV]: Cannot subscribe to entitlement events - WebSocket not ready`);
+      return;
+    }
+
     const subscribeAllEntitlements = {
       op: 35,
       t: Date.now(),
@@ -290,19 +307,25 @@ class StvWebSocket extends EventTarget {
   /**
    * Subscribe to all emote set events
    */
-  // subscribeToEmoteSetEvents() {
-  //   const subscribeAllEmoteSets = {
-  //     op: 35,
-  //     t: Date.now(),
-  //     d: {
-  //       type: "emote_set.*",
-  //       condition: { object_id: this.stvEmoteSetId },
-  //     },
-  //   };
 
-  //   this.chat.send(JSON.stringify(subscribeAllEmoteSets));
-  //   console.log(`[7TV]: Subscribed to emote_set.* events`);
-  // }
+  subscribeToEmoteSetEvents() {
+    if (!this.chat || this.chat.readyState !== WebSocket.OPEN) {
+      console.log(`[7TV]: Cannot subscribe to emote set events - WebSocket not ready`);
+      return;
+    }
+
+    const subscribeAllEmoteSets = {
+      op: 35,
+      t: Date.now(),
+      d: {
+        type: "emote_set.*",
+        condition: { object_id: this.stvEmoteSetId },
+      },
+    };
+
+    this.chat.send(JSON.stringify(subscribeAllEmoteSets));
+    console.log(`[7TV]: Subscribed to emote_set.* events`);
+  }
 
   setupMessageHandler() {
     this.chat.onmessage = (event) => {

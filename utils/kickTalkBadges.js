@@ -148,6 +148,15 @@ export const userKickTalkBadges = [
     ],
   },
   {
+    username: "ravenbtw",
+    badges: [
+      {
+        type: "BetaTester",
+        title: "Beta Tester",
+      },
+    ],
+  },
+  {
     username: "robotitan",
     badges: [
       {

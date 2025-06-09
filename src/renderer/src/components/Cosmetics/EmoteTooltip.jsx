@@ -1,7 +1,8 @@
-import { memo, useEffect, useRef, useState, useCallback, useMemo } from "react";
+import { memo, useEffect, useRef, useState, useCallback } from "react";
 import clsx from "clsx";
+import dayjs from "dayjs";
 
-const EmoteTooltip = memo(({ showEmoteInfo, mousePos, emoteInfo, type, emoteSrc }) => {
+const EmoteTooltip = memo(({ showEmoteInfo, mousePos, emoteInfo, type, emoteSrc, overlaidEmotes = [] }) => {
   const emoteTooltipRef = useRef(null);
   const [position, setPosition] = useState({ top: 0, left: 0 });
   const [isImageLoaded, setIsImageLoaded] = useState(false);
@@ -64,16 +65,19 @@ const EmoteTooltip = memo(({ showEmoteInfo, mousePos, emoteInfo, type, emoteSrc 
         opacity: showEmoteInfo && isImageLoaded && emoteTooltipRef.current ? 1 : 0,
       }}
       className={clsx("tooltipItem", showEmoteInfo && emoteTooltipRef.current ? "emoteTooltip" : "")}>
-      <img
-        src={emoteSrc}
-        className={type === "stv" ? "stvEmote emote " : "kickEmote emote "}
-        width={112}
-        height={112}
-        loading="lazy"
-        fetchpriority="low"
-        decoding="async"
-        onLoad={handleImageLoad}
-      />
+      <div style={{ position: "relative", display: "flex" }}>
+        <img
+          src={emoteSrc}
+          className={type === "stv" ? "stvEmote emote " : "kickEmote emote "}
+          width={"100%"}
+          height={64}
+          loading="lazy"
+          fetchpriority="low"
+          decoding="async"
+          onLoad={handleImageLoad}
+        />
+      </div>
+
       {isImageLoaded && (
         <div className="emoteTooltipInfo">
           <div className="emoteTooltipInfoHeader">
@@ -83,9 +87,35 @@ const EmoteTooltip = memo(({ showEmoteInfo, mousePos, emoteInfo, type, emoteSrc 
               <span className="emoteTooltipPlatform">{emoteInfo?.platform === "7tv" ? "7TV" : "Kick"}</span>
             </p>
           </div>
+
+          {/* Show overlaid emotes info */}
+
+          {overlaidEmotes.length > 0 && (
+            <div className="emoteTooltipOverlaidWrapper">
+              <h5>Zero-Width</h5>
+
+              {overlaidEmotes.length > 0 && (
+                <div className="emoteTooltipOverlaidItems">
+                  {overlaidEmotes.map((overlaidEmote, index) => (
+                    <div key={`${overlaidEmote.id}-${index}`} className="emoteTooltipOverlaidItem">
+                      <img src={`https://cdn.7tv.app/emote/${overlaidEmote.id}/1x.webp`} alt={overlaidEmote.name} />
+                      {/* <span>{overlaidEmote.name}</span> */}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           {type === "stv" && emoteInfo?.owner?.username && (
             <p>
               Made by <span>{emoteInfo.owner.username}</span>
+            </p>
+          )}
+
+          {type === "stv" && emoteInfo?.owner?.username && (
+            <p>
+              Added on <span>{dayjs(emoteInfo.added_timestamp).format("MMM D, YYYY")}</span>
             </p>
           )}
         </div>

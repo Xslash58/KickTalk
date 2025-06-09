@@ -32,8 +32,10 @@ import {
 
   // Kick Auth for Events
   getKickAuthForEvents,
+  getUpdateTitle,
+  getClearChatroom,
 } from "../../utils/services/kick/kickAPI";
-import { getUserStvId, getChannelEmotes } from "../../utils/services/seventv/stvAPI";
+import { getUserStvProfile, getChannelEmotes } from "../../utils/services/seventv/stvAPI";
 
 import Store from "electron-store";
 
@@ -104,10 +106,13 @@ const validateSessionToken = async () => {
 
     // Get STV ID with error handling
     try {
-      const stvId = await getUserStvId(data.id);
-      if (stvId) {
-        localStorage.setItem("stvId", stvId);
-        console.log("[Session Validation]: Updated stvId");
+      const stvData = await getUserStvProfile(data.id);
+      console.log("[Session Validation]: STV Data:", stvData);
+      const personalEmoteSets = stvData?.emoteSets?.filter((set) => set.type === "personal");
+      if (stvData) {
+        localStorage.setItem("stvId", stvData.user_id);
+        localStorage.setItem("stvPersonalEmoteSets", JSON.stringify(personalEmoteSets));
+        console.log("[Session Validation]: Updated stvId and stvPersonalEmoteSets");
       }
     } catch (stvError) {
       console.warn("[Session Validation]: Failed to get STV ID:", stvError);
@@ -186,6 +191,7 @@ if (process.contextIsolated) {
       notificationSounds: {
         getAvailable: () => ipcRenderer.invoke("notificationSounds:getAvailable"),
         getSoundUrl: (soundFile) => ipcRenderer.invoke("notificationSounds:getSoundUrl", { soundFile }),
+        openFolder: () => ipcRenderer.invoke("notificationSounds:openFolder"),
       },
 
       authDialog: {
@@ -200,7 +206,9 @@ if (process.contextIsolated) {
         move: (x, y) => ipcRenderer.send("userDialog:move", { x, y }),
         pin: (pinState) => ipcRenderer.invoke("userDialog:pin", pinState),
         onData: (callback) => {
-          const handler = (_, data) => callback(data);
+          const handler = (_, data) => {
+            callback(data);
+          };
 
           ipcRenderer.on("userDialog:data", handler);
           return () => ipcRenderer.removeListener("userDialog:data", handler);
@@ -345,6 +353,16 @@ if (process.contextIsolated) {
           withAuth((token, session) => getKickAuthForEvents(eventName, socketId, token, session)),
         getChatroomViewers: (chatroomId) => getChatroomViewers(chatroomId),
       },
+
+      // kickChannelActions: {
+      //   // Broadcaster Actions
+
+      //   // Channel Commands
+      //   getUpdateTitle: (channelName, title) => withAuth((token, session) => getUpdateTitle(channelName, title, token, session)),
+      //   getClearChatroom: (channelName) => withAuth((token, session) => getClearChatroom(channelName, token, session)),
+      //   getUpdateSlowmode: (channelName, slowmodeOptions) =>
+      //     withAuth((token, session) => getUpdateSlowmode(channelName, slowmodeOptions, token, session)),
+      // },
 
       // 7TV API
       stv: {

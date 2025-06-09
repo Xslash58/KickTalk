@@ -3,6 +3,7 @@ import RegularMessage from "./RegularMessage";
 import ArrowReplyLineIcon from "../../assets/icons/arrow_reply_line.svg?asset";
 import useChatStore from "../../providers/ChatProvider";
 import { useShallow } from "zustand/shallow";
+import { memo, useMemo } from "react";
 
 const ReplyMessage = ({
   message,
@@ -14,8 +15,9 @@ const ReplyMessage = ({
   chatroomId,
   chatroomName,
   userChatroomInfo,
-  sevenTVSettings,
   handleOpenReplyThread,
+  username,
+  settings,
 }) => {
   const chatStoreMessageThread = useChatStore(
     useShallow((state) =>
@@ -27,7 +29,13 @@ const ReplyMessage = ({
     <div className="chatMessageReply">
       <span className="chatMessageReplyText">
         <img className="chatMessageReplySymbol" src={ArrowReplyLineIcon} />
-        <span className="chatMessageReplyTextSender">{message?.metadata?.original_sender?.username}:</span>
+        <span className="chatMessageReplyTextSender">
+          <button
+            className="chatMessageReplyTextSenderUsername"
+            onClick={(e) => handleOpenUserDialog(e, message?.metadata?.original_sender?.username.toLowerCase())}>
+            @{message?.metadata?.original_sender?.username}:
+          </button>
+        </span>
         <span
           className="chatMessageReplyTextContent"
           onClick={() => handleOpenReplyThread(chatStoreMessageThread)}
@@ -51,10 +59,11 @@ const ReplyMessage = ({
         sevenTVEmotes={sevenTVEmotes}
         handleOpenUserDialog={handleOpenUserDialog}
         userStyle={userStyle}
-        sevenTVSettings={sevenTVSettings}
         chatroomId={chatroomId}
         chatroomName={chatroomName}
         userChatroomInfo={userChatroomInfo}
+        settings={settings}
+        username={username}
       />
     </div>
   );

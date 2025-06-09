@@ -8,6 +8,12 @@
   overflow-wrap: anywhere;
   border-radius: 4px;
   position: relative;
+  background: var(--message-bg);
+  line-height: 1.5;
+  // box-sizing: border-box;
+  // transform: translateZ(0);
+  // backface-visibility: hidden;
+  // will-change: transform, opacity;
 
   &:hover {
     .chatMessageActions {
@@ -15,7 +21,7 @@
     }
 
     &:not(.highlighted) {
-      background-color: rgba(255, 255, 255, 0.05) !important;
+      background-color: var(--message-bg-hover) !important;
     }
 
     &.highlighted {
@@ -28,18 +34,23 @@
         left: 0;
         right: 0;
         bottom: 0;
-        background-color: rgba(255, 255, 255, 0.1);
+        background-color: var(--message-bg-hover);
         pointer-events: none;
         border-radius: inherit;
       }
     }
   }
 
+  &.emoteSetUpdate:hover {
+    background: transparent !important;
+  }
+
   &.old,
   &.deleted {
     .chatMessageReplyText,
     .chatMessageUser .chatroomBadgeIcon,
-    .chatMessageUsername {
+    .chatMessageUsername,
+    .chatMessageTimestamp {
       opacity: 0.25;
     }
 
@@ -49,6 +60,24 @@
       > a,
       > .chatroomEmoteWrapper {
         opacity: 0.25;
+      }
+    }
+
+    &.highlighted {
+      .chatMessageReplyText,
+      .chatMessageUser .chatroomBadgeIcon,
+      .chatMessageUsername,
+      .chatMessageTimestamp {
+        opacity: 0.5;
+      }
+
+      .chatMessageContent {
+        > div,
+        > span,
+        > a,
+        > .chatroomEmoteWrapper {
+          opacity: 0.5;
+        }
       }
     }
   }
@@ -78,9 +107,23 @@
 
     > .chatMessageReplyTextSender {
       flex: 1 0 auto;
-      display: block;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      gap: 4px;
       max-width: fit-content;
-      font-weight: 700;
+      font-weight: 600;
+      font-size: 14px;
+
+      .chatMessageReplyTextSenderUsername {
+        color: var(--text-primary);
+        text-decoration: none;
+        font-size: 16px;
+        background: none;
+        border: none;
+        font-weight: 700;
+        cursor: pointer;
+      }
     }
 
     > .chatMessageReplyTextContent {
@@ -93,6 +136,8 @@
     > .chatMessageReplySymbol {
       width: 28px;
       height: 24px;
+      top: 2.5px;
+      position: relative;
       vertical-align: top;
     }
   }
@@ -115,8 +160,8 @@
     align-items: center;
     justify-content: center;
     background: none;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    background-color: #36443c;
+    border: 1px solid var(--border-primary);
+    background-color: var(--bg-secondary);
     cursor: pointer;
     border-radius: 3px;
     padding: 4px;
@@ -128,7 +173,7 @@
     }
 
     &:hover {
-      background-color: #4a5c52;
+      background-color: var(--bg-hover);
       opacity: 1;
     }
   }
@@ -136,28 +181,29 @@
 
 .chatMessageContent {
   display: inline;
-  color: rgba(255, 255, 255, 0.9);
+  color: var(--message-primary);
   overflow-wrap: anywhere;
-  line-height: 24px;
+  line-height: 1.5;
   vertical-align: middle;
   transition: opacity 0.2s ease;
+  word-break: break-word;
 
   a {
-    color: white;
+    color: var(--text-accent);
   }
 }
 
 .chatMessageTimestamp {
   font-size: var(--chat-message-font-size);
   margin-right: 6px;
-  color: rgba(255, 255, 255, 0.3);
+  opacity: 0.5;
+  color: var(--text-primary);
 }
 
 .chatMessageUser {
   display: inline-flex;
   word-break: break-all;
   flex-wrap: nowrap;
-  align-items: center;
   vertical-align: middle;
 
   > .chatMessageUsername {
@@ -181,6 +227,158 @@
 }
 
 /** [End of Message Item] **/
+
+/** [Mod Actions] **/
+
+.quickModTools {
+  display: inline-flex;
+  gap: 0;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  margin-right: 4px;
+
+  .quickModToolsBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    cursor: pointer;
+    background-color: transparent;
+    padding: 4px;
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+    transition: background-color 0.2s ease-in-out;
+
+    &:last-child {
+      border-right: none;
+    }
+
+    &.active {
+      background-color: rgba(255, 255, 255, 0.07);
+
+      img {
+        opacity: 0.7;
+      }
+    }
+
+    img {
+      opacity: 0.2;
+      transition: opacity 0.2s ease-in-out;
+    }
+
+    &:hover {
+      background-color: rgba(255, 255, 255, 0.07);
+
+      img {
+        opacity: 0.7;
+      }
+    }
+  }
+}
+
+.timeoutSlider {
+  position: absolute;
+  background: var(--bg-tertiary);
+  backdrop-filter: blur(4px);
+  border: 1px solid var(--border-primary);
+  border-radius: 8px;
+  padding: 12px;
+  min-width: 220px;
+  z-index: 100;
+  box-shadow: var(--shadow-elevated);
+  left: 8px;
+
+  // Position above by default
+  bottom: calc(100% + 8px);
+
+  // If there's not enough space above, position below
+  &.position-below {
+    bottom: auto;
+    top: calc(100% + 8px);
+  }
+
+  .timeoutSliderContent {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    gap: 8px;
+
+    .timeoutSliderBody {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      gap: 16px;
+
+      .timeoutSliderDuration {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        width: 100%;
+        span {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          text-transform: capitalize;
+          text-align: center;
+          flex: 1 0 auto;
+          font-size: 16px;
+          color: var(--text-primary);
+          font-weight: 500;
+          padding: 4px 0;
+          height: 32px;
+          border-radius: 4px;
+        }
+      }
+
+      .timeoutSliderInput {
+        [role="slider"] {
+          transition: all 0.15s ease;
+          cursor: grab;
+
+          &:hover {
+            transform: scale(1.2);
+          }
+
+          &:active {
+            cursor: grabbing;
+            transform: scale(1.3);
+          }
+        }
+      }
+
+      .timeoutSliderButton {
+        width: 80px;
+        height: 32px;
+        background: var(--btn-primary-bg);
+        color: var(--btn-primary-text);
+        border: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 600;
+        transition: all 0.2s ease;
+
+        &:hover {
+          background: var(--btn-primary-hover);
+          transform: translateY(-1px);
+        }
+
+        &:active {
+          background: var(--btn-primary-hover);
+          transform: translateY(0);
+        }
+      }
+    }
+  }
+}
 
 /** [Badges] **/
 
@@ -213,32 +411,53 @@
 }
 
 .stvEmote {
+  display: inline-flex;
+  margin: 0 auto;
   white-space: normal;
-  display: inline-block;
 }
 
 .chatroomEmoteWrapper {
   opacity: 1;
   position: relative;
-  display: inline-flex;
+  width: 100%;
+  height: 100%;
+  display: inline-grid;
+  grid-column: 1;
+  grid-row: 1;
   vertical-align: middle;
-  align-items: center;
-  justify-content: center;
+  // align-items: center;
+  // justify-content: center;
   margin-left: 1px;
   margin-right: 1px;
-  flex-direction: row;
+  // overflow: clip;
+
+  // flex-direction: row;
+  // flex-shrink: 0;
+}
+
+.kickEmote {
+  max-width: 124px;
 }
 
 .chatroomEmote {
-  top: 50%;
-  left: 0;
-  position: absolute;
-  width: inherit;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  // top: 50%;
+  // left: 0;
+  // position: absolute;
+  display: inline-grid;
+  grid-column: 1;
+  grid-row: 1;
+
+  // width: inherit;
+  // display: flex;
+  // align-items: center;
+  // justify-content: center;
   height: inherit;
-  transform: translate(0, -50%) rotate(0) skewX(0) skewY(0) scaleX(1) scaleY(1);
+  // transform: translate(0, -50%) rotate(0) skewX(0) skewY(0) scaleX(1) scaleY(1);
+
+  &.zeroWidthEmote {
+    pointer-events: none;
+    width: 100%;
+  }
 }
 
 /** [End of Emote] **/
@@ -246,7 +465,7 @@
 /** [Mod Action Message] **/
 
 .modActionMessage {
-  background: -webkit-linear-gradient(45deg, #779c85 80%, #030f08 100%);
+  background: -webkit-linear-gradient(45deg, var(--text-tertiary) 80%, var(--bg-overlay) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   font-weight: 600;
@@ -260,18 +479,18 @@
     border: none;
     font-weight: 700;
     cursor: pointer;
-    background-color: #2f3c33;
+    background-color: rgba(255, 255, 255, 0.07);
     border-radius: 3px;
     font-size: 14px;
     padding: 2px 4px;
-    color: #819c89;
+    color: rgba(255, 255, 255, 0.3);
     -webkit-background-clip: initial;
     -webkit-text-fill-color: initial;
-    transition: all 0.2s ease;
+    transition: all 0.2s ease-in-out;
 
     &:hover {
-      background-color: #2f3c33;
-      color: #a0bda9;
+      background-color: rgba(255, 255, 255, 0.1);
+      color: rgba(255, 255, 255, 0.7);
     }
   }
 }
@@ -279,11 +498,11 @@
 /** [End of Mod Action Message] **/
 .tooltipItem {
   display: none;
-  border-radius: 6px;
+  border-radius: 8px;
   position: fixed;
-  background-color: #0b160f;
-  border: 1px solid #192c1f;
-  border-bottom-width: 4px;
+  background-color: var(--bg-overlay);
+  border: 1px solid var(--border-primary);
+  border-bottom-width: 2px;
   margin-bottom: 0;
   text-align: center;
   pointer-events: none;
@@ -386,11 +605,28 @@
   min-width: 132px;
   z-index: 999;
   max-width: 300px;
+  min-height: 132px;
   font-size: 18px;
   align-items: center;
   justify-content: center;
   opacity: 1;
   padding: 16px;
+
+  .emoteTooltipOverlaidWrapper {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    width: 100%;
+    border-radius: 4px;
+    margin-bottom: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 0;
+    gap: 8px;
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.7);
+  }
 
   &.linkTooltip {
     .linkTooltipInfoHeader {
@@ -443,6 +679,7 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
+  width: 100%;
 
   > p {
     margin: 0;
@@ -482,16 +719,158 @@
 
   .emoteTooltipPlatform {
     border: 1px solid rgba(255, 255, 255, 0.1);
-    background-color: rgba(255, 255, 255, 0.1);
+    background-color: rgba(255, 255, 255, 0.05);
     margin-bottom: 4px;
     width: 100%;
     padding: 2px 8px;
-    height: 20px;
+    height: 24px;
     border-radius: 4px;
-    color: rgba(255, 255, 255, 0.5);
+    color: rgba(255, 255, 255, 0.7);
+    font-weight: 700;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 4px;
   }
 }
+
+/** [Emote Set Update Message] **/
+
+.emoteSetUpdateMessage {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 0;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-left: 4px solid rgba(255, 255, 255, 0.1);
+  max-width: 100%;
+  margin-bottom: 4px;
+  transition: all 0.15s ease;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.05) !important;
+  }
+
+  .emoteSetUpdateHeader {
+    font-weight: 600;
+    color: #ffffff;
+    font-size: 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+
+    img {
+      width: 24px;
+      height: 24px;
+      object-fit: contain;
+    }
+
+    .emoteSetUpdateTags {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .emoteSetUpdateLabel {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      padding: 2px 8px;
+      font-size: 12px;
+      text-transform: uppercase;
+      border-radius: 4px;
+
+      &.added {
+        background: #059005;
+      }
+
+      &.removed {
+        background: #af1f06;
+      }
+
+      &.updated {
+        background: #052a88;
+      }
+    }
+  }
+
+  .emoteSetUpdateDetails {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    justify-content: center;
+    padding: 0px 12px 8px 12px;
+  }
+
+  .emoteSetUpdateItem {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+
+    .emoteSetUpdateLabel {
+      font-weight: 600;
+      min-width: 60px;
+      flex-shrink: 0;
+    }
+
+    .emoteSetUpdateEmote {
+      height: 40px;
+      max-height: 40px;
+      object-fit: contain;
+    }
+
+    .emoteSetUpdateEmoteInfo {
+      display: flex;
+      flex-direction: column;
+      color: rgba(255, 255, 255, 0.7);
+      width: 100%;
+
+      &.updated {
+        flex-direction: row;
+        gap: 4px;
+
+        .emoteSetUpdateEmoteNameSeparator {
+          font-size: 16px;
+          font-weight: 700;
+          color: rgba(255, 255, 255, 0.7);
+        }
+      }
+
+      .emoteSetUpdateEmoteName {
+        font-weight: 700;
+        font-size: 16px;
+        display: flex;
+        gap: 4px;
+        color: rgba(255, 255, 255, 1);
+
+        > span {
+          font-weight: 400;
+          opacity: 0.7;
+          background: rgba(255, 255, 255, 0.05);
+          padding: 2px 8px;
+          border-radius: 4px;
+        }
+      }
+
+      .emoteSetUpdateEmoteOwner {
+        font-size: 14px;
+        color: rgba(255, 255, 255, 0.7);
+      }
+    }
+
+    .emoteSetUpdateEmotes {
+      color: var(--text-primary);
+      opacity: 0.9;
+      word-break: break-word;
+    }
+  }
+}
+
+/** [End of Emote Set Update Message] **/

@@ -2,17 +2,18 @@
   height: 100vh;
   display: flex;
   flex-direction: column;
-  border: 1px solid #2e3c32;
-  background: linear-gradient(180deg, #020a05 0%, #06190e 100%), linear-gradient(180deg, #031209 0%, #06190e 100%);
+  border: 1px solid var(--border-primary);
+  background: var(--bg-primary);
   border-radius: 4px;
+  -webkit-app-region: drag;
 }
 
 .dialogHeader {
-  border-bottom: 1px solid #2e3c32;
+  border-bottom: 1px solid var(--border-primary);
   align-items: center;
   display: flex;
   position: relative;
-  app-region: drag;
+  -webkit-app-region: drag;
   flex-direction: column;
   gap: 24px;
   flex: 0 1 30%;
@@ -26,8 +27,9 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  background: rgba(15, 25, 19, 0.95);
+  background: var(--bg-dialog-secondary);
   border-radius: 0 0 4px 4px;
+  -webkit-app-region: no-drag;
 }
 
 .dialogLogsHead {
@@ -54,6 +56,7 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
+  -webkit-app-region: no-drag;
 }
 
 .dialogOptionsButton {
@@ -62,13 +65,13 @@
   cursor: pointer;
   padding: 0;
   border-radius: 4px;
-  border: 1px solid #192c1f;
+  border: 1px solid rgba(255, 255, 255, 0.15);
   height: 24px;
   width: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
-  app-region: no-drag;
+  -webkit-app-region: no-drag;
   transition: background-color 0.2s ease-in-out;
 
   &.pinned {
@@ -84,7 +87,7 @@
   }
 
   &:hover {
-    background-color: #192c1f;
+    background-color: rgba(255, 255, 255, 0.15);
 
     img {
       opacity: 1;
@@ -100,7 +103,7 @@
 .dialogHeaderUser {
   flex: 1;
   display: flex;
-  gap: 24px;
+  gap: 16px;
   width: 100%;
   align-items: center;
   padding: 0 16px;
@@ -132,7 +135,7 @@
       padding: 12px;
       color: rgba(255, 255, 255, 0.7);
       border-radius: 4px;
-      app-region: no-drag;
+      -webkit-app-region: no-drag;
       cursor: pointer;
       flex: 1;
       display: flex;
@@ -212,7 +215,7 @@
     display: flex;
     gap: 4px;
     justify-content: space-between;
-    app-region: no-drag;
+    -webkit-app-region: no-drag;
     padding-top: 12px;
     border-top: 1px solid #2e3c32;
 
@@ -255,7 +258,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      app-region: no-drag;
+      -webkit-app-region: no-drag;
       transition: background-color 0.2s ease-in-out;
 
       &:hover {
@@ -287,7 +290,7 @@
     > h1 {
       font-size: 20px;
       width: max-content;
-      app-region: no-drag;
+      -webkit-app-region: no-drag;
     }
   }
 
@@ -333,7 +336,7 @@
   display: flex;
   gap: 4px;
   width: max-content;
-  app-region: no-drag;
+  -webkit-app-region: no-drag;
 
   > span {
     font-weight: 600;
@@ -349,7 +352,7 @@
 .dialogHeaderUserImage {
   height: 80px;
   width: 80px;
-  app-region: no-drag;
+  -webkit-app-region: no-drag;
 }
 
 .dialogLogsContent {

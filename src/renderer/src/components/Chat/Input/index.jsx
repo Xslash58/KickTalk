@@ -175,7 +175,7 @@ const ChatterSuggestions = memo(
   },
 );
 
-const KeyHandler = ({ chatroomId, onSendMessage, replyInputData, setReplyInputData, isReplyThread }) => {
+const KeyHandler = ({ chatroomId, onSendMessage, replyInputData, setReplyInputData, isReplyThread, allStvEmotes }) => {
   const [editor] = useLexicalComposerContext();
   const [emoteSuggestions, setEmoteSuggestions] = useState([]);
   const [chatterSuggestions, setChatterSuggestions] = useState([]);
@@ -194,9 +194,6 @@ const KeyHandler = ({ chatroomId, onSendMessage, replyInputData, setReplyInputDa
     setSelectedTabIndex(0);
   };
 
-  const sevenTVEmotes = useChatStore(
-    useShallow((state) => state.chatrooms.find((room) => room.id === chatroomId)?.channel7TVEmotes),
-  );
   const userChatroomInfo = useChatStore(
     useShallow((state) => state.chatrooms.find((room) => room.id === chatroomId)?.userChatroomInfo),
   );
@@ -209,20 +206,34 @@ const KeyHandler = ({ chatroomId, onSendMessage, replyInputData, setReplyInputDa
       const transformedText = text.toLowerCase();
 
       const sevenTvResults =
-        sevenTVEmotes
+        allStvEmotes
           ?.flatMap((emoteSet) => emoteSet.emotes)
-          ?.filter((emote) => emote.name.toLowerCase().includes(transformedText))
-          ?.slice(0, 10) || [];
+          ?.filter((emote) => emote.name.toLowerCase().includes(transformedText)) || [];
 
       const kickResults =
         kickEmotes
           ?.flatMap((emoteSet) => emoteSet.emotes || [])
-          ?.filter((emote) => emote.name.toLowerCase().includes(transformedText))
-          ?.slice(0, 10) || [];
+          ?.filter((emote) => emote.name.toLowerCase().includes(transformedText)) || [];
 
-      return [...sevenTvResults, ...kickResults];
+      const allResults = [...sevenTvResults, ...kickResults];
+
+      // Sort by relevance exact match first
+      const sortedResults = allResults.sort((a, b) => {
+        const aName = a.name.toLowerCase();
+        const bName = b.name.toLowerCase();
+
+        if (aName === transformedText && bName !== transformedText) return -1;
+        if (bName === transformedText && aName !== transformedText) return 1;
+
+        if (aName.startsWith(transformedText) && !bName.startsWith(transformedText)) return -1;
+        if (bName.startsWith(transformedText) && !aName.startsWith(transformedText)) return 1;
+
+        return aName.localeCompare(bName);
+      });
+
+      return sortedResults.slice(0, 20);
     },
-    [sevenTVEmotes, kickEmotes],
+    [allStvEmotes, kickEmotes],
   );
 
   const searchChatters = useCallback(
@@ -465,7 +476,6 @@ const KeyHandler = ({ chatroomId, onSendMessage, replyInputData, setReplyInputDa
           const anchorNode = selection.anchor.getNode();
           if (!anchorNode) return false;
           editor.update(() => {
-            console.log(tabCycleInfo);
             if (tabSuggestions?.length && tabCycleInfo?.emoteNodeKey) {
               const previousEmoteNode = $getNodeByKey(tabCycleInfo.emoteNodeKey);
               if (previousEmoteNode && previousEmoteNode.__type === "emote") {
@@ -489,13 +499,17 @@ const KeyHandler = ({ chatroomId, onSendMessage, replyInputData, setReplyInputDa
             const cursorOffset = selection.anchor.offset;
             const textBeforeCursor = textContent.slice(0, cursorOffset);
             const words = textBeforeCursor.split(/\s+/);
+
             const currentWord = words[words.length - 1];
             if (!currentWord) return;
-            const emotesA = sevenTVEmotes[0]?.emotes ?? [];
-            const emotesB = sevenTVEmotes[1]?.emotes ?? [];
-            const foundEmotes = [...emotesA, ...emotesB].filter((emote) =>
+
+            const emotesA = allStvEmotes[0]?.emotes ?? [];
+            const emotesB = allStvEmotes[1]?.emotes ?? [];
+            const emotesC = allStvEmotes[2]?.emotes ?? [];
+            const foundEmotes = [...emotesA, ...emotesB, ...emotesC].filter((emote) =>
               emote.name.toLowerCase().startsWith(currentWord.toLowerCase()),
             );
+
             if (foundEmotes.length > 0) {
               const startIndex = textBeforeCursor.lastIndexOf(currentWord);
               const endIndex = startIndex + currentWord.length;
@@ -775,6 +789,11 @@ const initialConfig = {
   theme,
   onError,
   nodes: [EmoteNode],
+  editorState: null,
+  editable: true,
+  editor: {
+    disableSpellcheck: true,
+  },
 };
 
 const ReplyHandler = ({ chatroomId, replyInputData, setReplyInputData }) => {
@@ -801,11 +820,16 @@ const ReplyHandler = ({ chatroomId, replyInputData, setReplyInputData }) => {
 };
 
 const ChatInput = memo(
-  ({ chatroomId, isReplyThread = false, replyMessage = {} }) => {
+  ({ chatroomId, isReplyThread = false, replyMessage = {}, settings }) => {
     const sendMessage = useChatStore((state) => state.sendMessage);
     const sendReply = useChatStore((state) => state.sendReply);
     const chatroom = useChatStore(useShallow((state) => state.chatrooms.find((room) => room.id === chatroomId)));
+    const personalEmoteSets = useChatStore(useShallow((state) => state.personalEmoteSets));
     const [replyInputData, setReplyInputData] = useState(null);
+
+    const allStvEmotes = useMemo(() => {
+      return [...(personalEmoteSets || []), ...(chatroom?.channel7TVEmotes || [])];
+    }, [personalEmoteSets, chatroom?.channel7TVEmotes]);
 
     // Reset selected index when changing chatrooms
     useEffect(() => {
@@ -861,7 +885,7 @@ const ChatInput = memo(
               sender,
               fetchedUser: user?.data,
               chatroomId,
-              sevenTVEmotes: chatroom?.channel7TVEmotes,
+              sevenTVEmotes: allStvEmotes,
               subscriberBadges: chatroom?.streamerData?.subscriber_badges,
               userChatroomInfo: chatroom?.userChatroomInfo,
               cords: [0, 300],
@@ -901,7 +925,9 @@ const ChatInput = memo(
     return (
       <div className="chatInputWrapper">
         <div className="chatInputInfoBar">
-          <InfoBar chatroomInfo={chatroom?.chatroomInfo} initialChatroomInfo={chatroom?.initialChatroomInfo} />
+          {settings?.chatrooms?.showInfoBar && (
+            <InfoBar chatroomInfo={chatroom?.chatroomInfo} initialChatroomInfo={chatroom?.initialChatroomInfo} />
+          )}
           <ReplyHandler chatroomId={chatroomId} replyInputData={replyInputData} setReplyInputData={setReplyInputData} />
         </div>
         <div className="chatInputContainer">
@@ -915,6 +941,7 @@ const ChatInput = memo(
                       enterKeyHint="send"
                       aria-placeholder={"Enter message..."}
                       placeholder={<div className="chatInputPlaceholder">Send a message...</div>}
+                      spellCheck={false}
                     />
                   </div>
                 }
@@ -928,6 +955,7 @@ const ChatInput = memo(
             <KeyHandler
               isReplyThread={isReplyThread}
               chatroomId={chatroomId}
+              allStvEmotes={allStvEmotes}
               onSendMessage={(content) => {
                 handleSendMessage(content, replyInputData ? "reply" : "message");
               }}
@@ -942,7 +970,10 @@ const ChatInput = memo(
       </div>
     );
   },
-  (prev, next) => prev.chatroomId === next.chatroomId && prev.replyMessage === next.replyMessage,
+  (prev, next) =>
+    prev.chatroomId === next.chatroomId &&
+    prev.replyMessage === next.replyMessage &&
+    prev.settings?.chatrooms?.showInfoBar === next.settings?.chatrooms?.showInfoBar,
 );
 
 export default ChatInput;

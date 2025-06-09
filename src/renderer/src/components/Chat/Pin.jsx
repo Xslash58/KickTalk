@@ -28,15 +28,11 @@ const Pin = memo(
         <div className="pinnedMessageTop">
           <div className="pinnedMessageHeader">
             <div className="pinnedMessageHeaderInfo">
-              <h4>
-                Pinned by{" "}
-                {pinnedBy?.identity?.badges?.length > 0 && (
-                  <KickBadges badges={originalSender?.identity?.badges} subscriberBadges={subscriberBadges} />
-                )}
-                <span style={{ color: pinnedBy?.identity?.color }}>
-                  {pinnedBy?.message?.sender?.username || pinnedBy?.username}
-                </span>
-              </h4>
+              <span>Sent by</span>
+              {originalSender?.identity?.badges?.length > 0 && (
+                <KickBadges badges={originalSender?.identity?.badges} subscriberBadges={subscriberBadges} />
+              )}
+              <span style={{ color: originalSender?.identity?.color }}>{originalSender?.username}</span>
             </div>
             <div className="pinnedMessageActions">
               <button onClick={() => setIsPinnedMessageOpen(!isPinnedMessageOpen)}>
@@ -49,7 +45,7 @@ const Pin = memo(
                 />
               </button>
               {canModerate && (
-                <button onClick={() => getUnpinMessage() && setShowPinnedMessage(false)}>
+                <button onClick={() => setShowPinnedMessage(false)}>
                   <img src={PushPinSlash} width={16} height={16} alt="Hide Pinned Message" />
                 </button>
               )}
@@ -61,13 +57,11 @@ const Pin = memo(
         </div>
         <div className={clsx("pinnedMessageFooter", isPinnedMessageOpen && "open")}>
           <div className="pinnedMessageFooterContent">
-            <span>Message sent by</span>
-            <div className="pinnedMessageFooterUsername">
-              {originalSender?.identity?.badges?.length > 0 && (
-                <KickBadges badges={originalSender?.identity?.badges} subscriberBadges={subscriberBadges} />
-              )}
-              <span style={{ color: originalSender?.identity?.color }}>{originalSender?.username}</span>
-            </div>
+            <span>Pinned by</span>
+            {pinnedBy?.identity?.badges?.length > 0 && (
+              <KickBadges badges={originalSender?.identity?.badges} subscriberBadges={subscriberBadges} />
+            )}
+            <span style={{ color: pinnedBy?.identity?.color }}>{pinnedBy?.message?.sender?.username || pinnedBy?.username}</span>
             <span>at {dayjs(pinDetails?.message?.created_at).format("h:mm A")}</span>
           </div>
           <span>{pinDetails?.finishs_at && `Pin expires ${dayjs(pinDetails?.finish_at).fromNow()}`}</span>

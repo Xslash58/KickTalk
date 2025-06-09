@@ -2,15 +2,14 @@
 .tooltipContent {
   overflow: hidden;
   border-radius: 4px;
-  background-color: #313c36db;
-  backdrop-filter: blur(2px);
+  background-color: var(--tooltip-bg);
   border: 1px solid rgba(255, 255, 255, 0.2);
   padding: 8px;
   font-size: 14px;
-  pointer-events: none;
   font-weight: 600;
-  color: #b5c4bb;
-  z-index: 9999;
+  color: var(--text-primary);
+  z-index: 99;
+  pointer-events: none;
   animation:
     fadeIn 0.2s ease-out,
     zoomIn 0.2s ease-out;
@@ -51,13 +50,13 @@
     flex-grow: 1;
     overflow: hidden;
     border-radius: 9999px;
-    background-color: #50725e7d;
+    background-color: var(--slider-track);
   }
 
   .sliderRange {
     position: absolute;
     height: 100%;
-    background-color: #37aa66;
+    background-color: var(--slider-range);
   }
 
   .sliderThumb {
@@ -66,8 +65,8 @@
     width: 16px;
     cursor: pointer;
     border-radius: 9999px;
-    border: 1px solid #ffffff12;
-    background-color: #a5cfb7;
+    border: 1px solid var(--slider-thumb-border);
+    background-color: var(--slider-thumb);
     transition:
       background-color 0.2s,
       border-color 0.2s,
@@ -104,24 +103,17 @@
     background-color 0.2s ease-in-out,
     border-color 0.2s ease-in-out;
 
-  &:focus-visible {
-    outline: none;
-    box-shadow:
-      0 0 0 2px #182f21,
-      0 0 0 4px #06120b;
-  }
-
   &:disabled {
     cursor: not-allowed;
     opacity: 0.5;
   }
 
   &[data-state="checked"] {
-    background-color: #37aa66;
+    background-color: var(--switch-checked);
   }
 
   &[data-state="unchecked"] {
-    background-color: #4c5d537d;
+    background-color: var(--switch-unchecked);
   }
 
   .switchThumb {

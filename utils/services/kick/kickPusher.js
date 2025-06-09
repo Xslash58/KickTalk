@@ -193,6 +193,11 @@ class KickPusher extends EventTarget {
           jsonData.event === `App\\Events\\PollUpdateEvent` ||
           jsonData.event === `App\\Events\\PollDeleteEvent`
         ) {
+          if (jsonData.event === `App\\Events\\PinnedMessageCreatedEvent`) {
+            console.log("[KickPusher] Pin created event received before dispatching");
+          } else if (jsonData.event === `App\\Events\\PinnedMessageDeletedEvent`) {
+            console.log("[KickPusher] Pin deleted event received before dispatching");
+          }
           this.dispatchEvent(new CustomEvent("channel", { detail: jsonData }));
         }
       } catch (error) {

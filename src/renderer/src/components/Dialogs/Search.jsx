@@ -10,6 +10,7 @@ const Search = () => {
   const [messages, setMessages] = useState([]);
   const [debouncedValue, setDebouncedValue] = useDebounceValue("", 200);
   const virtuosoRef = useRef(null);
+  const inputRef = useRef(null);
 
   const filteredMessages = useMemo(() => {
     if (!messages?.length) return [];
@@ -32,26 +33,32 @@ const Search = () => {
       messages,
       chatroomId,
       sevenTVEmotes,
-      sevenTVSettings,
       subscriberBadges,
       userChatroomInfo,
+      chatroomSlug,
       chatroomName,
       filteredKickTalkBadges,
       userStyle,
+      settings,
     }) => {
       setSearchData({
         chatroomId,
         sevenTVEmotes,
-        sevenTVSettings,
         subscriberBadges,
         userChatroomInfo,
+        chatroomSlug,
         chatroomName,
         filteredKickTalkBadges,
         userStyle,
+        settings,
       });
 
       setMessages(messages);
     };
+
+    setTimeout(() => {
+      inputRef.current.focus();
+    }, 0);
 
     const searchDataCleanup = window.app.searchDialog.onData(handleData);
     return () => {
@@ -108,7 +115,6 @@ const Search = () => {
             <RegularMessage
               message={message}
               sevenTVEmotes={searchData?.sevenTVEmotes}
-              sevenTVSettings={searchData?.sevenTVSettings}
               subscriberBadges={searchData?.subscriberBadges}
               chatroomId={searchData?.chatroomId}
               userChatroomInfo={searchData?.userChatroomInfo}
@@ -116,8 +122,9 @@ const Search = () => {
               userStyle={searchData?.userStyle}
               handleOpenUserDialog={handleOpenUserDialog}
               type={message.type}
-              chatroomName={searchData?.chatroomName}
+              chatroomName={searchData?.chatroomSlug}
               isSearch={true}
+              settings={searchData?.settings}
             />
           </div>
         </div>
@@ -127,24 +134,40 @@ const Search = () => {
   );
 
   return (
-    <div className="searchContainer">
-      <div className="searchHead">
-        <h2>
-          {debouncedValue ? (
-            <>
-              Search Messages: Showing {filteredMessages.length} of {messages?.filter((m) => m.type === "message")?.length || 0}
-            </>
-          ) : (
-            <>Search Messages ({messages?.filter((m) => m.type === "message")?.length || 0})</>
-          )}
-        </h2>
-        <button className="searchCloseBtn" onClick={() => window.app.searchDialog.close()}>
+    <div className="searchDialogContainer">
+      <div className="searchDialogHead">
+        {debouncedValue ? (
+          <h2>
+            <p>
+              Searching History in <span>{searchData?.chatroomName}</span>
+            </p>
+            <p>
+              Messages: <span>{filteredMessages.length}</span> of{" "}
+              <span>{messages?.filter((m) => m.type === "message")?.length || 0}</span>
+            </p>
+          </h2>
+        ) : (
+          <h2>
+            <p>
+              Searching History in <span>{searchData?.chatroomName}</span>
+            </p>
+            <p>
+              Messages: <span>{messages?.filter((m) => m.type === "message")?.length || 0}</span>
+            </p>
+          </h2>
+        )}
+        <button className="searchDialogCloseBtn" onClick={() => window.app.searchDialog.close()}>
           <img src={X} width={18} height={18} alt="Close" />
         </button>
       </div>
 
       <div className="searchInput">
-        <input type="text" placeholder="Search messages..." onChange={(e) => setDebouncedValue(e.target.value.trim())} />
+        <input
+          type="text"
+          placeholder="Search messages..."
+          onChange={(e) => setDebouncedValue(e.target.value.trim())}
+          ref={inputRef}
+        />
       </div>
 
       <div className="searchResults">

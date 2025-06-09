@@ -12,6 +12,11 @@ const rateLimitMap = new Map();
 //   },
 // });
 
+const getKickTalkDonators = async () => {
+  const response = await axios.get(`${KickTalkAPIUrl}/v1/donators`);
+  return response.data;
+};
+
 const getKickAuthForEvents = async (eventChannelName, socketId, sessionCookie, kickSession) => {
   try {
     const response = await axios.post(
@@ -66,6 +71,252 @@ const getFollowChannel = async (channelName) => {
 const getUnfollowChannel = async (channelName) => {
   const response = await axios.delete(`${APIUrl}/api/v2/channels/${channelName}/follow`);
   return response.data;
+};
+
+/**
+ *
+ * [BROADCASTER ACTIONS]
+ *
+ */
+
+const getModerateUser = async (channelName, username, sessionCookie, kickSession) => {
+  try {
+    // First try with the original channel name
+    const response = await axios.post(
+      `${APIUrl}/api/internal/v1/channels/${channelName}/community/moderators`,
+      {
+        username,
+      },
+      {
+        headers: {
+          Accept: "*/*",
+          Authorization: `Bearer ${sessionCookie}`,
+          "X-XSRF-TOKEN": kickSession,
+        },
+        Cookie: `kick_session=${kickSession}, session_token=${sessionCookie}, x-xsrf-token=${sessionCookie}, XSRF-TOKEN=${kickSession}`,
+      },
+    );
+
+    return response.data;
+  } catch (error) {
+    if (channelName.includes("_")) {
+      const transformedChannelName = channelName.replaceAll("_", "-");
+
+      if (transformedChannelName !== channelName) {
+        return await getModerateUser(transformedChannelName, username, sessionCookie, kickSession);
+      }
+    }
+
+    throw error;
+  }
+};
+
+const getUnmoderateUser = async (channelName, username, sessionCookie, kickSession) => {
+  try {
+    const response = await axios.delete(`${APIUrl}/api/internal/v1/channels/${channelName}/community/moderators/${username}`, {
+      headers: {
+        Accept: "*/*",
+        Authorization: `Bearer ${sessionCookie}`,
+        "X-XSRF-TOKEN": kickSession,
+      },
+      Cookie: `kick_session=${kickSession}, session_token=${sessionCookie}, x-xsrf-token=${sessionCookie}, XSRF-TOKEN=${kickSession}`,
+    });
+
+    return response.data;
+  } catch (error) {
+    if (channelName.includes("_")) {
+      const transformedChannelName = channelName.replaceAll("_", "-");
+
+      if (transformedChannelName !== channelName) {
+        return await getUnmoderateUser(transformedChannelName, username, sessionCookie, kickSession);
+      }
+    }
+
+    throw error;
+  }
+};
+
+const getVipUser = async (channelName, username, sessionCookie, kickSession) => {
+  try {
+    const response = await axios.post(`${APIUrl}/api/internal/v1/channels/${channelName}/community/vip`, {
+      username,
+    });
+
+    return response.data;
+  } catch (error) {
+    if (channelName.includes("_")) {
+      const transformedChannelName = channelName.replaceAll("_", "-");
+
+      if (transformedChannelName !== channelName) {
+        return await getVipUser(transformedChannelName, username, sessionCookie, kickSession);
+      }
+    }
+
+    throw error;
+  }
+};
+
+const getUnvipUser = async (channelName, username, sessionCookie, kickSession) => {
+  try {
+    const response = await axios.delete(`${APIUrl}/api/internal/v1/channels/${channelName}/community/vip/${username}`, {
+      headers: {
+        Accept: "*/*",
+        Authorization: `Bearer ${sessionCookie}`,
+        "X-XSRF-TOKEN": kickSession,
+      },
+      Cookie: `kick_session=${kickSession}, session_token=${sessionCookie}, x-xsrf-token=${sessionCookie}, XSRF-TOKEN=${kickSession}`,
+    });
+
+    return response.data;
+  } catch (error) {
+    if (channelName.includes("_")) {
+      const transformedChannelName = channelName.replaceAll("_", "-");
+
+      if (transformedChannelName !== channelName) {
+        return await getUnvipUser(transformedChannelName, username, sessionCookie, kickSession);
+      }
+    }
+
+    throw error;
+  }
+};
+
+const getOGUser = async (channelName, username, sessionCookie, kickSession) => {
+  try {
+    const response = await axios.post(`${APIUrl}/api/internal/v1/channels/${channelName}/community/ogs`, {
+      username,
+    });
+
+    return response.data;
+  } catch (error) {
+    if (channelName.includes("_")) {
+      const transformedChannelName = channelName.replaceAll("_", "-");
+
+      if (transformedChannelName !== channelName) {
+        return await getOGUser(transformedChannelName, username, sessionCookie, kickSession);
+      }
+    }
+
+    throw error;
+  }
+};
+
+const getUnogUser = async (channelName, username, sessionCookie, kickSession) => {
+  try {
+    const response = await axios.delete(`${APIUrl}/api/internal/v1/channels/${channelName}/community/ogs/${username}`, {
+      headers: {
+        Accept: "*/*",
+        Authorization: `Bearer ${sessionCookie}`,
+        "X-XSRF-TOKEN": kickSession,
+      },
+      Cookie: `kick_session=${kickSession}, session_token=${sessionCookie}, x-xsrf-token=${sessionCookie}, XSRF-TOKEN=${kickSession}`,
+    });
+
+    return response.data;
+  } catch (error) {
+    if (channelName.includes("_")) {
+      const transformedChannelName = channelName.replaceAll("_", "-");
+
+      if (transformedChannelName !== channelName) {
+        return await getUnogUser(transformedChannelName, username, sessionCookie, kickSession);
+      }
+    }
+
+    throw error;
+  }
+};
+
+/**
+ *
+ * [CHANNEL COMMANDS]
+ *
+ */
+
+const getUpdateTitle = async (channelName, title, sessionCookie, kickSession) => {
+  try {
+    const response = await axios.post(
+      `${APIUrl}/api/v2/channels/${channelName}/chatroom`,
+      {
+        title,
+      },
+      {
+        headers: {
+          Accept: "*/*",
+          Authorization: `Bearer ${sessionCookie}`,
+          "X-XSRF-TOKEN": kickSession,
+        },
+        Cookie: `kick_session=${kickSession}, session_token=${sessionCookie}, x-xsrf-token=${sessionCookie}, XSRF-TOKEN=${kickSession}`,
+      },
+    );
+
+    return response.data;
+  } catch (error) {
+    if (channelName.includes("_")) {
+      const transformedChannelName = channelName.replaceAll("_", "-");
+
+      if (transformedChannelName !== channelName) {
+        return await getUpdateTitle(transformedChannelName, title, sessionCookie, kickSession);
+      }
+    }
+
+    throw error;
+  }
+};
+
+const getClearChatroom = async (channelName, sessionCookie, kickSession) => {
+  try {
+    const response = await axios.post(
+      `${APIUrl}/api/v2/channels/${channelName}/chat-commands`,
+      {
+        command: "clear",
+      },
+      {
+        headers: {
+          Accept: "*/*",
+          Authorization: `Bearer ${sessionCookie}`,
+          "X-XSRF-TOKEN": kickSession,
+        },
+        Cookie: `kick_session=${kickSession}, session_token=${sessionCookie}, x-xsrf-token=${sessionCookie}, XSRF-TOKEN=${kickSession}`,
+      },
+    );
+
+    return response.data;
+  } catch (error) {
+    if (channelName.includes("_")) {
+      const transformedChannelName = channelName.replaceAll("_", "-");
+
+      if (transformedChannelName !== channelName) {
+        return await getClearChatroom(transformedChannelName, sessionCookie, kickSession);
+      }
+    }
+
+    throw error;
+  }
+};
+
+const getUpdateSlowmode = async (channelName, slowmodeOptions, sessionCookie, kickSession) => {
+  try {
+    const response = await axios.post(`${APIUrl}/api/v2/channels/${channelName}/chatroom`, slowmodeOptions, {
+      headers: {
+        Accept: "*/*",
+        Authorization: `Bearer ${sessionCookie}`,
+        "X-XSRF-TOKEN": kickSession,
+      },
+      Cookie: `kick_session=${kickSession}, session_token=${sessionCookie}, x-xsrf-token=${sessionCookie}, XSRF-TOKEN=${kickSession}`,
+    });
+
+    return response.data;
+  } catch (error) {
+    if (channelName.includes("_")) {
+      const transformedChannelName = channelName.replaceAll("_", "-");
+
+      if (transformedChannelName !== channelName) {
+        return await getUpdateSlowmode(transformedChannelName, slowmodeOptions, sessionCookie, kickSession);
+      }
+    }
+
+    throw error;
+  }
 };
 
 /**
@@ -270,7 +521,7 @@ const getInitialPollInfo = async (channelName, sessionCookie, kickSession) => {
       const transformedChannelName = channelName.replaceAll("_", "-");
 
       if (transformedChannelName !== channelName) {
-        return await getChannelChatroomInfo(transformedChannelName);
+        return await getInitialPollInfo(transformedChannelName, sessionCookie, kickSession);
       }
     }
 
@@ -356,24 +607,24 @@ const sendMessageToChannel = async (channelID, message, sessionCookie, kickSessi
     });
   }
 
-  const channelState = rateLimitMap.get(channelID);
+  const channelRateLimit = rateLimitMap.get(channelID);
 
-  if (now < channelState.cooldownUntil) {
-    if (!channelState.isActive) {
-      channelState.isActive = true;
+  if (now < channelRateLimit.cooldownUntil) {
+    if (!channelRateLimit.isActive) {
+      channelRateLimit.isActive = true;
       throw { code: "CHAT_RATE_LIMIT_ERROR" };
     }
     return;
   }
 
-  channelState.isActive = false;
+  channelRateLimit.isActive = false;
 
-  channelState.timestamps = channelState.timestamps.filter((ts) => now - ts <= 3000);
-  channelState.timestamps.push(now);
+  channelRateLimit.timestamps = channelRateLimit.timestamps.filter((ts) => now - ts <= 3000);
+  channelRateLimit.timestamps.push(now);
 
-  if (channelState.timestamps.length >= 9) {
-    channelState.cooldownUntil = now + 5000;
-    channelState.isActive = true;
+  if (channelRateLimit.timestamps.length >= 9) {
+    channelRateLimit.cooldownUntil = now + 5000;
+    channelRateLimit.isActive = true;
     throw { code: "CHAT_RATE_LIMIT_ERROR" };
   }
 
@@ -400,24 +651,23 @@ const sendReplyToChannel = async (channelID, message, metadata = {}, sessionCook
     });
   }
 
-  const channelState = rateLimitMap.get(channelID);
+  const channelRateLimit = rateLimitMap.get(channelID);
 
-  if (now < channelState.cooldownUntil) {
-    if (!channelState.isActive) {
-      channelState.isActive = true;
+  if (now < channelRateLimit.cooldownUntil) {
+    if (!channelRateLimit.isActive) {
+      channelRateLimit.isActive = true;
       throw { code: "CHAT_RATE_LIMIT_ERROR" };
     }
     return;
   }
 
-  channelState.isActive = false;
+  channelRateLimit.isActive = false;
+  channelRateLimit.timestamps = channelRateLimit.timestamps.filter((ts) => now - ts <= 3000);
+  channelRateLimit.timestamps.push(now);
 
-  channelState.timestamps = channelState.timestamps.filter((ts) => now - ts <= 3000);
-  channelState.timestamps.push(now);
-
-  if (channelState.timestamps.length >= 9) {
-    channelState.cooldownUntil = now + 5000;
-    channelState.isActive = true;
+  if (channelRateLimit.timestamps.length >= 9) {
+    channelRateLimit.cooldownUntil = now + 5000;
+    channelRateLimit.isActive = true;
     throw { code: "CHAT_RATE_LIMIT_ERROR" };
   }
 
@@ -534,7 +784,7 @@ const getPinMessage = async (data, sessionCookie, kickSession) => {
       const transformedChannelName = data?.chatroomName?.replaceAll("_", "-");
 
       if (transformedChannelName !== data?.chatroomName) {
-        return await getPinMessage(transformedChannelName, sessionCookie, kickSession);
+        return await getPinMessage({ ...data, chatroomName: transformedChannelName }, sessionCookie, kickSession);
       }
     }
 
@@ -685,6 +935,7 @@ const getChatroomViewers = async (chatroomId) => {
 export {
   getSelfInfo,
   getKickTalkBadges,
+  getKickTalkDonators,
   getUserKickId,
   getLinkThumbnail,
   getKickEmotes,
@@ -710,6 +961,19 @@ export {
   getInitialPollInfo,
   getSubmitPollVote,
   getChatroomViewers,
+
+  // Channel Commands
+  getUpdateTitle,
+  getClearChatroom,
+  getUpdateSlowmode,
+
+  // Broadcaster Actions
+  getModerateUser,
+  getUnmoderateUser,
+  getVipUser,
+  getUnvipUser,
+  getOGUser,
+  getUnogUser,
 
   // Mod Actions
   getBanUser,

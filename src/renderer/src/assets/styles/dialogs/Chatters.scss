@@ -3,8 +3,8 @@
   flex-direction: column;
   height: 100vh;
   border-radius: 6px;
-  border: 1px solid #323f36;
-  background-color: rgb(11 20 15 / 98%);
+  border: 1px solid var(--border-primary);
+  background-color: var(--bg-dialog-secondary);
 }
 
 .chattersHead {
@@ -13,7 +13,7 @@
   align-items: center;
   padding: 12px;
   min-height: 48px;
-  app-region: drag;
+  -webkit-app-region: drag;
   user-select: none;
   border-bottom: 1px solid #ffffff21;
 
@@ -26,7 +26,7 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    app-region: drag;
+    -webkit-app-region: drag;
 
     span {
       background-color: #ffffff37;
@@ -38,7 +38,7 @@
   }
 
   .chattersCloseBtn {
-    app-region: no-drag;
+    -webkit-app-region: no-drag;
     border: 1px solid #ffffff21;
     background-color: transparent;
     cursor: pointer;
@@ -110,7 +110,7 @@
   }
 
   &::-webkit-scrollbar-thumb {
-    background-color: #445648;
+    background-color: var(--scrollbar-thumb);
     border-radius: 2px;
     background-clip: content-box;
     min-width: 32px;

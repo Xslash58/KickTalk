@@ -6,7 +6,16 @@ const CustomEmoteComponent = ({ emoteId, emoteName, platform }) => {
       <img src={`https://files.kick.com/emotes/${emoteId}/fullsize`} alt={emoteName} emote-id={emoteId} emote-name={emoteName} />
     );
   } else if (platform === "7tv") {
-    return <img src={`https://cdn.7tv.app/emote/${emoteId}/1x.webp`} alt={emoteName} emote-id={emoteId} emote-name={emoteName} />;
+    return (
+      <>
+        <img
+          src={`https://cdn.7tv.app/emote/${emoteId}/1x.webp`}
+          alt={emoteName}
+          emote-id={emoteId}
+          emote-name={emoteName}
+        />{" "}
+      </>
+    );
   } else {
     return emoteName;
   }

@@ -4,8 +4,8 @@
   width: 100%;
   flex-direction: column;
   border-radius: 6px;
-  background: #0c1510;
-  border: 1px solid #202b25;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-primary);
 }
 
 .replyThreadHead {
@@ -14,11 +14,11 @@
   align-items: center;
   padding: 12px;
   min-height: 48px;
-  app-region: drag;
+  -webkit-app-region: drag;
   border-bottom: 1px solid #ffffff21;
 
   .replyThreadCloseBtn {
-    app-region: no-drag;
+    -webkit-app-region: no-drag;
     border: 1px solid #ffffff21;
     background-color: transparent;
     cursor: pointer;
@@ -58,7 +58,7 @@
     flex-direction: column;
     flex: 0 0 48px;
     justify-content: space-between;
-    background: #091810;
+    background: rgb(255 255 255 / 7%);
     border-bottom: 1px solid rgba(255, 255, 255, 0.1294117647);
     padding: 12px;
     gap: 8px;
@@ -91,8 +91,8 @@
     flex: 1 0;
     min-height: 0;
     width: 100%;
-    padding: 12px;
     overflow-y: auto;
+    padding: 12px 0;
 
     &::-webkit-scrollbar {
       width: 8px;
@@ -104,7 +104,7 @@
     }
 
     &::-webkit-scrollbar-thumb {
-      background-color: #b6d2c277;
+      background-color: var(--scrollbar-thumb);
       border-radius: 2px;
       background-clip: content-box;
       min-width: 32px;
@@ -115,7 +115,7 @@
       background-color: #ffffff26;
     }
     .chatMessageItem {
-      padding: 4px 0;
+      padding: 4px 12px;
     }
   }
 }

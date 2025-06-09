@@ -1,5 +1,5 @@
-import { app, shell, BrowserWindow, ipcMain, screen, session, Tray, dialog } from "electron";
-import { join } from "path";
+const { app, shell, BrowserWindow, ipcMain, screen, session, Tray, dialog } = require("electron");
+import { join, basename } from "path";
 import { electronApp, optimizer } from "@electron-toolkit/utils";
 import { update } from "./utils/update";
 import Store from "electron-store";
@@ -9,6 +9,7 @@ import dotenv from "dotenv";
 dotenv.config();
 
 const isDev = process.env.NODE_ENV === "development";
+const iconPath = join(__dirname, "../../resources/icons/win/KickTalk_v1.ico");
 
 const authStore = new Store({
   fileExtension: "env",
@@ -97,6 +98,51 @@ const getNotificationSounds = () => {
   return availableNotificationSounds;
 };
 
+const openNotificationFolder = async () => {
+  const result = await dialog.showOpenDialog(settingsDialog || mainWindow, {
+    title: "Select Notification Sound",
+    filters: [
+      { name: "Audio Files", extensions: ["mp3", "wav"] },
+      { name: "All Files", extensions: ["*"] },
+    ],
+    properties: ["openFile"],
+  });
+
+  if (result.canceled || !result.filePaths.length) {
+    return null;
+  }
+
+  const selectedFile = result.filePaths[0];
+  const fileName = basename(selectedFile);
+
+  const basePath = app.isPackaged
+    ? join(process.resourcesPath, "app.asar.unpacked/resources/sounds")
+    : join(__dirname, "../../resources/sounds");
+
+  const destPath = join(basePath, fileName);
+
+  try {
+    if (!fs.existsSync(basePath)) {
+      fs.mkdirSync(basePath, { recursive: true });
+    }
+
+    // Copy file to sounds directory
+    fs.copyFileSync(selectedFile, destPath);
+    getNotificationSounds();
+
+    console.log("[Notification Sounds]: File uploaded successfully:", fileName);
+
+    return {
+      name: fileName.split(".")[0],
+      value: destPath,
+      fileName: fileName,
+    };
+  } catch (error) {
+    console.error("[Notification Sounds]: Error uploading file:", error);
+    return null;
+  }
+};
+
 getNotificationSounds(); // Load initially
 
 const handleNotificationSound = (soundFile) => {
@@ -122,6 +168,10 @@ const getSoundUrl = (soundObject) => {
     return `file://${soundObject.value}`;
   }
 };
+
+ipcMain.handle("notificationSounds:openFolder", async () => {
+  return await openNotificationFolder();
+});
 
 ipcMain.handle("notificationSounds:getAvailable", () => {
   getNotificationSounds();
@@ -155,7 +205,10 @@ ipcMain.handle("store:get", async (e, { key }) => {
 ipcMain.handle("store:set", (e, { key, value }) => {
   const result = store.set(key, value);
 
-  mainWindow.webContents.send("store:updated", { [key]: value });
+  // Broadcast to all windows
+  BrowserWindow.getAllWindows().forEach((window) => {
+    window.webContents.send("store:updated", { [key]: value });
+  });
 
   if (key === "general") {
     if (process.platform === "darwin") {
@@ -385,7 +438,7 @@ const createWindow = () => {
     autoHideMenuBar: true,
     titleBarStyle: "hidden",
     roundedCorners: true,
-    icon: join(__dirname, "../../resources/icons/win/KickTalk_v1.ico"),
+    icon: iconPath,
     webPreferences: {
       devTools: true,
       nodeIntegration: false,
@@ -466,8 +519,7 @@ const loginToKick = async (method) => {
       autoHideMenuBar: true,
       parent: authDialog,
       roundedCorners: true,
-
-      icon: join(__dirname, "../../resources/icons/win/KickTalk_v1.ico"),
+      icon: iconPath,
       webPreferences: {
         autoplayPolicy: "user-gesture-required",
         nodeIntegration: false,
@@ -543,10 +595,30 @@ const loginToKick = async (method) => {
 };
 
 const setupLocalShortcuts = () => {
+  mainWindow.webContents.on("zoom-changed", (event, zoomDirection) => {
+    if (zoomDirection === "in") {
+      event.preventDefault();
+      if (mainWindow.webContents.getZoomFactor() < 1.5) {
+        const newZoomFactor = mainWindow.webContents.getZoomFactor() + 0.1;
+        mainWindow.webContents.setZoomFactor(newZoomFactor);
+        store.set("zoomFactor", newZoomFactor);
+      }
+    } else if (zoomDirection === "out") {
+      event.preventDefault();
+      if (mainWindow.webContents.getZoomFactor() > 0.8) {
+        const newZoomFactor = mainWindow.webContents.getZoomFactor() - 0.1;
+        mainWindow.webContents.setZoomFactor(newZoomFactor);
+        store.set("zoomFactor", newZoomFactor);
+      }
+    }
+  });
+
   mainWindow.webContents.on("before-input-event", (event, input) => {
     if (!mainWindow.isFocused()) return;
 
     if (input.control || input.meta) {
+      // if mouse scroll up zoom in mouse only
+
       if (input.key === "=" || input.key === "+") {
         event.preventDefault();
         if (mainWindow.webContents.getZoomFactor() < 1.5) {
@@ -652,7 +724,6 @@ ipcMain.handle("userDialog:open", (e, { data }) => {
   if (userDialog) {
     userDialog.setPosition(newX, newY);
     userDialog.webContents.send("userDialog:data", { ...data, pinned: false });
-
     return;
   }
 
@@ -666,6 +737,7 @@ ipcMain.handle("userDialog:open", (e, { data }) => {
     frame: false,
     transparent: true,
     parent: mainWindow,
+    backgroundColor: "#020a05",
     webPreferences: {
       devtools: true,
       nodeIntegration: false,
@@ -684,7 +756,9 @@ ipcMain.handle("userDialog:open", (e, { data }) => {
 
   userDialog.once("ready-to-show", () => {
     userDialog.show();
+
     userDialog.setAlwaysOnTop(false);
+    userDialog.setVisibleOnAllWorkspaces(false);
     userDialog.focus();
 
     userDialog.webContents.send("userDialog:data", { ...data, pinned: false });
@@ -697,11 +771,11 @@ ipcMain.handle("userDialog:open", (e, { data }) => {
   userDialog.on("blur", () => {
     if (userDialog && !userDialog.isAlwaysOnTop()) {
       userDialog.close();
-      mainWindow.setAlwaysOnTop(store.get("general.alwaysOnTop"));
     }
   });
 
   userDialog.on("closed", () => {
+    setAlwaysOnTop(mainWindow);
     dialogInfo = null;
     userDialog = null;
   });
@@ -712,10 +786,11 @@ ipcMain.handle("userDialog:pin", async (e, forcePinState) => {
     const newPinState = forcePinState !== undefined ? forcePinState : !userDialog.isAlwaysOnTop();
 
     if (isDev && newPinState) {
-      userDialog.webContents.openDevTools();
+      // userDialog.webContents.openDevTools();
     }
 
-    await userDialog.setAlwaysOnTop(newPinState, "screen-saver");
+    // Don't persist pin state - it should reset when dialog closes
+    await userDialog.setAlwaysOnTop(newPinState);
     await userDialog.setVisibleOnAllWorkspaces(newPinState);
   }
 });
@@ -746,7 +821,7 @@ ipcMain.handle("authDialog:open", (e) => {
     transparent: true,
     roundedCorners: true,
     parent: mainWindow,
-    icon: join(__dirname, "../../resources/icons/win/KickTalk_v1.ico"),
+    icon: iconPath,
     webPreferences: {
       devtools: true,
       nodeIntegration: false,
@@ -821,14 +896,6 @@ ipcMain.on("close", () => {
   }
 });
 
-// Window drag handler
-ipcMain.handle("window-drag", (e, { mouseX, mouseY }) => {
-  const win = BrowserWindow.fromWebContents(e.sender);
-  if (win) {
-    win.setPosition(mouseX, mouseY);
-  }
-});
-
 // Get App Info
 ipcMain.handle("get-app-info", () => {
   return {
@@ -875,7 +942,7 @@ ipcMain.handle("chattersDialog:open", (e, { data }) => {
     transparent: true,
     roundedCorners: true,
     parent: mainWindow,
-    icon: join(__dirname, "../../resources/icons/win/KickTalk_v1.ico"),
+    icon: iconPath,
     webPreferences: {
       devtools: true,
       nodeIntegration: false,
@@ -943,7 +1010,7 @@ ipcMain.handle("searchDialog:open", (e, { data }) => {
     transparent: true,
     roundedCorners: true,
     parent: mainWindow,
-    icon: join(__dirname, "../../resources/icons/win/KickTalk_v1.ico"),
+    icon: iconPath,
     webPreferences: {
       devtools: true,
       nodeIntegration: false,
@@ -1018,9 +1085,10 @@ ipcMain.handle("settingsDialog:open", async (e, { data }) => {
     resizable: true,
     frame: false,
     transparent: true,
+    backgroundColor: "#020a05",
     roundedCorners: true,
     parent: mainWindow,
-    icon: join(__dirname, "../../resources/icons/win/KickTalk_v1.ico"),
+    icon: iconPath,
     webPreferences: {
       devtools: true,
       nodeIntegration: false,

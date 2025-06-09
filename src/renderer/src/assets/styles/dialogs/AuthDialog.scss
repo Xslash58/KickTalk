@@ -3,11 +3,11 @@
   flex-direction: column;
   gap: 24px;
   padding: 24px;
-  app-region: drag;
+  -webkit-app-region: drag;
   height: min-content;
   border-radius: 4px;
-  background: linear-gradient(180deg, #0d2015 0%, #0b2314 80%);
-  border: 1px solid #2e3c32;
+  background: var(--bg-dialog-tertiary);
+  border: 1px solid var(--border-primary);
 
   &::-webkit-scrollbar {
     width: 4px;
@@ -19,7 +19,7 @@
   }
 
   &::-webkit-scrollbar-thumb {
-    background-color: #b6d2c277;
+    background-color: var(--scrollbar-thumb);
     border-radius: 2px;
     background-clip: content-box;
     min-width: 32px;
@@ -27,7 +27,7 @@
   }
 
   &::-webkit-scrollbar-track {
-    background-color: #ffffff26;
+    background-color: var(--scrollbar-track);
   }
 }
 
@@ -63,7 +63,7 @@
   border: 1px solid rgba(255, 255, 255, 0.2);
   color: rgba(255, 255, 255, 0.6);
   cursor: pointer;
-  app-region: no-drag;
+  -webkit-app-region: no-drag;
   transition:
     background-color 0.2s ease-in-out,
     border-color 0.2s ease-in-out,
@@ -102,7 +102,7 @@
   color: #fff;
   cursor: pointer;
   opacity: 0.6;
-  app-region: no-drag;
+  -webkit-app-region: no-drag;
 }
 
 .authDisclaimer {
@@ -110,5 +110,5 @@
   font-size: 14px;
   color: #fff;
   opacity: 0.6;
-  app-region: no-drag;
+  -webkit-app-region: no-drag;
 }

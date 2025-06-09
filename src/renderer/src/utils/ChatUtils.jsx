@@ -3,6 +3,11 @@ import utc from "dayjs/plugin/utc";
 
 dayjs.extend(utc);
 
+export const rgbaToString = (rgba) => {
+  if (typeof rgba === "string") return rgba;
+  return `rgba(${rgba.r}, ${rgba.g}, ${rgba.b}, ${rgba.a})`;
+};
+
 export const scrollToBottom = (chatBodyRef, setShowScrollToBottom) => {
   if (!chatBodyRef.current) return;
   chatBodyRef.current.scrollTop = chatBodyRef.current.scrollHeight;

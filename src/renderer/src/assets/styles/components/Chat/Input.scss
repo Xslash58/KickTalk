@@ -9,20 +9,22 @@
   flex-direction: column;
   align-items: center;
   position: relative;
+  padding-top: 8px;
 
   > .chatInputContainer {
     width: calc(100vw - 16px);
     margin-bottom: 8px;
+    margin-top: -1px;
     display: flex;
     position: relative;
     min-height: 64px;
     padding: 8px 0 8px 16px;
-    z-index: 9;
+    z-index: 3;
     align-items: center;
-    background: #182f21;
-    border: 1px solid rgba(80, 123, 97, 0.5);
+    background: var(--bg-input);
+    border: 1px solid var(--border-primary);
     border-radius: 4px;
-    box-shadow: 0px 2px 2px #07150a;
+    box-shadow: var(--shadow-secondary);
 
     input:focus-visible {
       outline: none;
@@ -37,9 +39,66 @@
   width: 100%;
   position: relative;
   flex-direction: column;
-  top: 4px;
   left: 0;
   z-index: 1;
+
+  > .chatInfoBar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px;
+    border: 1px solid var(--border-secondary);
+    border-bottom: none;
+    z-index: 1;
+    background: var(--input-info-bar);
+    margin: 0 8px;
+    padding-bottom: 10px;
+    height: 32px;
+    width: calc(100% - 16px);
+    border-radius: 6px 6px 0 0;
+    font-size: 14px;
+    top: 2px;
+    position: relative;
+    color: var(--text-tertiary);
+    animation: slideAndFadeIn 0.2s ease-in-out forwards;
+
+    > .chatInfoBarIcon {
+      position: relative;
+
+      > .chatInfoBarIconTooltipContent {
+        display: none;
+        position: absolute;
+        bottom: 32px;
+        right: -4px;
+        width: max-content;
+        max-width: 240px;
+        background-color: var(--bg-input);
+        border: 1px solid var(--border-secondary);
+        border-radius: 4px;
+        padding: 16px 12px;
+        color: var(--text-primary);
+        gap: 4px;
+        flex-direction: column;
+        z-index: 9999;
+
+        &.show {
+          display: flex;
+        }
+      }
+
+      > .chatInfoBarIconTooltip {
+        opacity: 0.4;
+        height: 16px;
+        width: 16px;
+        cursor: pointer;
+        transition: opacity 0.2s ease-in-out;
+
+        &:hover {
+          opacity: 0.8;
+        }
+      }
+    }
+  }
 
   > .replyInputContainer {
     display: flex;
@@ -48,15 +107,16 @@
     justify-content: space-between;
     padding: 8px;
     width: calc(100% - 16px);
-    border: 1px solid rgba(80, 123, 97, 0.5);
+    border: 1px solid var(--border-secondary);
     border-bottom: none;
-    background: #14291c;
+    background: var(--bg-tertiary);
     gap: 4px;
     opacity: 1;
     position: relative;
     min-height: min-content;
-    top: 1px;
+    margin-bottom: -6px;
     border-radius: 6px 6px 0 0;
+    z-index: 2;
 
     > .replyInputBoxHead {
       display: flex;
@@ -71,8 +131,8 @@
       }
 
       > .replyInputCloseButton {
-        app-region: no-drag;
-        border: 1px solid #ffffff21;
+        -webkit-app-region: no-drag;
+        border: 1px solid var(--border-primary);
         background-color: transparent;
         cursor: pointer;
         border-radius: 4px;
@@ -86,7 +146,7 @@
 
         &:hover {
           background-color: #ffffff21;
-          border-color: #ffffff37;
+          border-color: var(--border-hover);
 
           > img {
             opacity: 1;
@@ -116,64 +176,8 @@
 
     &.show {
       display: flex;
-      z-index: 1;
+      z-index: 2;
       animation: replySlideAndFadeIn 0.15s ease-in-out forwards;
-    }
-  }
-
-  > .chatInfoBar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 8px;
-    border: 1px solid rgba(80, 123, 97, 0.5);
-    border-bottom: none;
-    z-index: 1;
-    background: #213c2c;
-    margin: 0 8px;
-    padding-bottom: 10px;
-    height: 32px;
-    width: calc(100% - 16px);
-    border-radius: 6px 6px 0 0;
-    font-size: 14px;
-    color: #668d75;
-    animation: slideAndFadeIn 0.2s ease-in-out forwards;
-
-    > .chatInfoBarIcon {
-      position: relative;
-
-      > .chatInfoBarIconTooltipContent {
-        display: none;
-        position: absolute;
-        bottom: 32px;
-        right: -8px;
-        width: max-content;
-        max-width: 240px;
-        background-color: rgba(23, 41, 29, 0.9725490196);
-        border: 1px solid #3a5343;
-        border-radius: 4px;
-        padding: 16px 12px;
-        color: #6a8875;
-        gap: 4px;
-        flex-direction: column;
-        z-index: 9999;
-
-        &.show {
-          display: flex;
-        }
-      }
-
-      > .chatInfoBarIconTooltip {
-        opacity: 0.4;
-        height: 16px;
-        width: 16px;
-        cursor: pointer;
-        transition: opacity 0.2s ease-in-out;
-
-        &:hover {
-          opacity: 0.8;
-        }
-      }
     }
   }
 }
@@ -195,7 +199,7 @@
     overflow-x: hidden;
     width: 100%;
     color: #fff;
-    caret-color: rgba(80, 123, 97, 0.8);
+    caret-color: var(--input-caret);
     outline: 0px solid transparent;
     outline-offset: 0px;
 
@@ -203,25 +207,17 @@
       width: 8px;
     }
 
-    &::-webkit-scrollbar-corner {
-      background: rgba(255, 255, 255, 0.429);
-    }
-
     &::-webkit-scrollbar-thumb {
-      background-color: #b6d2c277;
+      background: var(--scrollbar-primary);
       border-radius: 2px;
       background-clip: content-box;
       min-width: 32px;
       min-height: 32px;
     }
-
-    &::-webkit-scrollbar-track {
-      background-color: #ffffff26;
-    }
   }
 
   .chatInputPlaceholder {
-    color: #daffe88a;
+    color: var(--text-tertiary);
     z-index: 99;
     position: absolute;
     top: 50%;
@@ -240,7 +236,7 @@
   min-width: 112px;
   max-width: 112px;
   justify-content: center;
-  border-left: 1px solid rgba(80, 123, 97, 0.3);
+  border-left: 1px solid var(--border-primary);
 
   &.replyThread {
     border-left: none;
@@ -259,7 +255,7 @@
   }
 
   *::selection {
-    background-color: rgba(80, 123, 97, 0.5);
+    background-color: rgba(255, 255, 255, 0.15);
   }
 }
 
@@ -280,11 +276,21 @@
   height: 38px;
   overflow: hidden;
   border-radius: 4px;
+  transition: border-color 0.15s ease-in-out;
+
+  &.activeDialog {
+    border-color: rgba(255, 255, 255, 0.3);
+
+    > .emoteBtnSeparator {
+      background-color: rgba(255, 255, 255, 0.3);
+    }
+  }
 
   > .emoteBtnSeparator {
     height: 100%;
     width: 1px;
     background-color: rgba(255, 255, 255, 0.05);
+    transition: background-color 0.15s ease-in-out;
   }
 }
 
@@ -335,10 +341,9 @@
   width: 100%;
   max-width: 550px;
   height: 280px;
-  backdrop-filter: blur(3px);
-  background-color: rgba(22, 34, 25, 0.95);
-  border: 1px solid #314d3c;
-  box-shadow: 0 4px 5px rgba(2, 10, 5, 0.5019607843);
+  background-color: var(--emote-dialog-bg);
+  border: 1px solid var(--emote-dialog-border);
+  box-shadow: var(--shadow-dialog);
   z-index: 99;
   display: none;
   overflow: hidden;
@@ -384,7 +389,7 @@
 }
 
 *::-webkit-scrollbar-thumb {
-  background-color: #364839;
+  background-color: var(--scrollbar-thumb);
   border-radius: 2px;
   background-clip: content-box;
 }
@@ -430,8 +435,8 @@
       }
 
       &.active {
-        background-color: #53ff245b;
-        border-color: #54ff249d;
+        background-color: var(--btn-secondary-bg);
+        border-color: var(--btn-secondary-border);
 
         > img {
           opacity: 1;
@@ -491,14 +496,14 @@
 }
 
 .dialogBodySection {
-  background-color: #1e2d21;
+  background: var(--bg-tertiary);
   border-radius: 8px;
   padding: 12px;
   min-height: calc(50% - 12px);
   overflow: hidden;
   transition: height 0.2s ease-in-out;
   &.opened {
-    background-color: #1e2d21;
+    background: var(--bg-tertiary);
     min-height: max-content;
 
     .dialogRowHeadBtn > img {
@@ -516,7 +521,7 @@
       height: 40px;
       padding: 4px;
       border-radius: 4px;
-      border: 1px solid #314d3c;
+      border: 1px solid var(--border-secondary);
       background: none;
       cursor: pointer;
       aspect-ratio: 1 / 1;
@@ -545,7 +550,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: rgba(6, 22, 7, 0.528);
+  background-color: var(--bg-overlay);
   border-radius: 4px;
 
   > img {
@@ -586,7 +591,7 @@
   > span {
     font-size: 14px;
     font-weight: 400;
-    color: #779c85;
+    color: var(--text-tertiary);
   }
 }
 
@@ -651,9 +656,8 @@
 /** [Emote Suggestions] **/
 
 .inputSuggestionsWrapper {
-  background: rgba(16, 33, 23, 0.98);
-  border: 1px solid #294133;
-  backdrop-filter: blur(4px);
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-primary);
   border-radius: 6px;
   height: 180px;
   position: absolute;
@@ -706,11 +710,11 @@
 
   &:hover,
   &.selected {
-    background: #1c36279e;
-    border: 1px solid #355342;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-primary);
 
     span {
-      color: #afd5bd;
+      color: var(--text-secondary);
     }
   }
 
@@ -730,7 +734,6 @@
     flex-shrink: 0;
     min-width: 32px;
     min-height: 32px;
-    border-radius: 4px;
     overflow: hidden;
     display: flex;
     align-items: center;
@@ -749,10 +752,10 @@
     min-width: 0;
     align-items: center;
     .emoteTags > span {
-      border: 1px solid rgba(42, 77, 57, 0.6);
+      border: 1px solid var(--border-secondary);
       padding: 4px 8px;
       border-radius: 4px;
-      color: #3e5c4a;
+      color: var(--text-tertiary);
       font-weight: 700;
       font-size: 12px;
     }
@@ -762,7 +765,7 @@
     font-size: 16px;
     font-weight: 600;
     flex: 1 1 100%;
-    color: #779c85;
+    color: var(--text-tertiary);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;

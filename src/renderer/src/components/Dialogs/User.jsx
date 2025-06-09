@@ -68,12 +68,11 @@ const User = () => {
         chatroom: currentChatroom,
       });
       setDialogUserStyle(userStyle);
-
       setSevenTVEmotes(sevenTVEmotes || currentChatroom?.channel7TVEmotes || []);
       setSubscriberBadges(currentChatroom?.streamerData?.subscriber_badges || []);
 
-      // Fetch all messages for the user (both regular and replies)
       const messages = await window.app.logs.get({ chatroomId: chatroomId, userId: sender.id });
+
       setUserLogs(messages);
 
       // Fetch User Profile in Channel
@@ -100,7 +99,14 @@ const User = () => {
   };
 
   const updateData = (data) => {
-    setUserLogs(data?.logs || []);
+    setUserLogs((prevLogs) => {
+      if (!data?.logs?.length) return prevLogs;
+      const existingIds = new Set(prevLogs.map((msg) => msg.id));
+      const newLogs = data.logs.filter((msg) => !existingIds.has(msg.id));
+
+      if (!newLogs.length) return prevLogs;
+      return [...prevLogs, ...newLogs];
+    });
   };
 
   useEffect(() => {
@@ -240,7 +246,7 @@ const User = () => {
               </button>
             </div>
 
-            {canModerate && (
+            {canModerate && dialogData?.sender?.username !== dialogData?.chatroom?.username && (
               <div className="dialogHeaderModActions">
                 <Tooltip delayDuration={100}>
                   <TooltipTrigger asChild>
@@ -317,9 +323,11 @@ const User = () => {
                   key={`${message.id}-${i}`}
                   message={message}
                   chatroomId={dialogData?.chatroomId}
+                  chatroomName={dialogData?.chatroom?.slug}
+                  userChatroomInfo={dialogData?.userChatroomInfo}
                   dialogUserStyle={dialogUserStyle}
                   subscriberBadges={subscriberBadges}
-                  sevenTVEmotes={sevenTVEmotes}
+                  allStvEmotes={sevenTVEmotes}
                   settings={settings}
                   kickTalkBadges={userKickTalkBadges}
                   type={"dialog"}

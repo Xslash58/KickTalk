@@ -3,22 +3,17 @@
   height: auto;
   width: 100%;
   overflow-x: scroll;
-  background-color: rgba(255, 255, 255, 0.0392156863);
+  background-color: var(--navbar-bg);
   display: flex;
   align-items: center;
   justify-content: space-between;
 
   &::-webkit-scrollbar {
-    width: 8px;
     height: 8px;
   }
 
-  &::-webkit-scrollbar-corner {
-    background: rgba(255, 255, 255, 0.429);
-  }
-
   &::-webkit-scrollbar-thumb {
-    background-color: #b6d2c277;
+    background-color: var(--scrollbar-thumb);
     border-radius: 2px;
     background-clip: content-box;
     min-width: 32px;
@@ -26,7 +21,7 @@
   }
 
   &::-webkit-scrollbar-track {
-    background-color: #ffffff26;
+    background-color: var(--scrollbar-track);
   }
 
   > .chatroomsList {
@@ -144,11 +139,19 @@
     justify-content: center;
     align-items: center;
     cursor: pointer;
-    background: rgba(255, 255, 255, 0.095);
+    background: rgba(255, 255, 255, 0.1);
     border-radius: 2px;
     width: 16px;
     height: 16px;
     border: none;
+    transition: background-color 0.2s ease-in-out;
+
+    &:hover {
+      background-color: rgba(255, 255, 255, 0.3);
+      > img {
+        opacity: 0.8;
+      }
+    }
 
     > img {
       opacity: 0.4;
@@ -184,7 +187,36 @@
         border-color: rgb(177, 195, 171);
       }
     }
+
+    .unreadCountIndicator {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background-color: transparent;
+      margin-left: 6px;
+      transition: background-color 0.2s ease-in-out;
+
+      &.hasUnread {
+        background-color: rgba(255, 255, 255, 0.5);
+      }
+    }
   }
+
+  &.hasUnread {
+    opacity: 1;
+    background-color: rgba(255, 255, 255, 0.03);
+
+    .streamerInfo {
+      color: rgba(255, 255, 255, 0.8);
+    }
+  }
+}
+
+.chatroomsSeparator {
+  width: 1px;
+  height: 28px;
+  background-color: rgba(255, 255, 255, 0.05);
+  margin: auto 4px;
 }
 
 .profileImage {
@@ -203,8 +235,7 @@
   padding-left: 24px;
   align-items: center;
   height: 72px;
-  backdrop-filter: blur(4px);
-  background: linear-gradient(90deg, rgba(3, 18, 9, 0) 0%, rgba(23, 41, 29, 0.9725490196) 50%);
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, var(--navbar-bg) 25%);
 }
 
 .navbarAddChatroomButton {
@@ -238,7 +269,7 @@
   }
 }
 
-.navbarAddChatroomDialog {
+.navbarDialog {
   display: none;
 
   &.open {
@@ -246,7 +277,7 @@
   }
 }
 
-.navbarAddChatroomDialogBody {
+.navbarDialogBody {
   max-width: 90%;
   width: 480px;
   position: fixed;
@@ -254,15 +285,58 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  border: 1px solid #274231;
-  background: linear-gradient(180deg, rgba(14, 34, 22, 0.63) 0%, rgba(5, 16, 9, 0.63) 100%);
-  backdrop-filter: blur(5px);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
   padding: 0;
   border-radius: 6px;
-  box-shadow: 0px 9px 10.1px 0px #020d06;
+
+  .navbarDialogOptions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .navbarDialogOptionBtns {
+    display: flex;
+    gap: 8px;
+
+    .navbarDialogOptionBtn {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      min-width: 124px;
+      padding: 12px;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid transparent;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.7);
+      transition: all 0.2s ease-in-out;
+
+      img {
+        opacity: 0.7;
+        transition: opacity 0.2s ease-in-out;
+      }
+
+      &.active {
+        background: var(--btn-secondary-bg);
+        border: 1px solid var(--btn-secondary-border);
+        color: white;
+
+        > img {
+          opacity: 1;
+        }
+      }
+    }
+  }
 }
 
-.navbarAddForm {
+.navbarAddForm,
+.navbarAddMentionsForm {
   display: flex;
   align-items: center;
   min-height: 48px;
@@ -283,7 +357,7 @@
     transition: border 0.3s ease;
 
     &:focus {
-      border-color: rgb(45, 104, 25);
+      border-color: var(--border-focus);
     }
 
     &::placeholder {
@@ -298,10 +372,14 @@
     padding-bottom: 16px;
   }
 
+  .navbarAddMentionsBtn {
+    margin: 0;
+  }
+
   button {
-    background: #17f640;
+    background: var(--btn-primary-bg);
     border: 1px solid rgba(255, 255, 255, 0.257);
-    color: #18221a;
+    color: var(--btn-primary-text);
     margin: 16px;
     height: 48px;
     min-width: 140px;
@@ -316,9 +394,9 @@
       color 0.2s ease-in-out;
 
     &:hover {
-      background: #0cd231;
-      border: 1px solid rgba(255, 255, 255, 0.257);
-      color: #18221a;
+      background: var(--btn-primary-hover);
+      border: 1px solid var(--btn-primary-hover);
+      color: var(--btn-primary-text);
     }
 
     &:disabled {
@@ -328,15 +406,43 @@
   }
 }
 
-.navbarAddChatroomDialogHead {
+.navbarAddChatroomDialog,
+.navbarAddMentionsDialog {
+  display: none;
+  flex-direction: column;
+  border-radius: 6px;
+  background: var(--bg-overlay);
+  border: 1px solid var(--border-primary);
+
+  &.active {
+    display: flex;
+
+    .navbarDialogBtn {
+      background: var(--btn-primary-bg);
+      border: 1px solid var(--btn-primary-hover);
+      color: var(--btn-primary-text);
+      transition: all 0.2s ease-in-out;
+
+      &:hover {
+        background: var(--btn-primary-hover);
+        border: 1px solid var(--btn-primary-hover);
+        color: var(--btn-primary-text);
+      }
+    }
+  }
+}
+
+.navbarAddChatroomDialogHead,
+.navbarAddMentionsDialogHead {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
   padding: 24px 16px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.navbarAddChatroomDialogHeadInfo {
+.navbarAddChatroomDialogHeadInfo,
+.navbarAddMentionsDialogHeadInfo {
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -353,12 +459,12 @@
   }
 }
 
-.navbarAddChatroomDialogClose {
-  min-height: 24px;
-  min-width: 24px;
+.navbarDialogClose {
+  height: 32px;
+  width: 32px;
   align-items: center;
   font-size: 20px;
-  border-radius: 2px;
+  border-radius: 6px;
   cursor: pointer;
   border: 1px solid rgba(255, 255, 255, 0.2);
   color: rgba(255, 255, 255, 0.5);
@@ -382,7 +488,7 @@
 }
 
 .dialogBackgroundOverlay {
-  background-color: rgba(5, 16, 6, 0.9);
+  background-color: var(--bg-overlay);
   z-index: 999;
   height: 100%;
   width: 100%;

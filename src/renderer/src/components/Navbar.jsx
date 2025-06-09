@@ -6,22 +6,30 @@ import Plus from "../assets/icons/plus-bold.svg?asset";
 import X from "../assets/icons/x-bold.svg?asset";
 import useClickOutside from "../utils/useClickOutside";
 import { useSettings } from "../providers/SettingsProvider";
-import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
-import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuSeparator, ContextMenuTrigger } from "./Shared/ContextMenu";
+import { DragDropContext, Droppable } from "@hello-pangea/dnd";
+import NotificationIcon from "../assets/icons/notification-bell.svg?asset";
+import MessageIcon from "../assets/icons/message-bubble.svg?asset";
+import ChatroomTab from "./Navbar/ChatroomTab";
+import MentionsTab from "./Navbar/MentionsTab";
 
-const Navbar = ({ currentChatroomId, onSelectChatroom }) => {
-  const connections = useChatStore((state) => state.connections);
+const Navbar = ({ currentChatroomId, kickId, onSelectChatroom }) => {
   const { settings } = useSettings();
+  const connections = useChatStore((state) => state.connections);
   const addChatroom = useChatStore((state) => state.addChatroom);
   const removeChatroom = useChatStore((state) => state.removeChatroom);
   const renameChatroom = useChatStore((state) => state.renameChatroom);
   const reorderChatrooms = useChatStore((state) => state.reorderChatrooms);
   const orderedChatrooms = useChatStore((state) => state.getOrderedChatrooms());
+  const hasMentionsTab = useChatStore((state) => state.hasMentionsTab);
+  const addMentionsTab = useChatStore((state) => state.addMentionsTab);
+  const removeMentionsTab = useChatStore((state) => state.removeMentionsTab);
 
   const [editingChatroomId, setEditingChatroomId] = useState(null);
   const [editingName, setEditingName] = useState("");
-  const [showAddChatroomDialog, setAddChatroomDialog] = useState(false);
+  const [showNavbarDialog, setShowNavbarDialog] = useState(false);
+  const [activeSection, setActiveSection] = useState("chatroom");
   const [isConnecting, setIsConnecting] = useState(false);
+  const [isSubmitError, setIsSubmitError] = useState(null);
 
   const inputRef = useRef(null);
   const renameInputRef = useRef(null);
@@ -38,13 +46,21 @@ const Navbar = ({ currentChatroomId, onSelectChatroom }) => {
 
     try {
       const newChatroom = await addChatroom(username);
-      if (newChatroom) {
+
+      if (newChatroom?.username) {
         inputRef.current.value = "";
-        setAddChatroomDialog(false);
+        setShowNavbarDialog(false);
         setTimeout(() => {
           onSelectChatroom(newChatroom.id);
         }, 0);
+
+        return;
       }
+
+      if (newChatroom?.status)
+        setTimeout(() => {
+          setIsSubmitError(null);
+        }, 2000);
     } finally {
       setIsConnecting(false);
     }
@@ -89,9 +105,7 @@ const Navbar = ({ currentChatroomId, onSelectChatroom }) => {
   // Select first chatroom on mount if no chatroom is currently selected
   useEffect(() => {
     if (orderedChatrooms.length > 0 && !currentChatroomId) {
-      setTimeout(() => {
-        onSelectChatroom(orderedChatrooms[0].id);
-      }, 100);
+      onSelectChatroom(orderedChatrooms[0].id);
     }
   }, [orderedChatrooms, currentChatroomId, onSelectChatroom]);
 
@@ -113,14 +127,40 @@ const Navbar = ({ currentChatroomId, onSelectChatroom }) => {
   }, []);
 
   useClickOutside(addChatroomDialogRef, () => {
-    setAddChatroomDialog(false);
+    setActiveSection("chatroom");
+    setShowNavbarDialog(false);
   });
+
+  // Handle Add Mentions Tab
+  const handleAddMentions = () => {
+    if (!kickId) return window.app.authDialog.open();
+
+    addMentionsTab();
+    setShowNavbarDialog(false);
+    setTimeout(() => {
+      onSelectChatroom("mentions");
+    }, 0);
+  };
+
+  const handleRemoveMentionsTab = () => {
+    removeMentionsTab();
+
+    // Handle chatroom switching if mentions tab was active
+    if (currentChatroomId === "mentions") {
+      if (orderedChatrooms.length > 0) {
+        onSelectChatroom(orderedChatrooms[0].id);
+      } else {
+        onSelectChatroom(null);
+      }
+    }
+  };
 
   // Handle new chatroom key press (ctrl + t) and close dialog (escape)
   const handleNewChatroomKeyPress = useCallback((e) => {
     if ((e.ctrlKey || e.metaKey) && (e.key.toLowerCase() === "t" || e.key.toLowerCase() === "j")) {
       e.preventDefault();
-      setAddChatroomDialog(true);
+
+      setShowNavbarDialog(true);
 
       setTimeout(() => {
         inputRef.current?.focus();
@@ -128,7 +168,8 @@ const Navbar = ({ currentChatroomId, onSelectChatroom }) => {
     }
 
     if (e.key === "Escape") {
-      setAddChatroomDialog(false);
+      setActiveSection("chatroom");
+      setShowNavbarDialog(false);
     }
   }, []);
 
@@ -140,7 +181,7 @@ const Navbar = ({ currentChatroomId, onSelectChatroom }) => {
   }, [handleNewChatroomKeyPress]);
 
   // Rename Chatroom
-  const handleRename = (e, { chatroomId, currentDisplayName }) => {
+  const handleRename = ({ chatroomId, currentDisplayName }) => {
     setEditingChatroomId(chatroomId);
     setEditingName(currentDisplayName);
     setTimeout(() => {
@@ -156,97 +197,6 @@ const Navbar = ({ currentChatroomId, onSelectChatroom }) => {
     setEditingName("");
   };
 
-  const chatroomTab = (chatroom, index) => (
-    <Draggable key={chatroom.id} draggableId={`item-${chatroom.id}`} index={index}>
-      {(provided, snapshot) => (
-        <div
-          ref={provided.innerRef}
-          {...provided.draggableProps}
-          {...provided.dragHandleProps}
-          style={{
-            ...provided.draggableProps.style,
-            opacity: snapshot.isDragging ? 0.8 : 1,
-          }}>
-          <ContextMenu>
-            <ContextMenuTrigger>
-              <div
-                onDoubleClick={(e) =>
-                  handleRename(e, { chatroomId: chatroom.id, currentDisplayName: chatroom.displayName || chatroom.username })
-                }
-                onClick={() => onSelectChatroom(chatroom.id)}
-                onMouseDown={async (e) => {
-                  if (e.button === 1) {
-                    await handleRemoveChatroom(chatroom.id);
-                  }
-                }}
-                className={clsx(
-                  "chatroomStreamer",
-                  chatroom.id === currentChatroomId && "chatroomStreamerActive",
-                  chatroom?.isStreamerLive && "chatroomStreamerLive",
-                  snapshot.isDragging && "dragging",
-                )}>
-                <div className="streamerInfo">
-                  {settings?.general?.showTabImages && chatroom.streamerData?.user?.profile_pic && (
-                    <img
-                      className="profileImage"
-                      src={chatroom.streamerData.user.profile_pic}
-                      alt={`${chatroom.username}'s profile`}
-                    />
-                  )}
-                  {editingChatroomId === chatroom.id ? (
-                    <input
-                      value={editingName}
-                      onChange={(e) => setEditingName(e.target.value)}
-                      onBlur={() => handleRenameSubmit(chatroom.id)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          handleRenameSubmit(chatroom.id);
-                        } else if (e.key === "Escape") {
-                          setEditingChatroomId(null);
-                          setEditingName("");
-                        }
-                      }}
-                      autoFocus
-                      onClick={(e) => e.stopPropagation()}
-                      ref={renameInputRef}
-                    />
-                  ) : (
-                    <span>{chatroom.displayName || chatroom.username}</span>
-                  )}
-                </div>
-                <button
-                  className="closeChatroom"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleRemoveChatroom(chatroom.id);
-                  }}
-                  aria-label="Remove chatroom">
-                  <img src={X} width={12} height={12} alt="Remove chatroom" />
-                </button>
-              </div>
-            </ContextMenuTrigger>
-            <ContextMenuContent>
-              <ContextMenuItem onSelect={() => window.open(`https://kick.com/${chatroom.username}`, "_blank")}>
-                Open Stream in Browser
-              </ContextMenuItem>
-              <ContextMenuItem onSelect={() => window.open(`https://player.kick.com/${chatroom.username}`, "_blank")}>
-                Open Player in Browser
-              </ContextMenuItem>
-              <ContextMenuSeparator />
-              <ContextMenuItem
-                onSelect={(e) =>
-                  handleRename(e, { chatroomId: chatroom.id, currentDisplayName: chatroom.displayName || chatroom.username })
-                }>
-                Rename Tab
-              </ContextMenuItem>
-              <ContextMenuItem onSelect={() => handleRemoveChatroom(chatroom.id)}>Remove Chatroom</ContextMenuItem>
-            </ContextMenuContent>
-          </ContextMenu>
-        </div>
-      )}
-    </Draggable>
-  );
-
   return (
     <>
       <div className={clsx("navbarContainer", settings?.general?.wrapChatroomsList && "wrapChatroomList")} ref={chatroomListRef}>
@@ -254,16 +204,41 @@ const Navbar = ({ currentChatroomId, onSelectChatroom }) => {
           <Droppable droppableId="chatrooms" direction="horizontal">
             {(provided) => (
               <div className="chatroomsList" {...provided.droppableProps} ref={provided.innerRef}>
-                {orderedChatrooms.map((chatroom, index) => chatroomTab(chatroom, index))}
+                {orderedChatrooms.map((chatroom, index) => (
+                  <ChatroomTab
+                    key={chatroom.id}
+                    chatroom={chatroom}
+                    index={index}
+                    currentChatroomId={currentChatroomId}
+                    onSelectChatroom={onSelectChatroom}
+                    onRemoveChatroom={handleRemoveChatroom}
+                    onRename={handleRename}
+                    editingChatroomId={editingChatroomId}
+                    editingName={editingName}
+                    setEditingName={setEditingName}
+                    onRenameSubmit={handleRenameSubmit}
+                    setEditingChatroomId={setEditingChatroomId}
+                    renameInputRef={renameInputRef}
+                    settings={settings}
+                  />
+                ))}
                 {provided.placeholder}
-
+                {orderedChatrooms.length > 0 && <span className="chatroomsSeparator" />}
+                {hasMentionsTab && (
+                  <MentionsTab
+                    currentChatroomId={currentChatroomId}
+                    onSelectChatroom={onSelectChatroom}
+                    onRemoveMentionsTab={handleRemoveMentionsTab}
+                  />
+                )}
                 {settings?.general?.wrapChatroomsList && (
                   <div className="navbarAddChatroomContainer">
                     <button
                       className="navbarAddChatroomButton"
                       onClick={() => {
-                        setAddChatroomDialog(!showAddChatroomDialog);
-                        if (!showAddChatroomDialog) {
+                        setActiveSection("chatroom");
+                        setShowNavbarDialog(!showNavbarDialog);
+                        if (!showNavbarDialog) {
                           setTimeout(() => {
                             inputRef.current?.focus();
                           }, 0);
@@ -280,39 +255,72 @@ const Navbar = ({ currentChatroomId, onSelectChatroom }) => {
           </Droppable>
         </DragDropContext>
 
-        <div className={clsx("navbarAddChatroomDialog", showAddChatroomDialog && "open")}>
-          <div className="navbarAddChatroomDialogBody" ref={addChatroomDialogRef}>
-            <div className="navbarAddChatroomDialogHead">
-              <div className="navbarAddChatroomDialogHeadInfo">
-                <h2>Add Chatroom</h2>
-                <p>Enter a channel name to add a new chatroom</p>
+        <div className={clsx("navbarDialog", showNavbarDialog && "open")}>
+          <div className="navbarDialogBody" ref={addChatroomDialogRef}>
+            <div className="navbarDialogOptions">
+              <div className="navbarDialogOptionBtns">
+                <button
+                  onClick={() => setActiveSection("chatroom")}
+                  className={clsx("navbarDialogOptionBtn", activeSection === "chatroom" && "active")}>
+                  <img src={MessageIcon} width={24} height={24} alt="Add chatroom" />
+                  <span>Chatroom</span>
+                </button>
+                <button
+                  onClick={() => setActiveSection("mentions")}
+                  className={clsx("navbarDialogOptionBtn", activeSection === "mentions" && "active")}>
+                  <img src={NotificationIcon} width={24} height={24} alt="Notifications" />
+                  <span>Mentions</span>
+                </button>
               </div>
-              <button
-                className="navbarAddChatroomDialogClose"
-                onClick={() => setAddChatroomDialog(false)}
-                aria-label="Close Add Chatroom">
-                <img src={X} width={16} height={16} alt="Close Add Chatroom" />
+
+              <button className="navbarDialogClose" onClick={() => setShowNavbarDialog(false)} aria-label="Close Add Mentions">
+                <img src={X} width={16} height={16} alt="Close Add Mentions" />
               </button>
             </div>
-            <form onSubmit={handleSubmit} className="navbarAddForm">
-              <div>
-                <input ref={inputRef} placeholder="Enter streamer name..." disabled={isConnecting} />
+
+            <div className={clsx("navbarAddChatroomDialog", activeSection === "chatroom" && "active")}>
+              <div className="navbarAddChatroomDialogHead">
+                <div className="navbarAddChatroomDialogHeadInfo">
+                  <h2>Add Chatroom</h2>
+                  <p>Enter a channel name to add a new chatroom</p>
+                </div>
               </div>
-              <button className="navbarAddChatroom" type="submit" disabled={isConnecting}>
-                {isConnecting ? "Connecting..." : "Add Chatroom"}
-              </button>
-            </form>
+              <form onSubmit={handleSubmit} className="navbarAddForm">
+                <div>
+                  <input ref={inputRef} placeholder="Enter streamer name..." disabled={isConnecting} />
+                </div>
+                <button className="navbarAddChatroomBtn navbarDialogBtn" type="submit" disabled={isConnecting}>
+                  {isConnecting ? "Connecting..." : isSubmitError ? isSubmitError?.message : "Add Chatroom"}
+                </button>
+              </form>
+            </div>
+
+            <div className={clsx("navbarAddMentionsDialog", activeSection === "mentions" && "active")}>
+              <div className="navbarAddMentionsDialogHead">
+                <div className="navbarAddMentionsDialogHeadInfo">
+                  <h2>Add Mentions Tab</h2>
+                  <p>Add a tab to view all your mentions & highlights in all chats in one place</p>
+                </div>
+                <div className="navbarAddMentionsForm">
+                  <button className="navbarAddMentionsBtn navbarDialogBtn" onClick={handleAddMentions}>
+                    Add Mentions Tab
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
 
           <div className="dialogBackgroundOverlay" />
         </div>
+
+        {/* Add chatroom button */}
         {!settings?.general?.wrapChatroomsList && (
           <div className="navbarAddChatroomContainer">
             <button
               className="navbarAddChatroomButton"
               onClick={() => {
-                setAddChatroomDialog(!showAddChatroomDialog);
-                if (!showAddChatroomDialog) {
+                setShowNavbarDialog(!showNavbarDialog);
+                if (!showNavbarDialog) {
                   setTimeout(() => {
                     inputRef.current?.focus();
                   }, 0);

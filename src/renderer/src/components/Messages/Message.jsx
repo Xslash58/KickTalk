@@ -1,17 +1,22 @@
 import "../../assets/styles/components/Chat/Message.scss";
-import { memo, useCallback, useRef, useEffect, useMemo } from "react";
+import { useCallback, useRef, useMemo, useState } from "react";
 import ModActionMessage from "./ModActionMessage";
 import RegularMessage from "./RegularMessage";
+import EmoteUpdateMessage from "./EmoteUpdateMessage";
 import clsx from "clsx";
 import { useShallow } from "zustand/shallow";
 import useCosmeticsStore from "../../providers/CosmeticsProvider";
 import useChatStore from "../../providers/ChatProvider";
 import ReplyMessage from "./ReplyMessage";
+
 import {
   ContextMenu,
   ContextMenuContent,
   ContextMenuItem,
   ContextMenuSeparator,
+  ContextMenuSub,
+  ContextMenuSubContent,
+  ContextMenuSubTrigger,
   ContextMenuTrigger,
 } from "../Shared/ContextMenu";
 
@@ -20,18 +25,19 @@ const Message = ({
   userChatroomInfo,
   chatroomId,
   subscriberBadges,
-  sevenTVEmotes,
+  allStvEmotes,
   kickTalkBadges,
   settings,
   dialogUserStyle,
   type,
   username,
+  userId,
   chatroomName,
+  donators,
 }) => {
   const messageRef = useRef(null);
-  const getUpdateSoundPlayed = useChatStore(useShallow((state) => state.getUpdateSoundPlayed));
-  const getPinMessage = useChatStore(useShallow((state) => state.getPinMessage));
   const getDeleteMessage = useChatStore(useShallow((state) => state.getDeleteMessage));
+  const [rightClickedEmote, setRightClickedEmote] = useState(null);
 
   let userStyle;
 
@@ -50,21 +56,53 @@ const Message = ({
   );
 
   const handleOpenUserDialog = useCallback(
-    (e) => {
+    async (e, username) => {
       e.preventDefault();
 
-      window.app.userDialog.open({
-        sender: message.sender,
-        userChatroomInfo,
-        chatroomId,
-        subscriberBadges,
-        sevenTVEmotes,
-        cords: [e.clientX, e.clientY],
-        userStyle,
-      });
+      if (username) {
+        const user = await window.app.kick.getUserChatroomInfo(chatroomName, username);
+
+        if (!user?.data?.id) return;
+
+        const sender = {
+          id: user.data.id,
+          username: user.data.username,
+          slug: user.data.slug,
+        };
+
+        window.app.userDialog.open({
+          sender,
+          fetchedUser: user?.data,
+          chatroomId,
+          subscriberBadges,
+          sevenTVEmotes: allStvEmotes,
+          cords: [e.clientX, e.clientY],
+          username,
+        });
+      } else {
+        window.app.userDialog.open({
+          sender: message.sender,
+          userChatroomInfo,
+          chatroomId,
+          subscriberBadges,
+          sevenTVEmotes: allStvEmotes,
+          cords: [e.clientX, e.clientY],
+          userStyle,
+          username,
+        });
+      }
     },
-    [message?.sender, userChatroomInfo, chatroomId, userStyle, subscriberBadges, sevenTVEmotes],
+    [message?.sender, userChatroomInfo, chatroomId, userStyle, subscriberBadges, allStvEmotes, username],
   );
+
+  const rgbaObjectToString = (rgba) => {
+    if (!rgba) return "transparent";
+    if (typeof rgba === "string") return rgba;
+    if (typeof rgba === "object" && rgba.r !== undefined) {
+      return `rgba(${rgba.r}, ${rgba.g}, ${rgba.b}, ${rgba.a})`;
+    }
+    return "transparent";
+  };
 
   // Remove useCallback for these since message changes constantly
   const handleCopyMessage = () => {
@@ -98,69 +136,97 @@ const Message = ({
     }
   };
 
-  const filteredKickTalkBadges = kickTalkBadges?.find(
-    (badge) => badge.username.toLowerCase() === message?.sender?.username?.toLowerCase(),
-  )?.badges;
-
-  const checkForPhrases = () => {
-    if (
-      settings?.notifications?.enabled &&
-      (settings?.notifications?.background || settings?.notifications?.sound) &&
-      settings?.notifications?.phrases?.length &&
-      message?.sender?.slug !== username
-    ) {
-      return settings?.notifications?.phrases?.some((phrase) => {
-        return message.content?.toLowerCase().includes(phrase.toLowerCase());
-      });
-    }
-    return false;
-  };
-
-  const shouldDetectPhrases = checkForPhrases();
-  const shouldHighlight = shouldDetectPhrases && settings?.notifications?.background;
-
-  // Handle notification sound in useEffect
-  useEffect(() => {
-    if (type === "dialog" || type === "replyThread") return;
-
-    if (shouldDetectPhrases && settings.notifications.sound && message.soundPlayed !== true && !message?.is_old) {
-      // Only play sound for messages created within the last 5 seconds
-      const messageTime = new Date(message.created_at).getTime();
-      const now = Date.now();
-      const isRecentMessage = now - messageTime < 5000; // 5 seconds
-
-      if (isRecentMessage) {
-        window.app.notificationSounds
-          .getSoundUrl(settings?.notifications?.soundFile)
-          .then((soundUrl) => {
-            const audio = new Audio(soundUrl);
-            audio.volume = settings?.notifications?.volume || 0.1;
-            audio.play().catch((error) => {
-              console.error("Error playing sound:", error);
-            });
-          })
-          .catch((error) => {
-            console.error("Error loading sound file:", error);
-          });
+  const handleOpenEmoteLink = () => {
+    if (rightClickedEmote) {
+      let emoteUrl = "";
+      if (rightClickedEmote.type === "stv") {
+        emoteUrl = `https://7tv.app/emotes/${rightClickedEmote.id}`;
+      } else {
+        emoteUrl = `https://files.kick.com/emotes/${rightClickedEmote.id}/fullsize`;
       }
 
-      getUpdateSoundPlayed(chatroomId, message.id);
+      window.open(emoteUrl, "_blank");
     }
-  }, [
-    shouldDetectPhrases,
-    settings?.notifications?.sound,
-    settings?.notifications?.soundFile,
-    settings?.notifications?.volume,
-    message.soundPlayed,
-    message.is_old,
-    message.created_at,
-    chatroomId,
-    message.id,
-    getUpdateSoundPlayed,
-    type,
-  ]);
+  };
 
-  const showContextMenu = !message?.deleted && message?.type !== "system" && message?.type !== "mod_action";
+  const handleOpen7TVEmoteLink = useCallback(
+    (resolution) => {
+      if (rightClickedEmote && rightClickedEmote.type === "stv") {
+        let emoteUrl = "";
+        if (resolution === "page") {
+          emoteUrl = `https://7tv.app/emotes/${rightClickedEmote.id}`;
+        } else {
+          emoteUrl = `https://cdn.7tv.app/emote/${rightClickedEmote.id}/${resolution}.webp`;
+        }
+
+        window.open(emoteUrl, "_blank");
+      }
+    },
+    [rightClickedEmote],
+  );
+
+  // Handle context menu on the message to detect emote right-clicks
+  const handleMessageContextMenu = useCallback((e) => {
+    setRightClickedEmote(null);
+    let emoteImg = null;
+    if (e.target.tagName === "IMG" && e.target.className.includes("emote")) {
+      emoteImg = e.target;
+    } else if (e.target.className.includes("chatroomEmote")) {
+      emoteImg = e.target.querySelector("img.emote");
+    }
+
+    if (emoteImg) {
+      const alt = emoteImg.getAttribute("alt");
+      const src = emoteImg.getAttribute("src");
+
+      let emoteData = null;
+      if (src.includes("7tv.app")) {
+        const match = src.match(/\/emote\/([^\/]+)\//);
+        if (match) {
+          emoteData = {
+            id: match[1],
+            name: alt,
+            type: "stv",
+          };
+        }
+      } else if (src.includes("kick.com/emotes")) {
+        const match = src.match(/\/emotes\/([^\/]+)/);
+        if (match) {
+          emoteData = {
+            id: match[1],
+            name: alt,
+            type: "kick",
+          };
+        }
+      }
+
+      if (emoteData) {
+        setRightClickedEmote(emoteData);
+      }
+    }
+  }, []);
+
+  // Get existing KickTalk badges (Founder, Beta Tester, etc.)
+  const existingKickTalkBadges =
+    kickTalkBadges?.find((badge) => badge.username.toLowerCase() === message?.sender?.username?.toLowerCase())?.badges || [];
+
+  // Check if user is a donator
+  const donatorBadges = [];
+  if (message?.sender?.username) {
+    const donator = donators?.find((d) => d.message?.toLowerCase() === message?.sender?.username?.toLowerCase());
+    if (donator) {
+      donatorBadges.push({
+        type: "Donator",
+        title: "KickTalk Donator",
+      });
+    }
+  }
+
+  // Combine all KickTalk badges (existing + donator)
+  const filteredKickTalkBadges = [...existingKickTalkBadges, ...donatorBadges];
+
+  const showContextMenu =
+    !message?.deleted && message?.type !== "system" && message?.type !== "stvEmoteSetUpdate" && message?.type !== "mod_action";
 
   const handleOpenReplyThread = useCallback(
     async (chatStoreMessageThread) => {
@@ -179,15 +245,46 @@ const Message = ({
         chatroomId,
         messages: sortedMessages,
         originalMessageId: message?.metadata?.original_message?.id,
-        sevenTVEmotes,
+        allStvEmotes,
         subscriberBadges,
         userChatroomInfo,
         chatroomName,
+        username,
         settings,
       });
     },
-    [chatroomId, message, userChatroomInfo, chatroomName, sevenTVEmotes, subscriberBadges, settings],
+    [chatroomId, message, userChatroomInfo, chatroomName, allStvEmotes, subscriberBadges, settings, username],
   );
+
+  // [Highlights]: Handles highlighting message phrases
+  const shouldHighlightMessage = useMemo(() => {
+    if (!settings?.notifications?.background || !settings?.notifications?.phrases?.length || type === "dialog") {
+      return false;
+    }
+
+    // Don't highlight your own messages (including replies)
+    if (message?.sender?.slug === username) {
+      return false;
+    }
+
+    // Check for self-mention in replies
+    if (message?.metadata?.original_sender?.id == userId && message?.sender?.id != userId) {
+      return true;
+    }
+
+    // Check for highlight phrases
+    return settings.notifications.phrases.some((phrase) => message?.content?.toLowerCase().includes(phrase.toLowerCase()));
+  }, [
+    settings?.notifications?.background,
+    settings?.notifications?.phrases,
+    message?.content,
+    message?.sender?.slug,
+    message?.sender?.id,
+    message?.metadata?.original_sender?.id,
+    type,
+    username,
+    userId,
+  ]);
 
   const messageContent = (
     <div
@@ -195,11 +292,12 @@ const Message = ({
         "chatMessageItem",
         message.is_old && type !== "replyThread" && "old",
         message.deleted && "deleted",
+        message.type === "stvEmoteSetUpdate" && "emoteSetUpdate",
         type === "dialog" && "dialogChatMessageItem",
-        shouldHighlight && "highlighted",
+        shouldHighlightMessage && "highlighted",
       )}
       style={{
-        backgroundColor: shouldHighlight ? settings?.notifications?.backgroundColour : "transparent",
+        backgroundColor: shouldHighlightMessage ? rgbaObjectToString(settings?.notifications?.backgroundRgba) : "transparent",
       }}
       ref={messageRef}>
       {(message.type === "message" || type === "replyThread") && (
@@ -208,15 +306,14 @@ const Message = ({
           message={message}
           filteredKickTalkBadges={filteredKickTalkBadges}
           subscriberBadges={subscriberBadges}
-          sevenTVEmotes={sevenTVEmotes}
+          sevenTVEmotes={allStvEmotes}
           userStyle={userStyle}
-          sevenTVSettings={settings?.sevenTV}
-          getPinMessage={getPinMessage}
           handleOpenUserDialog={handleOpenUserDialog}
           userChatroomInfo={userChatroomInfo}
           chatroomName={chatroomName}
           chatroomId={chatroomId}
           settings={settings}
+          username={username}
         />
       )}
 
@@ -226,14 +323,15 @@ const Message = ({
           message={message}
           filteredKickTalkBadges={filteredKickTalkBadges}
           subscriberBadges={subscriberBadges}
-          sevenTVEmotes={sevenTVEmotes}
+          sevenTVEmotes={allStvEmotes}
           userStyle={userStyle}
-          sevenTVSettings={settings?.sevenTV}
           handleOpenUserDialog={handleOpenUserDialog}
           userChatroomInfo={userChatroomInfo}
           chatroomName={chatroomName}
           chatroomId={chatroomId}
           handleOpenReplyThread={handleOpenReplyThread}
+          settings={settings}
+          username={username}
         />
       )}
 
@@ -247,12 +345,15 @@ const Message = ({
         </span>
       )}
 
+      {message.type === "stvEmoteSetUpdate" && <EmoteUpdateMessage message={message} />}
+
       {message.type === "mod_action" && (
         <ModActionMessage
           message={message}
           chatroomId={chatroomId}
+          chatroomName={chatroomName}
           subscriberBadges={subscriberBadges}
-          channel7TVEmotes={sevenTVEmotes}
+          allStvEmotes={allStvEmotes}
           userChatroomInfo={userChatroomInfo}
         />
       )}
@@ -262,11 +363,58 @@ const Message = ({
   if (showContextMenu) {
     return (
       <ContextMenu>
-        <ContextMenuTrigger asChild>{messageContent}</ContextMenuTrigger>
+        <ContextMenuTrigger asChild onContextMenu={handleMessageContextMenu}>
+          {messageContent}
+        </ContextMenuTrigger>
         <ContextMenuContent>
           {message?.content && <ContextMenuItem onSelect={handleCopyMessage}>Copy Message</ContextMenuItem>}
 
           <ContextMenuItem onSelect={handleReply}>Reply to Message</ContextMenuItem>
+
+          {rightClickedEmote && rightClickedEmote.type === "stv" && (
+            <>
+              <ContextMenuSeparator />
+              <ContextMenuSub>
+                <ContextMenuSubTrigger>Open Emote Links</ContextMenuSubTrigger>
+                <ContextMenuSubContent>
+                  <ContextMenuItem onSelect={() => handleOpen7TVEmoteLink("page")}>7TV Link</ContextMenuItem>
+                  <ContextMenuSeparator />
+                  <ContextMenuItem onSelect={() => handleOpen7TVEmoteLink("1x")}>1x Link</ContextMenuItem>
+                  <ContextMenuItem onSelect={() => handleOpen7TVEmoteLink("2x")}>2x Link</ContextMenuItem>
+                  <ContextMenuItem onSelect={() => handleOpen7TVEmoteLink("4x")}>4x Link</ContextMenuItem>
+                </ContextMenuSubContent>
+              </ContextMenuSub>
+              <ContextMenuSub>
+                <ContextMenuSubTrigger>Copy Emote Links</ContextMenuSubTrigger>
+                <ContextMenuSubContent>
+                  <ContextMenuItem
+                    onSelect={() => navigator.clipboard.writeText(`https://7tv.app/emotes/${rightClickedEmote.id}`)}>
+                    7TV Link
+                  </ContextMenuItem>
+                  <ContextMenuSeparator />
+                  <ContextMenuItem
+                    onSelect={() => navigator.clipboard.writeText(`https://cdn.7tv.app/emote/${rightClickedEmote.id}/1x.webp`)}>
+                    1x Link
+                  </ContextMenuItem>
+                  <ContextMenuItem
+                    onSelect={() => navigator.clipboard.writeText(`https://cdn.7tv.app/emote/${rightClickedEmote.id}/2x.webp`)}>
+                    2x Link
+                  </ContextMenuItem>
+                  <ContextMenuItem
+                    onSelect={() => navigator.clipboard.writeText(`https://cdn.7tv.app/emote/${rightClickedEmote.id}/4x.webp`)}>
+                    4x Link
+                  </ContextMenuItem>
+                </ContextMenuSubContent>
+              </ContextMenuSub>
+            </>
+          )}
+
+          {rightClickedEmote && rightClickedEmote.type === "kick" && (
+            <>
+              <ContextMenuSeparator />
+              <ContextMenuItem onSelect={handleOpenEmoteLink}>Open Kick Emote</ContextMenuItem>
+            </>
+          )}
 
           {canModerate && message?.content && (
             <>

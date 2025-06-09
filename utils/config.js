@@ -12,15 +12,15 @@ const schema = {
         type: "boolean",
         default: false,
       },
+      dialogAlwaysOnTop: {
+        type: "boolean",
+        default: false,
+      },
       wrapChatroomsList: {
         type: "boolean",
         default: false,
       },
       showTabImages: {
-        type: "boolean",
-        default: true,
-      },
-      showTimestamps: {
         type: "boolean",
         default: true,
       },
@@ -32,9 +32,9 @@ const schema = {
     },
     default: {
       alwaysOnTop: false,
+      dialogAlwaysOnTop: false,
       wrapChatroomsList: false,
       showTabImages: true,
-      showTimestamps: true,
       timestampFormat: "disabled",
     },
   },
@@ -45,9 +45,26 @@ const schema = {
         type: "boolean",
         default: true,
       },
+      batchingInterval: {
+        type: "number",
+        default: 0,
+        minimum: 0,
+        maximum: 10000,
+      },
+      batching: {
+        type: "boolean",
+        default: false,
+      },
+      showInfoBar: {
+        type: "boolean",
+        default: true,
+      },
     },
     default: {
       showModActions: true,
+      batchingInterval: 0,
+      batching: false,
+      showInfoBar: true,
     },
   },
   notifications: {
@@ -63,13 +80,17 @@ const schema = {
       },
       volume: {
         type: "number",
-        default: 0.1,
+        default: 0.2,
         minimum: 0,
         maximum: 1,
       },
       soundFile: {
         type: "string",
         default: "../resources/sounds/default.wav",
+      },
+      soundFileName: {
+        type: "string",
+        default: "default",
       },
       background: {
         type: "boolean",
@@ -79,6 +100,15 @@ const schema = {
         type: "string",
         default: "#000000",
       },
+      backgroundRgba: {
+        type: "object",
+        default: {
+          r: 255,
+          g: 255,
+          b: 255,
+          a: 0.25,
+        },
+      },
       phrases: {
         type: "array",
         default: [],
@@ -87,8 +117,21 @@ const schema = {
     default: {
       enabled: true,
       sound: true,
-      volume: 1,
+      volume: 0.2,
       soundFile: "../resources/sounds/default.wav",
+      soundFileName: "default",
+    },
+  },
+  moderation: {
+    type: "object",
+    properties: {
+      quickModTools: {
+        type: "boolean",
+        default: true,
+      },
+    },
+    default: {
+      quickModTools: true,
     },
   },
   sevenTV: {
@@ -119,9 +162,17 @@ const schema = {
     },
   },
   theme: {
-    type: "string",
-    enum: ["light", "dark"],
-    default: "dark",
+    type: "object",
+    properties: {
+      current: {
+        type: "string",
+        enum: ["default", "dark", "blue", "purple", "red"],
+        default: "default",
+      },
+    },
+    default: {
+      current: "default",
+    },
   },
   zoomFactor: {
     type: "number",
