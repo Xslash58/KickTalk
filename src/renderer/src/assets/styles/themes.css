@@ -122,7 +122,7 @@
 
   /* Switch */
   --switch-checked: #37aa66;
-  --switch-unchecked: #4c5d537d;
+  --switch-unchecked: #3535357d;
 
   /* Navbar */
   --navbar-bg: #161616;
@@ -428,7 +428,7 @@
   --bg-primary: linear-gradient(180deg, #0f0202 0%, #1a0505 100%);
   --bg-secondary: #7f1d1d;
   --bg-tertiary: #2a0808;
-  --bg-input: #7f1d1d;
+  --bg-input: #511313;
   --bg-hover: #991b1b;
   --bg-active: #b91c1c;
   --bg-selected: #7f1d1d;
