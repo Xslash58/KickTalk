@@ -8,9 +8,9 @@ const SettingsProvider = ({ children }) => {
 
   const handleThemeChange = async (newTheme) => {
     const themeData = { current: newTheme };
-    setSettings((prev) => ({ ...prev, theme: themeData }));
+    setSettings((prev) => ({ ...prev, customTheme: themeData }));
     applyTheme(themeData);
-    await window.app.store.set("theme", themeData);
+    await window.app.store.set("customTheme", themeData);
   };
 
   useEffect(() => {
@@ -20,8 +20,8 @@ const SettingsProvider = ({ children }) => {
         setSettings(settings);
 
         // Apply theme to document
-        if (settings?.theme?.current) {
-          applyTheme(settings.theme);
+        if (settings?.customTheme?.current) {
+          applyTheme(settings.customTheme);
         }
       } catch (error) {
         console.error("[SettingsProvider]: Error loading settings:", error);
@@ -45,8 +45,8 @@ const SettingsProvider = ({ children }) => {
           }
         });
 
-        if (data.theme?.current) {
-          applyTheme(data.theme);
+        if (data.customTheme?.current) {
+          applyTheme(data.customTheme);
         }
 
         return newSettings;
@@ -61,7 +61,7 @@ const SettingsProvider = ({ children }) => {
       setSettings((prev) => ({ ...prev, [key]: value }));
       await window.app.store.set(key, value);
 
-      if (key === "theme" && value?.current) {
+      if (key === "customTheme" && value?.current) {
         applyTheme(value);
       }
     } catch (error) {

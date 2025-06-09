@@ -1,5 +1,5 @@
-export const applyTheme = (theme) => {
-  const themeValue = theme.current;
+export const applyTheme = (customTheme) => {
+  const themeValue = customTheme.current;
 
   if (themeValue && themeValue !== "default") {
     document.documentElement.setAttribute("data-theme", themeValue);
@@ -10,7 +10,7 @@ export const applyTheme = (theme) => {
 
 export const initTheme = async () => {
   try {
-    const theme = await window.app.store.get("theme");
+    const theme = await window.app.store.get("customTheme");
     applyTheme(theme);
   } catch (error) {
     console.error("[Theme]: Failed to load theme:", error);

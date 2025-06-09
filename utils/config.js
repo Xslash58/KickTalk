@@ -161,7 +161,7 @@ const schema = {
       badges: true,
     },
   },
-  theme: {
+  customTheme: {
     type: "object",
     properties: {
       current: {
@@ -173,6 +173,11 @@ const schema = {
     default: {
       current: "default",
     },
+  },
+  theme: {
+    type: "string",
+    enum: ["light", "dark"],
+    default: "dark",
   },
   zoomFactor: {
     type: "number",

@@ -190,7 +190,7 @@ const GeneralSection = ({ settingsData, onChange }) => {
           <div className="settingsItem">
             <div
               className={clsx("settingSwitchItem", {
-                active: settingsData?.theme?.current !== "default",
+                active: settingsData?.customTheme?.current !== "default",
               })}>
               <div className="settingsItemTitleWithInfo">
                 <span className="settingsItemTitle">Theme</span>
@@ -206,33 +206,39 @@ const GeneralSection = ({ settingsData, onChange }) => {
                 </Tooltip>
               </div>
 
-              <DropdownMenu value={settingsData?.general?.theme}>
+              <DropdownMenu value={settingsData?.customTheme?.current || "default"}>
                 <DropdownMenuTrigger asChild>
                   <button className="timestampFormat">
-                    {settingsData?.theme?.current === "default"
+                    {settingsData?.customTheme?.current === "default"
                       ? "Default"
-                      : settingsData?.theme?.current.charAt(0).toUpperCase() + settingsData?.theme?.current.slice(1)}
+                      : settingsData?.customTheme?.current.charAt(0).toUpperCase() + settingsData?.customTheme?.current.slice(1)}
                     <img src={CaretDownIcon} width={14} height={14} alt="Chevron" />
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent side="bottom">
                   <DropdownMenuItem
-                    onClick={() => onChange("theme", { ...settingsData?.theme, current: "default" })}
+                    onClick={() => onChange("customTheme", { ...settingsData?.customTheme, current: "default" })}
                     value="default">
                     Default
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => onChange("theme", { ...settingsData?.theme, current: "dark" })} value="dark">
+                  <DropdownMenuItem
+                    onClick={() => onChange("customTheme", { ...settingsData?.customTheme, current: "dark" })}
+                    value="dark">
                     Dark
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => onChange("theme", { ...settingsData?.theme, current: "blue" })} value="blue">
+                  <DropdownMenuItem
+                    onClick={() => onChange("customTheme", { ...settingsData?.customTheme, current: "blue" })}
+                    value="blue">
                     Blue
                   </DropdownMenuItem>
                   <DropdownMenuItem
-                    onClick={() => onChange("theme", { ...settingsData?.theme, current: "purple" })}
+                    onClick={() => onChange("customTheme", { ...settingsData?.customTheme, current: "purple" })}
                     value="purple">
                     Purple
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => onChange("theme", { ...settingsData?.theme, current: "red" })} value="red">
+                  <DropdownMenuItem
+                    onClick={() => onChange("customTheme", { ...settingsData?.customTheme, current: "red" })}
+                    value="red">
                     Red
                   </DropdownMenuItem>
                 </DropdownMenuContent>
