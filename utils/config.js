@@ -166,7 +166,7 @@ const schema = {
     properties: {
       current: {
         type: "string",
-        enum: ["default", "dark", "blue", "purple", "red"],
+        enum: ["default", "dark", "blue", "purple", "red", "xslash"],
         default: "default",
       },
     },

@@ -241,6 +241,11 @@ const GeneralSection = ({ settingsData, onChange }) => {
                     value="red">
                     Red
                   </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => onChange("customTheme", { ...settingsData?.customTheme, current: "xslash" })}
+                    value="xslash">
+                    Xslash
+                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
