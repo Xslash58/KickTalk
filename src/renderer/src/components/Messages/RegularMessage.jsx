@@ -64,6 +64,7 @@ const RegularMessage = memo(
         return {
           backgroundImage: userStyle.paint.backgroundImage,
           filter: userStyle.paint.shadows,
+          backgroundSize: '100% 100%'
         };
       }
       return { color: message.sender.identity?.color };
@@ -103,10 +104,10 @@ const RegularMessage = memo(
           {shouldShowModActions && <ModActions chatroomName={chatroomName} message={message} />}
 
           <div className="chatMessageBadges">
+            <KickBadges badges={message?.sender?.identity?.badges} subscriberBadges={subscriberBadges} />
             {kickTalkBadges && <KickTalkBadges badges={kickTalkBadges} />}
             {donatorBadges && <KickTalkBadges badges={donatorBadges} />}
             {userStyle?.badge && <StvBadges badge={userStyle?.badge} />}
-            <KickBadges badges={message?.sender?.identity?.badges} subscriberBadges={subscriberBadges} />
           </div>
 
           <button
