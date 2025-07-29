@@ -755,7 +755,7 @@ const useChatStore = create((set, get) => ({
             chatroom.username.toLowerCase() === username.toLowerCase() ||
             chatroom.username.toLowerCase() === username.replaceAll("-", "_"),
         ) ||
-        savedChatrooms.length >= 5
+        savedChatrooms.length >= 100
       ) {
         return;
       }
