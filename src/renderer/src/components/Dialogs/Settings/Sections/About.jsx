@@ -9,7 +9,7 @@ const AboutSection = ({ appInfo }) => {
       <div className="settingsContentSection">
         <div className="settingsSectionHeader">
           <h4>About KickTalk</h4>
-          <p>A chat client for Kick.com.</p>
+          <p>A chat client for Kick.com. (Unofficial fork made by Xslash)</p>
         </div>
 
         <div className="settingsContentAboutDevsContainer">
